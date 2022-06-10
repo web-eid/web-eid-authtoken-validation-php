@@ -1,0 +1,23 @@
+{
+    "name": "web_eid/web_eid_authtoken_validation_php",
+    "description": "Web eID authentication token validation library for PHP",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Guido Gröön",
+            "role" : "developer"
+        }
+    ],
+    "require": {
+        "mlocati/ocsp": "1.0.2"
+    },    
+    "require-dev": {
+		"phpunit/phpunit": "^9.5"
+	},    
+    "autoload": {
+        "psr-4": {
+            "web_eid\\web_eid_authtoken_validation_php\\": ["src"]
+        }
+    }    
+}
