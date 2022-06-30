@@ -94,7 +94,7 @@ final class AuthTokenValidationConfiguration
         return $this->disallowedSubjectCertificatePolicies;
     }
 
-    public function getNonceDisabledOcspUrls(): array
+    public function &getNonceDisabledOcspUrls(): array
     {
         return $this->nonceDisabledOcspUrls;
     }    
