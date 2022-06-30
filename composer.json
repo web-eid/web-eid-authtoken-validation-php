@@ -19,5 +19,11 @@
         "psr-4": {
             "web_eid\\web_eid_authtoken_validation_php\\": ["src"]
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "web_eid\\web_eid_authtoken_validation_php\\": ["tests"]
+        }
     }    
+
 }

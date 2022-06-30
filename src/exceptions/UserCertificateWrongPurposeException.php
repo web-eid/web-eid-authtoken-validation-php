@@ -22,39 +22,15 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\certificate;
+namespace web_eid\web_eid_authtoken_validation_php\exceptions;
 
-use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
-use web_eid\web_eid_authtoken_validation_php\util\X509;
-use BadFunctionCallException;
-
-final class CertificateLoader
+/**
+ * Thrown when the user certificate purpose is not client authentication.
+ */
+class UserCertificateWrongPurposeException extends AuthTokenException
 {
-
     public function __construct()
     {
-        throw new BadFunctionCallException('Utility class');
-    }
-
-    /**
-     * Loads certificate files from paths into array of OpenSSLCertificate
-     * @param string ...$resourceNames array of certificate paths
-     * 
-     * @return array
-     * @throws CertificateDecodingException
-     */
-    public static function loadCertificatesFromResources(string ...$resourceNames): array
-    {
-        $caCertificates = [];
-        foreach ($resourceNames as $resourceName) {
-            $x509 = new X509();
-            $certificate = $x509->loadX509(file_get_contents($resourceName));
-            if ($certificate) {
-                $caCertificates[] = $certificate;
-            } else {
-                throw new CertificateDecodingException($resourceName);
-            }
-        }
-        return $caCertificates;
+        parent::__construct('User certificate is not be used for authentication');
     }
 }

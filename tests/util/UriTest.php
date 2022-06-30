@@ -7,7 +7,7 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\MalformedUriException;
 
 class UriTest extends TestCase
 {
-    public function testIsAbsolute(): void
+    public function testWhenIsOrNotAbsolute(): void
     {
         $uri = new Uri("https://example.com");
         $this->assertTrue($uri->isAbsolute() == true);
@@ -25,7 +25,7 @@ class UriTest extends TestCase
         $this->assertTrue($uri->isAbsolute() == false);
     }
 
-    public function testSeriouslyMalformedUriParse(): void
+    public function testWhenSeriouslyMalformedUriParse(): void
     {
         $this->expectException(MalformedUriException::class);
         new Uri("/search/index.html:2022");

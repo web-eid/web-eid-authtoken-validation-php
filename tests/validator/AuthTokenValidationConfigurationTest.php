@@ -9,7 +9,7 @@ use InvalidArgumentException;
 class AuthTokenValidationConfigurationTest extends TestCase
 {
 
-    public function testHttpOriginUrl(): void
+    public function testWhenOriginUrlIsHttp(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Origin URI must only contain the HTTPS scheme, host and optional port component");
@@ -18,7 +18,7 @@ class AuthTokenValidationConfigurationTest extends TestCase
         $configuration->validate();
     }
 
-    public function testNotAbsoluteUrl(): void
+    public function testWhenNotAbsoluteUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Provided URI is not a valid URL");
@@ -27,7 +27,7 @@ class AuthTokenValidationConfigurationTest extends TestCase
         $configuration->validate();
     }
 
-    public function testNoSiteOrigin(): void
+    public function testWhenNoSiteOrigin(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("Origin URI must not be null");
@@ -35,7 +35,7 @@ class AuthTokenValidationConfigurationTest extends TestCase
         $configuration->validate();
     }
 
-    public function testNoTrustedCertificates(): void
+    public function testWhenNoTrustedCertificates(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("At least one trusted certificate authority must be provided");
@@ -44,7 +44,7 @@ class AuthTokenValidationConfigurationTest extends TestCase
         $configuration->validate();
     }
 
-    public function testZeroOcspRequestTimeout(): void
+    public function testWhenZeroOcspRequestTimeout(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("OCSP request timeout must be greater than zero");

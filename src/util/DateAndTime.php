@@ -68,3 +68,22 @@ final class DateAndTime
     }
 
 }
+
+final class DefaultClock
+{
+    private static DefaultClock $instance;
+
+    public static function getInstance()
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new DefaultClock();
+        }
+        return self::$instance;
+    }
+
+    public function now(): DateTime
+    {
+        return new DateTime();
+    }
+
+}

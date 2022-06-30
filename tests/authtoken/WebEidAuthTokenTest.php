@@ -9,7 +9,7 @@ use UnexpectedValueException;
 class WebEidAuthTokenTest extends TestCase
 {
 
-    public function testAuthTokenException(): void
+    public function testWhenFaultyAuthTokenParameter(): void
     {
         $authTokenJson = '{"unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4","algorithm": 1,"signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZh","format": "web-eid:1.0","appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"}';
         $this->expectException(UnexpectedValueException::class);
@@ -17,7 +17,7 @@ class WebEidAuthTokenTest extends TestCase
         new WebEidAuthToken($authTokenJson);
     }
 
-    public function testAuthTokenParameters(): void
+    public function testValidateAuthTokenParameters(): void
     {
         $authTokenJson = '{"unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4","algorithm": "RS256","signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZh","format": "web-eid:1.0","appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"}';
         $authToken = new WebEidAuthToken($authTokenJson);
@@ -28,7 +28,7 @@ class WebEidAuthTokenTest extends TestCase
         $this->assertEquals("https://web-eid.eu/web-eid-app/releases/v2.0.0", $authToken->getAppVersion());
     }
 
-    public function testNotAuthToken(): void
+    public function testWhenNotAuthToken(): void
     {
         $authToken = new WebEidAuthToken("somestring");
         $this->assertNotTrue($authToken);
