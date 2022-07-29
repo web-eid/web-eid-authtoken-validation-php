@@ -28,8 +28,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\MalformedUriException;
 
 use InvalidArgumentException;
 
-use function PHPUnit\Framework\isNull;
-
 class Uri
 {
 
@@ -280,11 +278,11 @@ class Uri
         return rawurlencode($match[0]);
     }
 
-    private function getUrl(): string
+    public function getUrl(): string
     {
         $scheme   = ($this->getScheme() !== "") ? $this->getScheme() . '://' : '';
         $host     = ($this->getHost() !== "") ? $this->getHost() : '';
-        $port     = !isNull($this->getPort()) ? ':' . $this->getPort() : '';
+        $port     = !is_null($this->getPort()) ? ':' . $this->getPort() : '';
         $user     = ($this->getUser() !== "") ? $this->getUser() : '';
         $pass     = ($this->getPassword() !== "") ? ':' . $this->getPassword()  : '';
         $pass     = ($user || $pass) ? "$pass@" : '';
@@ -323,6 +321,12 @@ class Uri
             return false;
         }
         return true;
-    } 
+    }
 
+    public function createFromArray(array $parts): Uri
+    {
+        $uri = new self();
+        $uri->setParts($parts);
+        return $uri;
+    }
 }

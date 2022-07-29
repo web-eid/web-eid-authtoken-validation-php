@@ -24,40 +24,90 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\challenge;
 
+use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceGenerationException;
+use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
+use InvalidArgumentException;
 
 class ChallengeNonceGeneratorBuilder
 {
-    /**
-     * @var int Challenge nounce length.
-     */
-    private const NOUNCE_LENGTH = 32;
+
+    private ChallengeNonceStore $challengeNonceStore;
 
     /**
-     * @var int Challenge nounce max validity in minutes.
+     * @var int Challenge nounce max validity in seconds.
      */
-    private const TTL = 5;
+    private int $ttl;
 
     /**
-     * @var string Random bytes
+     * @var $secureRandom
      */
-    private string $secureRandom;
+    private $secureRandom;
 
     public function __construct()
     {
-        $this->secureRandom = $this->generateSecureRandom();
-    }    
+        // 5 minutes
+        $this->ttl = 300;
+        $this->secureRandom = function($nounce_length) {
+            return $this->generateSecureRandom($nounce_length);
+        };
+    }
 
-    private function generateSecureRandom() {
+    /**
+     * Override default nonce time-to-live duration.
+     * <p>
+     * When the time-to-live passes, the nonce is considered to be expired.
+     *
+     * @param int $seconds - challenge nonce time-to-live duration in seconds
+     * @return current builder instance
+     */    
+    public function withNonceTtl(int $seconds): ChallengeNonceGeneratorBuilder
+    {
+        $this->ttl = $seconds;
+        return $this;
+    }
+
+   /**
+     * Sets the challenge nonce store where the generated challenge nonces will be stored.
+     *
+     * @param challengeNonceStore challenge nonce store
+     * @return current builder instance
+     */    
+    public function withChallengeNonceStore(ChallengeNonceStore $challengeNonceStore): ChallengeNonceGeneratorBuilder
+    {
+        $this->challengeNonceStore = $challengeNonceStore;
+        return $this;
+    }
+
+    public function build(): ChallengeNonceGenerator
+    {
+        // Force to use PHP session based nounce store when store is not set
+        if (!isset($this->challengeNonceStore)) {
+            $this->challengeNonceStore = new ChallengeNonceStore();
+        }
+        $this->validateParameters();
+        return new ChallengeNonceGeneratorImpl($this->challengeNonceStore, $this->secureRandom, $this->ttl);
+    }
+
+    private function  validateParameters(): void
+    {
+        if (is_null($this->challengeNonceStore)) {
+            throw new InvalidArgumentException("Challenge nonce store must not be null");    
+        }
+        if (is_null($this->secureRandom)) {
+            throw new InvalidArgumentException("Secure random generator must not be null");    
+        }
+        DateAndtime::requirePositiveDuration($this->ttl, "Nonce TTL");
+    }
+
+    private function generateSecureRandom(int $nounce_length) {
         // Try random_bytes function as default for generating random bytes 
         if (function_exists('random_bytes')) {
-            $this->secureRandom = random_bytes(self::NOUNCE_LENGTH);
-            return;
+            return random_bytes($nounce_length);
         }
         // Try openssl_random_pseudo_bytes function as second option for generating random bytes 
         if (function_exists('openssl_random_pseudo_bytes')) {
-            $this->secureRandom = openssl_random_pseudo_bytes(self::NOUNCE_LENGTH);
-            return;
+            return openssl_random_pseudo_bytes($nounce_length);
         }
         throw new ChallengeNonceGenerationException();
 

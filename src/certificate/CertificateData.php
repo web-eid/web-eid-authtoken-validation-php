@@ -22,9 +22,11 @@
  * SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
-use web_eid\web_eid_authtoken_validation_php\util\X509;
+use phpseclib3\File\X509;
 use UnexpectedValueException;
 use BadFunctionCallException;
 
@@ -33,7 +35,7 @@ final class CertificateData
 
     public function __construct()
     {
-        throw new BadFunctionCallException('Utility class');
+        throw new BadFunctionCallException("Utility class");
     }
 
     /**
@@ -43,7 +45,7 @@ final class CertificateData
      */    
     public static function getSubjectCN(X509 $certificate): string
     {
-        return self::getField($certificate, 'CN');
+        return self::getField($certificate, 'id-at-commonName');
     }
 
     /**
@@ -53,7 +55,7 @@ final class CertificateData
      */    
     public static function getSubjectSurname(X509 $certificate): string
     {
-        return self::getField($certificate, 'SN');
+        return self::getField($certificate, 'id-at-surname');
     }
 
     /**
@@ -63,7 +65,7 @@ final class CertificateData
      */    
     public static function getSubjectGivenName(X509 $certificate): string
     {
-        return self::getField($certificate, 'GN');
+        return self::getField($certificate, 'id-at-givenName');
     }
 
     /**
@@ -73,7 +75,7 @@ final class CertificateData
      */    
     public static function getSubjectIdCode(X509 $certificate): string
     {
-        return self::getField($certificate, 'serialNumber');
+        return self::getField($certificate, 'id-at-serialNumber');
     }
 
     /**
@@ -83,7 +85,7 @@ final class CertificateData
      */    
     public static function getSubjectCountryCode(X509 $certificate): string
     {
-        return self::getField($certificate, 'C');
+        return self::getField($certificate, 'id-at-countryName');
     }
 
     /**
@@ -94,9 +96,9 @@ final class CertificateData
      */    
     private static function getField(X509 $certificate, string $fieldId): string
     {
-        $result = $certificate->getSubjectProp($fieldId);
+        $result = $certificate->getSubjectDNProp($fieldId);
         if ($result) {
-            return $result;
+            return $result[0];
         } 
         throw new UnexpectedValueException('fieldId '.$fieldId.' not found in certificate subject');
     }

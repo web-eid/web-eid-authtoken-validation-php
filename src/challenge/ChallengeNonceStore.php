@@ -25,6 +25,11 @@
 namespace web_eid\web_eid_authtoken_validation_php\challenge;
 
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonce;
+use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceNotFoundException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\SessionNotExistException;
+use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
+use DateTime;
 
 /**
  * A store for storing generated challenge nonces and accessing their generation time.
@@ -34,7 +39,15 @@ class ChallengeNonceStore
     private const CHALLENGE_NONCE_SESSION_KEY = "web-eid-challenge-nonce"; 
     private $session;
 
-    public function __construct($session) {
+    public function __construct($session = null) {
+        // When store session not provided
+        if (is_null($session)) {
+            if (!$this->isSessionExist()) {
+                throw new SessionNotExistException();
+            }
+            $this->session =& $_SESSION;
+            return;
+        }
         $this->session = $session;
     }
 
@@ -55,7 +68,7 @@ class ChallengeNonceStore
     public function getAndRemove(): ?ChallengeNonce {
 
         if (!isset($this->session[self::CHALLENGE_NONCE_SESSION_KEY])) {
-            return null;
+            throw new ChallengeNonceNotFoundException();
         }
 
         // Unserialize challenge nonce from session
@@ -67,13 +80,27 @@ class ChallengeNonceStore
         ]);
         
         if (!$challengeNonce) {
-            return null;
+            throw new ChallengeNonceNotFoundException();
         }
+
+        if (DateAndTime::utcNow() > $challengeNonce->getExpirationTime()) {
+            throw new ChallengeNonceExpiredException();
+        }        
 
         // Remove challenge nonce from session
         unset($this->session[self::CHALLENGE_NONCE_SESSION_KEY]);
 
         return $challengeNonce;
     }
+
+    /**
+     * Returns boolean, is session available
+     *
+     * @return bool
+     */    
+    private function isSessionExist(): bool {
+        return (session_status() !== PHP_SESSION_NONE);
+    }
+
 
 }

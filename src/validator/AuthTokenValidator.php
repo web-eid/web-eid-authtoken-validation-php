@@ -21,9 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
+use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 
 /**
@@ -39,7 +41,7 @@ interface AuthTokenValidator
      * @param String $authToken the Web eID authentication token string, in Web eID JSON format
      * @return the Web eID authentication token
      */
-    public function parse(string $authToken);
+    public function parse(string $authToken): WebEidAuthToken;
     
     /**
      * Validates the Web eID authentication token signed by the subject and returns
@@ -52,6 +54,6 @@ interface AuthTokenValidator
      * @param String currentChallengeNonce the challenge nonce that is associated with the authentication token
      * @return validated subject certificate
      */    
-    public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce);
+    public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509;
 
 }

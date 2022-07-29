@@ -22,18 +22,18 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\util;
+ declare(strict_types=1);
 
-final class TrustedCertificates
+namespace web_eid\web_eid_authtoken_validation_php\util;
+use Countable;
+
+final class TrustedCertificates implements Countable
 {
-    private array $certificates;
+    private X509Collection $certificates;
 
     public function __construct(array $certificates)
     {
-        // Make unique array
-        $serialized = array_map('serialize', $certificates);
-        $uniqueCertificates = array_unique($serialized);
-        $this->certificates = array_intersect_key($certificates, $uniqueCertificates);
+        $this->certificates = new X509Collection(...$certificates);
     }
 
     public function count(): int
@@ -41,8 +41,8 @@ final class TrustedCertificates
         return count($this->certificates);
     }
 
-    public function getCertificates(): array
+    public function getCertificates(): X509Collection
     {
         return $this->certificates;
-    }    
+    }
 }

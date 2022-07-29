@@ -24,15 +24,18 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
-use web_eid\web_eid_authtoken_validation_php\util\X509;
+use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateDisallowedPolicyException;
+use web_eid\web_eid_authtoken_validation_php\util\Log;
 
 final class SubjectCertificatePolicyValidator implements SubjectCertificateValidator
 {
     private $disallowedSubjectCertificatePolicyIds = [];
+    private Log $logger;
 
     public function __construct(array $disallowedSubjectCertificatePolicyIds)
     {
+        $this->logger = Log::getLogger(self::class);
         $this->disallowedSubjectCertificatePolicyIds = $disallowedSubjectCertificatePolicyIds;
     }
 
@@ -43,18 +46,20 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
             return;
         }
 
-        $policies = $subjectCertificate->getExdendedCertificatePolicies();
+        $policies = $subjectCertificate->getExtension('id-ce-certificatePolicies');
         // When there is no certificatePolicies or certificate parse failed
         if (!$policies) {
             return;
         }
 
         // Loop through disallowed policies array
-        foreach($this->disallowedSubjectCertificatePolicyIds as $policy) {
-            if (strpos($policies, $policy) !== false) {
-                throw new UserCertificateDisallowedPolicyException();    
+        foreach($policies as $policy) {
+            if (in_array($policy['policyIdentifier'], $this->disallowedSubjectCertificatePolicyIds)) {
+                throw new UserCertificateDisallowedPolicyException();
             }
         }
+
+        $this->logger->debug("User certificate does not contain disallowed policies.");
 
     }
 }

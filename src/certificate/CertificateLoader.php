@@ -22,10 +22,12 @@
  * SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
-use web_eid\web_eid_authtoken_validation_php\util\X509;
+use phpseclib3\File\X509;
 use BadFunctionCallException;
 
 final class CertificateLoader
@@ -33,7 +35,7 @@ final class CertificateLoader
 
     public function __construct()
     {
-        throw new BadFunctionCallException('Utility class');
+        throw new BadFunctionCallException("Utility class");
     }
 
     /**
@@ -47,10 +49,10 @@ final class CertificateLoader
     {
         $caCertificates = [];
         foreach ($resourceNames as $resourceName) {
-            $x509 = new X509();
-            $certificate = $x509->loadX509(file_get_contents($resourceName));
-            if ($certificate) {
-                $caCertificates[] = $certificate;
+            $cert = new X509();
+            $loaded = $cert->loadX509(file_get_contents($resourceName));
+            if ($loaded) {
+                array_push($caCertificates, $cert);
             } else {
                 throw new CertificateDecodingException($resourceName);
             }

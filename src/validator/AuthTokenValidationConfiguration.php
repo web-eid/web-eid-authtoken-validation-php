@@ -21,24 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use web_eid\web_eid_authtoken_validation_php\util\SubjectCertificatePolicies;
 use web_eid\web_eid_authtoken_validation_php\util\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
+use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspUrl;
 
 use InvalidArgumentException;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
 
 final class AuthTokenValidationConfiguration
 {
     private ?Uri $siteOrigin = null;
-    private array $trustedCACertificates = [];
-    private bool $isUserCertificateRevocationCheckWithOcspEnabled = false;
+    private array $trustedCACertificates = array();
+    private bool $isUserCertificateRevocationCheckWithOcspEnabled = true;
     private int $ocspRequestTimeout = 5;
-    private array $disallowedSubjectCertificatePolicies = [];
-    private array $nonceDisabledOcspUrls = [];
+    private array $disallowedSubjectCertificatePolicies;
+    private UriCollection $nonceDisabledOcspUrls;
+    private ?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration = null;
 
     public function __construct()
     {
@@ -49,9 +53,7 @@ final class AuthTokenValidationConfiguration
             SubjectCertificatePolicies::$ESTEID_SK_2015_MOBILE_ID_POLICY_V3,
             SubjectCertificatePolicies::$ESTEID_SK_2015_MOBILE_ID_POLICY
         ];
-
-        // Disable OCSP nonce extension for EstEID 2015 cards by default.
-        $this->nonceDisabledOcspUrls[] = OcspUrl::AIA_ESTEID_2015_URL;
+        $this->nonceDisabledOcspUrls = new UriCollection(new Uri(OcspUrl::AIA_ESTEID_2015_URL));
     }
 
     public function setSiteOrigin(Uri $siteOrigin): void
@@ -89,12 +91,22 @@ final class AuthTokenValidationConfiguration
         $this->ocspRequestTimeout = $ocspRequestTimeout;
     }
 
-    public function getDisallowedSubjectCertificatePolicies(): array
+    public function getDesignatedOcspServiceConfiguration(): ?DesignatedOcspServiceConfiguration
+    {
+        return $this->designatedOcspServiceConfiguration;
+    }
+
+    public function setDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration): void
+    {
+        $this->designatedOcspServiceConfiguration = $designatedOcspServiceConfiguration;
+    }
+
+    public function &getDisallowedSubjectCertificatePolicies(): array
     {
         return $this->disallowedSubjectCertificatePolicies;
     }
 
-    public function &getNonceDisabledOcspUrls(): array
+    public function getNonceDisabledOcspUrls(): UriCollection
     {
         return $this->nonceDisabledOcspUrls;
     }    
@@ -133,13 +145,15 @@ final class AuthTokenValidationConfiguration
             throw new InvalidArgumentException('Provided URI is not a valid URL');
         }
 
+        $reference = $uri->createFromArray([
+            "scheme" => "https",
+            "host" => $uri->getHost(),
+            "port" => $uri->getPort(),
+        ]);
+
         // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
-        if (!$uri->verifyComponents([
-                "scheme" => "https",
-                "host" => $uri->getHost(),
-                "port" => $uri->getPort(),
-            ])
-        ) {
+        if ($uri->getUrl() !== $reference->getUrl())
+        {
             throw new InvalidArgumentException('Origin URI must only contain the HTTPS scheme, host and optional port component');
         }
 

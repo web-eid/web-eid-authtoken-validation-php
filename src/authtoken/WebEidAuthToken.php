@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace web_eid\web_eid_authtoken_validation_php\authtoken;
 
 use UnexpectedValueException;

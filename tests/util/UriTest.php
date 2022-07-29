@@ -53,5 +53,16 @@ class UriTest extends TestCase
         $uri = new Uri("https://example.com/path/index.html?a=b&b[]=2&b[]=3#fragment");
         $this->assertTrue($uri->verifyComponents(['scheme' => 'https', 'host' => 'example.com', 'port' => 81]) == false);
     }
- 
+
+    public function testWhenNotExactlySameReference(): void
+    {
+        $uri = new Uri("https://example.com:81/path/index.html?a=b&b[]=2&b[]=3#fragment");
+        $reference = $uri->createFromArray([
+            'scheme' => 'https',
+            'host' => $uri->getHost(),
+            'port' => $uri->getPort()
+        ]);
+        $this->assertNotEquals($uri->getUrl(), $reference->getUrl());
+    }
+    
 }
