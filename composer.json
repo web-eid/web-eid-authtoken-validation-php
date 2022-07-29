@@ -9,21 +9,27 @@
             "role" : "developer"
         }
     ],
-    "require": {
-        "mlocati/ocsp": "1.0.2"
-    },    
     "require-dev": {
 		"phpunit/phpunit": "^9.5"
 	},    
     "autoload": {
         "psr-4": {
             "web_eid\\web_eid_authtoken_validation_php\\": ["src"]
-        }
+        },
+        "files": [
+            "config/configuration.php"
+        ],
+		"classmap": [
+			"src/util/CollectionsUtil.php"
+		]
     },
     "autoload-dev": {
         "psr-4": {
             "web_eid\\web_eid_authtoken_validation_php\\": ["tests"]
         }
-    }    
-
+    },
+    "require": {
+        "lyquidity/requester": "^1.0",
+        "phpseclib/phpseclib": "3.0.14"
+    }
 }

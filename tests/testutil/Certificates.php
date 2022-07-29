@@ -24,7 +24,8 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\testutil;
 
-use web_eid\web_eid_authtoken_validation_php\util\X509;
+use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
 
  class Certificates
  {
@@ -35,11 +36,47 @@ use web_eid\web_eid_authtoken_validation_php\util\X509;
     private static ?X509 $jaakKristjanEsteid2018Cert = null;
     private static ?X509 $mariliisEsteid2015Cert = null;
 
+    private static ?X509 $testEsteid2015CA = null;
+    private static ?X509 $testEsteid2018CA = null;
+    private static ?X509 $testSkOcspResponder2020 = null;
+
+    public static function loadCertificates(): void
+    {
+        $certificates = CertificateLoader::loadCertificatesFromResources(__DIR__."/../_resources/TEST_of_ESTEID-SK_2015.cer", __DIR__."/../_resources/TEST_of_ESTEID2018.cer", __DIR__."/../_resources/TEST_of_SK_OCSP_RESPONDER_2020.cer");
+        self::$testEsteid2015CA = $certificates[0];
+        self::$testEsteid2018CA = $certificates[1];
+        self::$testSkOcspResponder2020 = $certificates[2];
+    }
+
+    public static function getTestEsteid2018CA(): X509
+    {
+        if (is_null(self::$testEsteid2018CA)) {
+            self::loadCertificates();
+        }
+        return self::$testEsteid2018CA;
+    }
+
+    public static function getTestEsteid2015CA(): X509
+    {
+        if (is_null(self::$testEsteid2015CA)) {
+            self::loadCertificates();
+        }
+        return self::$testEsteid2015CA;
+    }
+
+    public static function getTestSkOcspResponder2020(): X509
+    {
+        if (is_null(self::$testSkOcspResponder2020)) {
+            self::loadCertificates();
+        }
+        return self::$testSkOcspResponder2020;
+    }
+
     public static function getJaakKristjanEsteid2018Cert(): X509
     {
         if (self::$jaakKristjanEsteid2018Cert == null) {
-            $x509 = new X509();
-            self::$jaakKristjanEsteid2018Cert = $x509->loadX509(self::JAAK_KRISTJAN_ESTEID2018_CERT);
+            self::$jaakKristjanEsteid2018Cert = new X509();
+            self::$jaakKristjanEsteid2018Cert->loadX509(self::JAAK_KRISTJAN_ESTEID2018_CERT);
         }
         return self::$jaakKristjanEsteid2018Cert;
     }
@@ -47,8 +84,8 @@ use web_eid\web_eid_authtoken_validation_php\util\X509;
     public static function getMariLiisEsteid2015Cert(): X509
     {
         if (self::$mariliisEsteid2015Cert == null) {
-            $x509 = new X509();
-            self::$mariliisEsteid2015Cert = $x509->loadX509(self::MARILIIS_ESTEID2015_CERT);
+            self::$mariliisEsteid2015Cert = new X509();
+            self::$mariliisEsteid2015Cert->loadX509(self::MARILIIS_ESTEID2015_CERT);
         }
         return self::$mariliisEsteid2015Cert;
     }

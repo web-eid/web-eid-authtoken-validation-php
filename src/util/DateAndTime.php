@@ -49,7 +49,7 @@ final class DateAndTime
      * 
      * @return DateTime
      */
-    public static function utsNow(): DateTime
+    public static function utcNow(): DateTime
     {
         return new DateTime('now', new DateTimeZone('UTC'));    
     }
@@ -83,7 +83,20 @@ final class DefaultClock
 
     public function now(): DateTime
     {
+        if (isset($this->mockedClock)) {
+            return $this->mockedClock;
+        }
         return new DateTime();
     }
+
+    public function setClock(DateTime $mockedClock): void
+    {
+        $this->mockedClock = $mockedClock;
+    }    
+
+    public function resetClock(): void
+    {
+        unset($this->mockedClock);
+    }    
 
 }

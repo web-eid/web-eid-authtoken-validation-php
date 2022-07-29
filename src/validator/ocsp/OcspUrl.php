@@ -25,6 +25,9 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use BadFunctionCallException;
+use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use Exception;
 
 final class OcspUrl
 {
@@ -33,5 +36,33 @@ final class OcspUrl
     public function __construct()
     {
         throw new BadFunctionCallException('Utility class');
-    }    
+    }
+
+    /**
+     * Returns the OCSP responder {@link URI} or {@code null} if it doesn't have one.
+     */    
+    public static function getOcspUri(X509 $certificate): ?Uri
+    {
+        $authorityInformationAccess = $certificate->getExtension("id-pe-authorityInfoAccess");
+        try {
+
+            if ($authorityInformationAccess) {
+
+                foreach($authorityInformationAccess as $accessDescription) {
+
+                    if (in_array($accessDescription["accessMethod"], ["id-pkix-ocsp", "id-ad-ocsp"]) && array_key_exists("uniformResourceIdentifier", $accessDescription["accessLocation"])) {
+                        $accessLocationUrl = $accessDescription["accessLocation"]["uniformResourceIdentifier"];
+                        return new Uri($accessLocationUrl);
+                    }
+
+                }
+
+            }
+
+        } catch (Exception $e) {
+            return null;
+        }
+
+        return null;
+    }
 }

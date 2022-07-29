@@ -24,14 +24,22 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
-use web_eid\web_eid_authtoken_validation_php\util\X509;
+use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateMissingPurposeException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateWrongPurposeException;
+use web_eid\web_eid_authtoken_validation_php\util\Log;
 
 final class SubjectCertificatePurposeValidator implements SubjectCertificateValidator
 {
 
-    private const EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION = "TLS Web Client Authentication";
+    // oid 1.3.6.1.5.5.7.3.2
+    private const EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION = "id-kp-clientAuth";
+    private Log $logger;
+
+    public function __construct()
+    {
+        $this->logger = Log::getLogger(self::class);    
+    }
 
     /**
      * Validates that the purpose of the user certificate from the authentication token contains client authentication.
@@ -41,13 +49,14 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
      */    
     public function validate(X509 $subjectCertificate): void
     {
-        $usages = $subjectCertificate->getExtendedKeyUsage();
-        if (!$usages) {
+        $usages = $subjectCertificate->getExtension('id-ce-extKeyUsage');
+        if (!$usages || empty($usages)) {
             throw new UserCertificateMissingPurposeException();
         }
         // Extended usages must contain TLS Web Client Authentication
         if (!in_array(self::EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION, $usages)) {
             throw new UserCertificateWrongPurposeException();
-        }        
+        }
+        $this->logger->debug("User certificate can be used for client authentication.");
     }
 }

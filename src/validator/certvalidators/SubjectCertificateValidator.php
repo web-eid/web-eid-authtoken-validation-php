@@ -24,7 +24,7 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
-use web_eid\web_eid_authtoken_validation_php\util\X509;
+use phpseclib3\File\X509;
 
 interface SubjectCertificateValidator {
     public function validate(X509 $subjectCertificate): void;
