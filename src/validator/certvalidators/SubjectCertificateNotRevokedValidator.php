@@ -24,9 +24,6 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
-use lyquidity\OCSP\CertificateInfo;
-use lyquidity\OCSP\CertificateLoader;
-use lyquidity\OCSP\Response;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\util\Log;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
@@ -34,7 +31,12 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspRequestBuilder;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspResponseValidator;
 use Throwable;
+use web_eid\ocsp_php\Ocsp;
+use web_eid\ocsp_php\OcspBasicResponse;
+use web_eid\ocsp_php\OcspRequest;
+use web_eid\ocsp_php\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\OcspService;
 
 final class SubjectCertificateNotRevokedValidator implements SubjectCertificateValidator
 {
@@ -62,35 +64,23 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
                 $this->logger->debug("Disabling OCSP nonce extension");
             }
     
-            $certificateLoader = new CertificateLoader();
+            $certificateId = (new Ocsp())->generateCertificateId($subjectCertificate, $this->trustValidator->getSubjectCertificateIssuerCertificate());
+            $request = (new OcspRequestBuilder())->withCertificateId($certificateId)->enableOcspNonce($ocspService->doesSupportNonce())->build();
 
-            // PEM encoded
-            $certPem = $subjectCertificate->saveX509($subjectCertificate->getCurrentCert(), X509::FORMAT_PEM);
-            $iss = $this->trustValidator->getSubjectCertificateIssuerCertificate();
-            $issuerPem = $iss->saveX509($iss->getCurrentCert(), X509::FORMAT_PEM);
-
-            $certificate = $certificateLoader->fromString($certPem);
-            $issuerCertificate = $certificateLoader->fromString($issuerPem);
-    
-            // Extract the relevant data from the two certificates
-            $certificateInfo = new CertificateInfo();
-            $requestInfo = $certificateInfo->extractRequestInfo($certificate, $issuerCertificate);
-    
-            $request = (new OcspRequestBuilder())
-                ->withCertificateId($requestInfo)
-                ->enableOcspNonce($ocspService->doesSupportNonce())
-                ->build();
-    
-            
             $this->logger->debug("Sending OCSP request");
 
-            // TODO
-            // Replace faulty OCSP library
-            return;
-    
-            $response = $this->ocspClient->request($ocspService->getAccessLocation(), $request);
-            $this->verifyOcspResponse($response);
-            //$ocspResponderUrl = $certificateLoader->extractOcspResponderUrl($certificate);
+            $response = $this->ocspClient->request($ocspService->getAccessLocation(), $request->getEncodeDer());
+
+            // When status is not successful
+            if ($response->getStatus() != "successful") {
+                throw new UserCertificateOCSPCheckFailedException("OCSP response status: " . $response->getStatus());
+            }
+
+            $this->verifyOcspResponse($response, $ocspService, $certificateId);
+
+            if ($ocspService->doesSupportNonce()) {
+                $this->checkNonce($request, $response->getBasicResponse());
+            }
 
         } catch (Throwable $e) {
             throw new UserCertificateOCSPCheckFailedException("Exception: " . $e->getMessage(), $e);
@@ -98,9 +88,76 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
     }
 
-    private function verifyOcspResponse(Response $response): void
+    // Todo, check ocspService
+    private function verifyOcspResponse(OcspResponse $response, OcspService $ocspService, array $requestCertificateId): void
     {
+        $basicResponse = $response->getBasicResponse();
+
+        // The verification algorithm follows RFC 2560, https://www.ietf.org/rfc/rfc2560.txt.
+        //
+        // 3.2.  Signed Response Acceptance Requirements
+        //   Prior to accepting a signed response for a particular certificate as
+        //   valid, OCSP clients SHALL confirm that:
+        //
+        //   1. The certificate identified in a received response corresponds to
+        //      the certificate that was identified in the corresponding request.
+
+        // As we sent the request for only a single certificate, we expect only a single response.
+        if (count($basicResponse->getResponses()) != 1) {
+            throw new UserCertificateOCSPCheckFailedException("OCSP response must contain one response, received " . count($basicResponse->getResponses()) . " responses instead");
+        }
+
+        if ($requestCertificateId != $basicResponse->getCertID()) {
+            throw new UserCertificateOCSPCheckFailedException("OCSP responded with certificate ID that differs from the requested ID");
+        }
+
+        //   2. The signature on the response is valid.
+
+        // We assume that the responder includes its certificate in the certs field of the response
+        // that helps us to verify it. According to RFC 2560 this field is optional, but including it
+        // is standard practice.
+
+        if (count($basicResponse->getCertificates()) < 1) {
+            throw new UserCertificateOCSPCheckFailedException("OCSP response must contain the responder certificate, but none was provided");
+        }
+
+        // The first certificate is the responder certificate, other certificates, if given, are the certificate's chain.
+        $responderCert = $basicResponse->getCertificates()[0];
+
+        OcspResponseValidator::validateResponseSignature($basicResponse, $responderCert);
+
+        //   3. The identity of the signer matches the intended recipient of the
+        //      request.
+        //
+        //   4. The signer is currently authorized to provide a response for the
+        //      certificate in question.
+        
+        $producedAt = $basicResponse->getProducedAt();
+        $ocspService->validateResponderCertificate($responderCert, $producedAt);
+
+        //   5. The time at which the status being indicated is known to be
+        //      correct (thisUpdate) is sufficiently recent.
+        //
+        //   6. When available, the time at or before which newer information will
+        //      be available about the status of the certificate (nextUpdate) is
+        //      greater than the current time.
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($basicResponse, $producedAt);
+
+        // Now we can accept the signed response as valid and validate the certificate status.
         OcspResponseValidator::validateSubjectCertificateStatus($response);
+        $this->logger->debug("OCSP check result is GOOD");
+
+    }
+
+    private static function checkNonce(OcspRequest $request, OcspBasicResponse $basicResponse): void
+    {
+        $requestNonce = $request->getNonceExtension();
+        $responseNonce = $basicResponse->getNonceExtension();
+
+        if ($requestNonce != $responseNonce) {
+            throw new UserCertificateOCSPCheckFailedException("OCSP request and response nonces differ, possible replay attack");
+        }
     }
 
 }

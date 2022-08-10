@@ -25,10 +25,15 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use BadFunctionCallException;
-use lyquidity\OCSP\Response;
+use DateInterval;
+use DateTime;
 use web_eid\web_eid_authtoken_validation_php\exceptions\OCSPCertificateException;
 use phpseclib3\File\X509;
+use web_eid\ocsp_php\OcspBasicResponse;
+use web_eid\ocsp_php\OcspResponse;
+use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateRevokedException;
+use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 
 final class OcspResponseValidator
 {
@@ -54,29 +59,58 @@ final class OcspResponseValidator
         }        
     }
 
-    public static function validateResponseSignature()
+    public static function validateResponseSignature(OcspBasicResponse $basicResponse, X509 $responderCert): void
     {
+        // get public key from responder certificate in order to verify signature on response
+        $publicKey = $responderCert->getPublicKey()->withHash($basicResponse->getSignatureAlgorithm());
+        // verify response data
+        $encodedTbsResponseData = $basicResponse->getEncodedResponseData();
+        $signature = $basicResponse->getSignature();
+
+        if (!$publicKey->verify($encodedTbsResponseData, $signature)) {
+            throw new UserCertificateOCSPCheckFailedException("OCSP response signature is invalid");
+        }
+    }
+
+    public static function validateCertificateStatusUpdateTime(OcspBasicResponse $basicResponse, DateTime $producedAt): void
+    {
+        // From RFC 2560, https://www.ietf.org/rfc/rfc2560.txt:
+        // 4.2.2.  Notes on OCSP Responses
+        // 4.2.2.1.  Time
+        //   Responses whose nextUpdate value is earlier than
+        //   the local system time value SHOULD be considered unreliable.
+        //   Responses whose thisUpdate time is later than the local system time
+        //   SHOULD be considered unreliable.
+        //   If nextUpdate is not set, the responder is indicating that newer
+        //   revocation information is available all the time.
+
+        $notAllowedBefore = (clone $producedAt)->sub(new DateInterval('PT'.self::ALLOWED_TIME_SKEW.'S'));
+        $notAllowedAfter = (clone $producedAt)->add(new DateInterval('PT'.self::ALLOWED_TIME_SKEW.'S'));
+
+        $thisUpdate = $basicResponse->getThisUpdate();
+        $nextUpdate = $basicResponse->getNextUpdate();
+
+        if ($notAllowedAfter < $thisUpdate || $notAllowedBefore > (!is_null($nextUpdate) ? $nextUpdate : $thisUpdate)) {
+
+            throw new UserCertificateOCSPCheckFailedException("Certificate status update time check failed: ".
+                "notAllowedBefore: " . DateAndTime::toUtcString($notAllowedBefore).
+                ", notAllowedAfter: " . DateAndTime::toUtcString($notAllowedAfter).
+                ", thisUpdate: " . DateAndTime::toUtcString($thisUpdate).
+                ", nextUpdate: " . DateAndTime::toUtcString($nextUpdate));
+        }
 
     }
 
-    public static function validateCertificateStatusUpdateTime()
+    public static function validateSubjectCertificateStatus(OcspResponse $response): void
     {
-
-    }
-
-    public static function validateSubjectCertificateStatus(Response $certStatusResponse): void
-    {
-        // TODO
-        // Selected lib does not support needed functionality and will be replaced
-        return;
-        if ($certStatusResponse->isRevoked() === false) {
+        if (is_null($response->isRevoked())) {
+            throw new UserCertificateRevokedException("Unknown status");
+        }
+        if ($response->isRevoked() === false) {
             return;
         }
-        if ($certStatusResponse->isRevoked() === true) {
-            throw (is_null($certStatusResponse->getRevocationReason())) ? new UserCertificateRevokedException() : new UserCertificateRevokedException("Revocation reason: " . $certStatusResponse->getRevocationReason());
-        }
-        if (is_null($certStatusResponse->isRevoked())) {
-            throw new UserCertificateRevokedException("Unknown status");
+        if ($response->isRevoked() === true) {
+            throw ($response->getRevokeReason() == "") ? new UserCertificateRevokedException() : new UserCertificateRevokedException("Revocation reason: " . $response->getRevokeReason());
         }
         throw new UserCertificateRevokedException("Status is neither good, revoked nor unknown");
     }

@@ -25,9 +25,9 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use web_eid\web_eid_authtoken_validation_php\util\Uri;
-use lyquidity\OCSP\Response;
+use web_eid\ocsp_php\OcspResponse;
 
 interface OcspClient
 {
-    public function request(Uri $url, string $requestBody): Response;
+    public function request(Uri $url, string $requestBody): OcspResponse;
 }

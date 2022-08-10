@@ -26,27 +26,76 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
+use DateTime;
 use PHPUnit\Framework\TestCase;
+use web_eid\ocsp_php\OcspBasicResponse;
+use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 
 class OcspResponseValidatorTest extends TestCase
 {
 
     public function testWhenThisUpdateDayBeforeProducedAtThenThrows(): void
     {
-        // TODO
-        $this->assertTrue(1==1);
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = ['thisUpdate' => '2021-09-01T00:00:00.000Z'];
+        $mockBasicResponse = new OcspBasicResponse($response);
+
+        $producedAt = new DateTime("2021-09-02T00:00:00.000Z");
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: ".
+            "Certificate status update time check failed: ".
+            "notAllowedBefore: 2021-09-01 23:59:45 UTC". 
+            ", notAllowedAfter: 2021-09-02 00:00:15 UTC". 
+            ", thisUpdate: 2021-09-01 00:00:00 UTC". 
+            ", nextUpdate: null"); 
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
     }
 
     public function testWhenThisUpdateDayAfterProducedAtThenThrows(): void
     {
-        // TODO
-        $this->assertTrue(1==1);
+
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = ['thisUpdate' => '2021-09-02T00:00:00.000Z'];
+        $mockBasicResponse = new OcspBasicResponse($response);
+
+        $producedAt = new DateTime("2021-09-01T00:00:00.000Z");
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: ". 
+            "Certificate status update time check failed: ".
+            "notAllowedBefore: 2021-08-31 23:59:45 UTC".
+            ", notAllowedAfter: 2021-09-01 00:00:15 UTC".
+            ", thisUpdate: 2021-09-02 00:00:00 UTC".
+            ", nextUpdate: null"); 
+
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
     }
 
     public function testWhenNextUpdateDayBeforeProducedAtThenThrows(): void
     {
-        // TODO
-        $this->assertTrue(1==1);
+
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = [
+            'thisUpdate' => '2021-09-02T00:00:00.000Z',
+            'nextUpdate' => '2021-09-01T00:00:00.000Z'
+        ];
+        $mockBasicResponse = new OcspBasicResponse($response);
+        $producedAt = new DateTime("2021-09-02T00:00:00.000Z");
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: ".
+        "Certificate status update time check failed: ".
+        "notAllowedBefore: 2021-09-01 23:59:45 UTC".
+        ", notAllowedAfter: 2021-09-02 00:00:15 UTC".
+        ", thisUpdate: 2021-09-02 00:00:00 UTC".
+        ", nextUpdate: 2021-09-01 00:00:00 UTC");
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
     }
 
 }
