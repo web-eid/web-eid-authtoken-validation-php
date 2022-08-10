@@ -19,9 +19,9 @@
         "files": [
             "config/configuration.php"
         ],
-		"classmap": [
-			"src/util/CollectionsUtil.php"
-		]
+        "classmap": [
+            "src/util/CollectionsUtil.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -35,8 +35,7 @@
         }
     ],
     "require": {
-        "lyquidity/requester": "^1.0",
         "phpseclib/phpseclib": "3.0.14",
-        "web_eid/ocsp_php": "dev-main"
+        "web_eid/ocsp_php": "dev-development"
     }
 }
