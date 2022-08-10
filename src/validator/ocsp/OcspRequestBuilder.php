@@ -26,16 +26,14 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
-use lyquidity\OCSP\CertificateInfo;
-use lyquidity\OCSP\Ocsp;
-use lyquidity\OCSP\Request;
+use web_eid\ocsp_php\OcspRequest;
 
 final class OcspRequestBuilder
 {
 
     private $secureRandom;
     private bool $ocspNonceEnabled = true;
-    private $certificateId;
+    private array $certificateId;
 
     public function __construct()
     {
@@ -44,9 +42,9 @@ final class OcspRequestBuilder
         };
     }
 
-    public function withCertificateId(Request $certInfo): OcspRequestBuilder
+    public function withCertificateId(array $certificateId): OcspRequestBuilder
     {
-        $this->certificateId = $certInfo;
+        $this->certificateId = $certificateId;
         return $this;
     }
 
@@ -56,10 +54,17 @@ final class OcspRequestBuilder
         return $this;
     }
 
-    public function build()
+    public function build(): OcspRequest
     {
-        $ocsp = new Ocsp();
-        return $ocsp->buildOcspRequestBodySingle($this->certificateId);
+        $ocspRequest = new OcspRequest();
+        $ocspRequest->addCertificateId($this->certificateId);
+
+        if ($this->ocspNonceEnabled) {
+            $nonceBytes = call_user_func($this->secureRandom, 8);
+            $ocspRequest->addNonceExtension($nonceBytes);
+        }
+
+        return $ocspRequest;
     }
 
     private function generateSecureRandom(int $nounce_length): string {

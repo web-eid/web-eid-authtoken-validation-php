@@ -31,6 +31,7 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServi
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServiceConfiguration;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspService;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\OcspService;
 
 class OcspServiceProvider
 {
@@ -48,9 +49,9 @@ class OcspServiceProvider
      * the designated OCSP service is configured and supports the issuer of the certificate.
      *
      * @param certificate subject certificate that is to be checked with OCSP
-     * @return either the designated or AIA OCSP service instance
+     * @return OcspService either the designated or AIA OCSP service instance
      */    
-    public function getService(X509 $certificate)
+    public function getService(X509 $certificate): OcspService
     {
         if (!is_null($this->designatedOcspService) && $this->designatedOcspService->supportsIssuerOf($certificate)) {
             return $this->designatedOcspService;

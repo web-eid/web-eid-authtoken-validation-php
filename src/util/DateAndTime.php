@@ -67,6 +67,14 @@ final class DateAndTime
         }
     }
 
+    public static function toUtcString(?DateTime $date): string
+    {
+        if (is_null($date)) {
+            return 'null';
+        }
+        return ((clone $date)->setTimezone(new DateTimeZone('UTC')))->format('Y-m-d H:i:s e');
+    }
+
 }
 
 final class DefaultClock
