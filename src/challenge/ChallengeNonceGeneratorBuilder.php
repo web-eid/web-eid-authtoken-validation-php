@@ -59,7 +59,7 @@ class ChallengeNonceGeneratorBuilder
      * When the time-to-live passes, the nonce is considered to be expired.
      *
      * @param int $seconds - challenge nonce time-to-live duration in seconds
-     * @return current builder instance
+     * @return ChallengeNonceGeneratorBuilder builder instance
      */    
     public function withNonceTtl(int $seconds): ChallengeNonceGeneratorBuilder
     {
@@ -71,11 +71,24 @@ class ChallengeNonceGeneratorBuilder
      * Sets the challenge nonce store where the generated challenge nonces will be stored.
      *
      * @param challengeNonceStore challenge nonce store
-     * @return current builder instance
+     * @return ChallengeNonceGeneratorBuilder builder instance
      */    
     public function withChallengeNonceStore(ChallengeNonceStore $challengeNonceStore): ChallengeNonceGeneratorBuilder
     {
         $this->challengeNonceStore = $challengeNonceStore;
+        return $this;
+    }
+
+    /**
+     * Sets the source of random bytes for the nonce.
+     *
+     * @param callable $secureRandom function which returns random bytes with number of bytes as input
+     *
+     * @return ChallengeNonceGeneratorBuilder builder instance
+     */
+    public function withSecureRandom(callable $secureRandom): ChallengeNonceGeneratorBuilder
+    {
+        $this->secureRandom = $secureRandom;
         return $this;
     }
 

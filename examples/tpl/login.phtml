@@ -1,0 +1,64 @@
+<h1 class="text-center mt-5">Authenticate with Web eID</h1>
+<p class="text-center mt-5"><button type="button" class="btn btn-lg btn-primary" id="webeid-auth-button">Authenticate</button></p>
+
+<div id="error-message">
+    <div class="message"></div>
+    <div class="details"></div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script type="module">
+    "use strict";
+    import * as webeid from "./js/web-eid.js";
+    import {hideErrorMessage, showErrorMessage, checkHttpError} from "./js/errors.js";
+
+    hideErrorMessage();
+
+    const authButton = document.querySelector("#webeid-auth-button");
+
+    const csrfToken = document.querySelector('#csrftoken').content;
+    const csrfHeaderName = document.querySelector('#csrfheadername').content;
+
+    const lang = new URLSearchParams(window.location.search).get("lang") || "en";
+
+    authButton.addEventListener("click", async () => {
+        hideErrorMessage();
+        authButton.disabled = true;
+
+        try {
+            const challengeResponse = await fetch("./nonce", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            await checkHttpError(challengeResponse);
+            const {nonce} = await challengeResponse.json();
+
+            const authToken = await webeid.authenticate(nonce, {lang});
+
+            const authTokenResponse = await fetch("./validate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    [csrfHeaderName]: csrfToken
+                },
+                body: `${JSON.stringify(authToken)}`
+            });
+            await checkHttpError(authTokenResponse);
+            const authTokenResult = await authTokenResponse.json();
+
+            console.log("Authentication successful! Result:", authTokenResult);
+
+            window.location.href = "/welcome";
+
+        } catch (error) {
+            showErrorMessage(error);
+            throw error;
+        } finally {
+            authButton.disabled = false;
+        }
+    });
+
+    //# sourceURL=index.js
+</script>    
