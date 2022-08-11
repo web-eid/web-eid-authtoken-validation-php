@@ -1,0 +1,31 @@
+{
+    "name": "demo/webeid-php",
+    "description": "Web eID PHP demo",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Guido Gröön",
+            "role" : "developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "web_eid/web_eid_authtoken_validation_php": "dev-main",
+        "web_eid/ocsp_php": "dev-main",
+        "altorouter/altorouter": "1.1.0"
+    },
+    "autoload": {
+        "classmap": ["src"]
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/web-eid/web-eid-authtoken-validation-php.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/web-eid/ocsp-php.git"
+        }        
+    ]        
+}
