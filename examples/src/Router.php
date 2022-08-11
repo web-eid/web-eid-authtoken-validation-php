@@ -14,7 +14,7 @@ class Router
         $router->map('GET', '/', ['controller' => 'Pages', 'method' => 'login']);
         $router->map('GET', '/logout', ['controller' => 'Auth', 'method' => 'logout']);
 
-        // Allow route onlu for authenticated users
+        // Allow route only for authenticated users
         if (isset($_SESSION["auth-user"])) {
             $router->map('GET', '/welcome', ['controller' => 'Pages', 'method' => 'welcome']);
         }
