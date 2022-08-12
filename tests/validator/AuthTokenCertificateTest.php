@@ -38,6 +38,7 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidEx
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotTrustedException;
 use DateTime;
 use UnexpectedValueException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 
 class AuthTokenCertificateTest extends AbstractTestWithValidator
 {
@@ -241,15 +242,30 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
         $this->validator->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
     }
 
-    /*
-        TODO
     public function testWhenCertificateIsRevokedThenOcspCheckFails(): void
     {
+        $this->mockDate("2020-01-01");
+        $validatorWithOcspCheck = AuthTokenValidators::getAuthTokenValidatorWithOcspCheck();
+        $token = $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", self::REVOKED_CERT);
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: User certificate has been revoked: Revocation reason: unspecified");
+
+        $validatorWithOcspCheck->validate($token, self::VALID_CHALLENGE_NONCE);
     }
+
     public function testWhenCertificateIsRevokedThenOcspCheckWithDesignatedOcspServiceFails(): void
     {
+        $this->mockDate("2020-01-01");
+
+        $validatorWithOcspCheck = AuthTokenValidators::getAuthTokenValidatorWithDesignatedOcspCheck();
+        $token = $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", self::REVOKED_CERT);
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: User certificate has been revoked");
+
+        $validatorWithOcspCheck->validate($token, self::VALID_CHALLENGE_NONCE);
     }
-    */
 
     public function testWhenCertificateCaIsNotPartOfTrustChainThenValidationFails(): void
     {

@@ -389,7 +389,7 @@ The following additional configuration options are available in `ChallengeNonceG
 Extended configuration example:
 
 ```php  
-$generator = (new ChallengeNonceGeneratorBuilder)
+$generator = (new ChallengeNonceGeneratorBuilder())
   ->withNonceTtl(300) // 5 minutes
   ->withSecureRandom(customSecureRandom)  
   ->build();

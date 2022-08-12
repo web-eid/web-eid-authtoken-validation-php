@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use phpseclib3\File\X509;
@@ -32,9 +34,45 @@ class OcspUrlTest extends TestCase
     public function testWhenExtensionValueIsNullThenReturnsNull()
     {
         $mockCertificate = $this->createMock(X509::class);
-        $mockCertificate->method('getExtension')->willReturn(null);
+        $mockCertificate->method("getExtension")->willReturn(null);
         $this->assertNull(OcspUrl::getOcspUri($mockCertificate));
     }
 
-    // TODO: Investigate two more tests
+    public function testWhenExtensionValueIsInvalidThenReturnsNull()
+    {
+        $mockCertificate = $this->createMock(X509::class);
+        $mockCertificate->method("getExtension")->willReturn([
+            [
+                "accessMethod" => "id-ad-ocsp",
+                'accessLocation' => ["uniformResourceIdentifier" => pack("c*", ...array(1, 2, 3))]
+            ]
+        ]);
+
+        // We will get empty uri parts
+        $url = OcspUrl::getOcspUri($mockCertificate);
+        $this->assertFalse($url->isAbsolute());
+        $this->assertEmpty($url->getScheme());
+        $this->assertEmpty($url->getHost());
+    }
+
+    public function testWhenExtensionValueIsNotAiaThenReturnsNull()
+    {
+        $mockCertificate = $this->createMock(X509::class);
+        $mockCertificate->method("getExtension")->willReturn([
+            [
+                "accessMethod" => "id-ad-ocsp",
+                'accessLocation' => ["uniformResourceIdentifier" => pack("c*", ...array(4, 64, 48, 62, 48, 50, 6, 11, 43, 6, 1, 4, 1, -125, -111, 33, 1, 2, 1, 48,
+                    35, 48, 33, 6, 8, 43, 6, 1, 5, 5, 7, 2, 1, 22, 21, 104, 116, 116, 112, 115,
+                    58, 47, 47, 119, 119, 119, 46, 115, 107, 46, 101, 101, 47, 67, 80, 83, 48,
+                    8, 6, 6, 4, 0, -113, 122, 1, 2))]
+            ]
+        ]);
+
+        // We will get empty uri parts
+        $url = OcspUrl::getOcspUri($mockCertificate);
+        $this->assertFalse($url->isAbsolute());
+        $this->assertEmpty($url->getScheme());
+        $this->assertEmpty($url->getHost());
+    }
+
 }
