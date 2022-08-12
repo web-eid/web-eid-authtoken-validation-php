@@ -55,19 +55,19 @@ class OcspServiceProviderTest extends TestCase
 
     public function testWhenAiaOcspServiceConfigurationProvidedThenCreatesAiaOcspService(): void
     {
-        // TODO
-        // Add correct cert to testutil/Certificates, because PHP does not validate certificates like Java
+        // In PHP validation is different
+        // we need to use TEST_of_EE-GovCA2018.pem.crt (getAiaOcspServiceConfiguration()) certificate for validation 
+
         $ocspServiceProvider = OcspServiceMaker::getAiaOcspServiceProvider();
         
-        /*
         $service2018 = $ocspServiceProvider->getService(Certificates::getJaakKristjanEsteid2018Cert());
 
         $this->assertEquals($service2018->getAccessLocation(), new Uri("http://aia.demo.sk.ee/esteid2018"));
         $this->assertTrue($service2018->doesSupportNonce());
 
-        $service2018->validateResponderCertificate(Certificates::getTestEsteid2018CA(), new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
-        */
+        $service2018->validateResponderCertificate(Certificates::getTestEsteid2018CA(), new DateTime('Thursday, August 26, 2021 5:46:40 PM'));
 
+        // Responder certificate issuer is not in trusted certificates
         $service2015 = $ocspServiceProvider->getService(Certificates::getMariLiisEsteid2015Cert());
         $this->assertEquals($service2015->getAccessLocation(), new Uri("http://aia.demo.sk.ee/esteid2015"));
         $this->assertFalse($service2015->doesSupportNonce());

@@ -88,7 +88,6 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
     }
 
-    // Todo, check ocspService
     private function verifyOcspResponse(OcspResponse $response, OcspService $ocspService, array $requestCertificateId): void
     {
         $basicResponse = $response->getBasicResponse();

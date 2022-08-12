@@ -39,13 +39,15 @@ use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
     private static ?X509 $testEsteid2015CA = null;
     private static ?X509 $testEsteid2018CA = null;
     private static ?X509 $testSkOcspResponder2020 = null;
+    private static ?X509 $testEsteid2018CAGov = null;
 
     public static function loadCertificates(): void
     {
-        $certificates = CertificateLoader::loadCertificatesFromResources(__DIR__."/../_resources/TEST_of_ESTEID-SK_2015.cer", __DIR__."/../_resources/TEST_of_ESTEID2018.cer", __DIR__."/../_resources/TEST_of_SK_OCSP_RESPONDER_2020.cer");
+        $certificates = CertificateLoader::loadCertificatesFromResources(__DIR__."/../_resources/TEST_of_ESTEID-SK_2015.cer", __DIR__."/../_resources/TEST_of_ESTEID2018.cer", __DIR__."/../_resources/TEST_of_SK_OCSP_RESPONDER_2020.cer", __DIR__."/../_resources/TEST_of_EE-GovCA2018.pem.crt");
         self::$testEsteid2015CA = $certificates[0];
         self::$testEsteid2018CA = $certificates[1];
         self::$testSkOcspResponder2020 = $certificates[2];
+        self::$testEsteid2018CAGov = $certificates[3];
     }
 
     public static function getTestEsteid2018CA(): X509
@@ -70,6 +72,14 @@ use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
             self::loadCertificates();
         }
         return self::$testSkOcspResponder2020;
+    }
+
+    public static function getTestEsteid2018CAGov(): X509
+    {
+        if (is_null(self::$testEsteid2018CAGov)) {
+            self::loadCertificates();
+        }
+        return self::$testEsteid2018CAGov;
     }
 
     public static function getJaakKristjanEsteid2018Cert(): X509
