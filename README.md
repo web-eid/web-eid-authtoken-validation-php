@@ -222,6 +222,8 @@ See the complete example from the ***examples*** directory.
 - [Challenge nonce generation](#challenge-nonce-generation)
   - [Basic usage](#basic-usage-1)
   - [Extended configuration](#extended-configuration-1)  
+- [Example implementation](#example-implementation)
+- [Testing](#testing)
 
 # Introduction
 
