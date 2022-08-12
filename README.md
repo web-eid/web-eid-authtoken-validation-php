@@ -58,7 +58,7 @@ use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceGeneratorBu
 ...
 public function generator(): ChallengeNonceGenerator
 {
-    return (new ChallengeNonceGeneratorBuilder)
+    return (new ChallengeNonceGeneratorBuilder())
       ->withNonceTtl(300) // challenge nonce TTL in seconds, default is 300 (5 minutes)
       ->build();
 }
