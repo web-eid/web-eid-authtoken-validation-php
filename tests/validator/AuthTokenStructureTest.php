@@ -58,6 +58,5 @@ class AuthTokenStructureTest extends AbstractTestWithValidator
         $this->expectException(AuthTokenParseException::class);
         $this->expectExceptionMessage("Only token format version 'web-eid:1' is currently supported");
         $this->validator->validate($token, "");
-    }    
-
+    }
 }

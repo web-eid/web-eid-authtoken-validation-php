@@ -33,5 +33,4 @@ class ChallengeNonceExpiredException extends AuthTokenException
     {
         parent::__construct("Challenge nonce has expired");
     }
-
 }

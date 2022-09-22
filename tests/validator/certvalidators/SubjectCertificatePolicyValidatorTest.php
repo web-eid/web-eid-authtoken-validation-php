@@ -47,5 +47,4 @@ class SubjectCertificatePolicyValidatorTest extends TestCase
         $validator = new SubjectCertificatePolicyValidator(["1.3.6.1.4.1.2.1.2.1"]);
         $this->assertNull($validator->validate($cert));
     }
-
 }

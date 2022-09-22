@@ -38,7 +38,7 @@ use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 final class OcspResponseValidator
 {
 
-/**
+    /**
      * Indicates that a X.509 Certificates corresponding private key may be used by an authority to sign OCSP responses.
      * <p>
      * https://oidref.com/1.3.6.1.5.5.7.3.9.
@@ -55,8 +55,8 @@ final class OcspResponseValidator
     public static function validateHasSigningExtension(X509 $certificate): void
     {
         if (!$certificate->getExtension("id-ce-extKeyUsage") || !in_array(self::OCSP_SIGNING, $certificate->getExtension("id-ce-extKeyUsage"))) {
-            throw new OCSPCertificateException("Certificate ".$certificate->getSubjectDN(X509::DN_STRING)." does not contain the key usage extension for OCSP response signing");
-        }        
+            throw new OCSPCertificateException("Certificate " . $certificate->getSubjectDN(X509::DN_STRING) . " does not contain the key usage extension for OCSP response signing");
+        }
     }
 
     public static function validateResponseSignature(OcspBasicResponse $basicResponse, X509 $responderCert): void
@@ -84,21 +84,20 @@ final class OcspResponseValidator
         //   If nextUpdate is not set, the responder is indicating that newer
         //   revocation information is available all the time.
 
-        $notAllowedBefore = (clone $producedAt)->sub(new DateInterval('PT'.self::ALLOWED_TIME_SKEW.'S'));
-        $notAllowedAfter = (clone $producedAt)->add(new DateInterval('PT'.self::ALLOWED_TIME_SKEW.'S'));
+        $notAllowedBefore = (clone $producedAt)->sub(new DateInterval('PT' . self::ALLOWED_TIME_SKEW . 'S'));
+        $notAllowedAfter = (clone $producedAt)->add(new DateInterval('PT' . self::ALLOWED_TIME_SKEW . 'S'));
 
         $thisUpdate = $basicResponse->getThisUpdate();
         $nextUpdate = $basicResponse->getNextUpdate();
 
         if ($notAllowedAfter < $thisUpdate || $notAllowedBefore > (!is_null($nextUpdate) ? $nextUpdate : $thisUpdate)) {
 
-            throw new UserCertificateOCSPCheckFailedException("Certificate status update time check failed: ".
-                "notAllowedBefore: " . DateAndTime::toUtcString($notAllowedBefore).
-                ", notAllowedAfter: " . DateAndTime::toUtcString($notAllowedAfter).
-                ", thisUpdate: " . DateAndTime::toUtcString($thisUpdate).
+            throw new UserCertificateOCSPCheckFailedException("Certificate status update time check failed: " .
+                "notAllowedBefore: " . DateAndTime::toUtcString($notAllowedBefore) .
+                ", notAllowedAfter: " . DateAndTime::toUtcString($notAllowedAfter) .
+                ", thisUpdate: " . DateAndTime::toUtcString($thisUpdate) .
                 ", nextUpdate: " . DateAndTime::toUtcString($nextUpdate));
         }
-
     }
 
     public static function validateSubjectCertificateStatus(OcspResponse $response): void
@@ -114,5 +113,4 @@ final class OcspResponseValidator
         }
         throw new UserCertificateRevokedException("Status is neither good, revoked nor unknown");
     }
-
 }

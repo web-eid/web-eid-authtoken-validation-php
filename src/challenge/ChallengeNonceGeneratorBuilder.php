@@ -48,7 +48,7 @@ class ChallengeNonceGeneratorBuilder
     {
         // 5 minutes
         $this->ttl = 300;
-        $this->secureRandom = function($nounce_length) {
+        $this->secureRandom = function ($nounce_length) {
             return $this->generateSecureRandom($nounce_length);
         };
     }
@@ -60,19 +60,19 @@ class ChallengeNonceGeneratorBuilder
      *
      * @param int $seconds - challenge nonce time-to-live duration in seconds
      * @return ChallengeNonceGeneratorBuilder builder instance
-     */    
+     */
     public function withNonceTtl(int $seconds): ChallengeNonceGeneratorBuilder
     {
         $this->ttl = $seconds;
         return $this;
     }
 
-   /**
+    /**
      * Sets the challenge nonce store where the generated challenge nonces will be stored.
      *
      * @param challengeNonceStore challenge nonce store
      * @return ChallengeNonceGeneratorBuilder builder instance
-     */    
+     */
     public function withChallengeNonceStore(ChallengeNonceStore $challengeNonceStore): ChallengeNonceGeneratorBuilder
     {
         $this->challengeNonceStore = $challengeNonceStore;
@@ -105,15 +105,16 @@ class ChallengeNonceGeneratorBuilder
     private function  validateParameters(): void
     {
         if (is_null($this->challengeNonceStore)) {
-            throw new InvalidArgumentException("Challenge nonce store must not be null");    
+            throw new InvalidArgumentException("Challenge nonce store must not be null");
         }
         if (is_null($this->secureRandom)) {
-            throw new InvalidArgumentException("Secure random generator must not be null");    
+            throw new InvalidArgumentException("Secure random generator must not be null");
         }
         DateAndtime::requirePositiveDuration($this->ttl, "Nonce TTL");
     }
 
-    private function generateSecureRandom(int $nounce_length) {
+    private function generateSecureRandom(int $nounce_length)
+    {
         // Try random_bytes function as default for generating random bytes 
         if (function_exists('random_bytes')) {
             return random_bytes($nounce_length);
@@ -123,7 +124,5 @@ class ChallengeNonceGeneratorBuilder
             return openssl_random_pseudo_bytes($nounce_length);
         }
         throw new ChallengeNonceGenerationException();
-
     }
-
 }

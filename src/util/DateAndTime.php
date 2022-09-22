@@ -38,7 +38,7 @@ final class DateAndTime
      * @throws BadFunctionCallException
      *
      * @return never
-     */    
+     */
     public function __construct()
     {
         throw new BadFunctionCallException('Utility class');
@@ -51,7 +51,7 @@ final class DateAndTime
      */
     public static function utcNow(): DateTime
     {
-        return new DateTime('now', new DateTimeZone('UTC'));    
+        return new DateTime('now', new DateTimeZone('UTC'));
     }
 
     /**
@@ -63,7 +63,7 @@ final class DateAndTime
     public static function requirePositiveDuration(int $duration, string $fieldName): void
     {
         if ($duration <= 0) {
-            throw new InvalidArgumentException($fieldName.' must be greater than zero');    
+            throw new InvalidArgumentException($fieldName . ' must be greater than zero');
         }
     }
 
@@ -74,7 +74,6 @@ final class DateAndTime
         }
         return ((clone $date)->setTimezone(new DateTimeZone('UTC')))->format('Y-m-d H:i:s e');
     }
-
 }
 
 final class DefaultClock
@@ -100,11 +99,10 @@ final class DefaultClock
     public function setClock(DateTime $mockedClock): void
     {
         $this->mockedClock = $mockedClock;
-    }    
+    }
 
     public function resetClock(): void
     {
         unset($this->mockedClock);
-    }    
-
+    }
 }

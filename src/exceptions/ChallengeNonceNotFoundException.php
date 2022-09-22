@@ -33,5 +33,5 @@ class ChallengeNonceNotFoundException extends AuthTokenException
     public function __construct()
     {
         parent::__construct("Challenge nonce was not found in the nonce store");
-    }    
+    }
 }

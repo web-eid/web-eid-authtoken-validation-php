@@ -37,7 +37,7 @@ final class OcspRequestBuilder
 
     public function __construct()
     {
-        $this->secureRandom = function($nonce_length): string {
+        $this->secureRandom = function ($nonce_length): string {
             return $this->generateSecureRandom($nonce_length);
         };
     }
@@ -67,7 +67,8 @@ final class OcspRequestBuilder
         return $ocspRequest;
     }
 
-    private function generateSecureRandom(int $nounce_length): string {
+    private function generateSecureRandom(int $nounce_length): string
+    {
         // Try random_bytes function as default for generating random bytes 
         if (function_exists('random_bytes')) {
             return random_bytes($nounce_length);
@@ -77,6 +78,4 @@ final class OcspRequestBuilder
             return openssl_random_pseudo_bytes($nounce_length);
         }
     }
-
-
 }

@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
@@ -64,8 +65,7 @@ class DesignatedOcspService implements OcspService
         // see https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning.
         if ($this->configuration->getResponderCertificate()->getCurrentCert() != $cert->getCurrentCert()) {
             throw new OCSPCertificateException("Responder certificate from the OCSP response is not equal to the configured designated OCSP responder certificate");
-        }        
+        }
         CertificateValidator::certificateIsValidOnDate($cert, $producedAt, "Designated OCSP responder");
     }
-
 }

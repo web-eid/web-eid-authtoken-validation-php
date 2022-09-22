@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
@@ -61,7 +62,7 @@ final class AuthTokenValidationConfiguration
         $this->siteOrigin = $siteOrigin;
     }
 
-    public function getSiteOrigin(): ?Uri 
+    public function getSiteOrigin(): ?Uri
     {
         return $this->siteOrigin;
     }
@@ -75,7 +76,7 @@ final class AuthTokenValidationConfiguration
     {
         return $this->isUserCertificateRevocationCheckWithOcspEnabled;
     }
-    
+
     public function setUserCertificateRevocationCheckWithOcspDisabled(): void
     {
         $this->isUserCertificateRevocationCheckWithOcspEnabled = false;
@@ -109,23 +110,23 @@ final class AuthTokenValidationConfiguration
     public function getNonceDisabledOcspUrls(): UriCollection
     {
         return $this->nonceDisabledOcspUrls;
-    }    
+    }
 
     /**
      * Checks that the configuration parameters are valid.
      *
      * @throws IllegalArgumentException when any parameter is invalid
-     */    
+     */
     public function validate(): void
     {
         if (is_null($this->siteOrigin)) {
-            throw new InvalidArgumentException('Origin URI must not be null');    
+            throw new InvalidArgumentException('Origin URI must not be null');
         }
 
         self::validateIsOriginURL($this->siteOrigin);
 
         if (count($this->trustedCACertificates) == 0) {
-            throw new InvalidArgumentException('At least one trusted certificate authority must be provided');    
+            throw new InvalidArgumentException('At least one trusted certificate authority must be provided');
         }
 
         DateAndTime::requirePositiveDuration($this->ocspRequestTimeout, "OCSP request timeout");
@@ -137,7 +138,7 @@ final class AuthTokenValidationConfiguration
      *
      * @param uri URI with origin URL
      * @throws IllegalArgumentException when the URI is not in the form of origin URL
-     */    
+     */
     public function validateIsOriginURL(Uri $uri): void
     {
         // 1. Verify that the URI can be converted to absolute URL.
@@ -152,11 +153,8 @@ final class AuthTokenValidationConfiguration
         ]);
 
         // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
-        if ($uri->getUrl() !== $reference->getUrl())
-        {
+        if ($uri->getUrl() !== $reference->getUrl()) {
             throw new InvalidArgumentException('Origin URI must only contain the HTTPS scheme, host and optional port component');
         }
-
     }
-
 }

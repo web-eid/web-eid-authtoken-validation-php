@@ -63,6 +63,5 @@ class ChallengeNonce
     public function getExpirationTime(): DateTime
     {
         return $this->expirationTime;
-    }    
-
+    }
 }

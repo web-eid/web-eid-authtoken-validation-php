@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
@@ -42,7 +43,7 @@ interface AuthTokenValidator
      * @return the Web eID authentication token
      */
     public function parse(string $authToken): WebEidAuthToken;
-    
+
     /**
      * Validates the Web eID authentication token signed by the subject and returns
      * the subject certificate that can be used for retrieving information about the subject.
@@ -53,7 +54,6 @@ interface AuthTokenValidator
      * @param WebEidAuthToken authToken the Web eID authentication token
      * @param String currentChallengeNonce the challenge nonce that is associated with the authentication token
      * @return validated subject certificate
-     */    
+     */
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509;
-
 }

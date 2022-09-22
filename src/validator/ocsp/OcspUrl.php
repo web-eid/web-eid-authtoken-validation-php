@@ -40,7 +40,7 @@ final class OcspUrl
 
     /**
      * Returns the OCSP responder {@link URI} or {@code null} if it doesn't have one.
-     */    
+     */
     public static function getOcspUri(X509 $certificate): ?Uri
     {
         $authorityInformationAccess = $certificate->getExtension("id-pe-authorityInfoAccess");
@@ -48,17 +48,14 @@ final class OcspUrl
 
             if ($authorityInformationAccess) {
 
-                foreach($authorityInformationAccess as $accessDescription) {
+                foreach ($authorityInformationAccess as $accessDescription) {
 
                     if (in_array($accessDescription["accessMethod"], ["id-pkix-ocsp", "id-ad-ocsp"]) && array_key_exists("uniformResourceIdentifier", $accessDescription["accessLocation"])) {
                         $accessLocationUrl = $accessDescription["accessLocation"]["uniformResourceIdentifier"];
                         return new Uri($accessLocationUrl);
                     }
-
                 }
-
             }
-
         } catch (Exception $e) {
             return null;
         }

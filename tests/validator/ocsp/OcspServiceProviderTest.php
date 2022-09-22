@@ -50,7 +50,6 @@ class OcspServiceProviderTest extends TestCase
         $this->expectExceptionMessage("Responder certificate from the OCSP response is not equal to the configured designated OCSP responder certificate");
 
         $service->validateResponderCertificate(Certificates::getTestEsteid2018CA(), new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
-
     }
 
     public function testWhenAiaOcspServiceConfigurationProvidedThenCreatesAiaOcspService(): void
@@ -59,7 +58,7 @@ class OcspServiceProviderTest extends TestCase
         // we need to use TEST_of_EE-GovCA2018.pem.crt (getAiaOcspServiceConfiguration()) certificate for validation 
 
         $ocspServiceProvider = OcspServiceMaker::getAiaOcspServiceProvider();
-        
+
         $service2018 = $ocspServiceProvider->getService(Certificates::getJaakKristjanEsteid2018Cert());
 
         $this->assertEquals($service2018->getAccessLocation(), new Uri("http://aia.demo.sk.ee/esteid2018"));
@@ -71,11 +70,10 @@ class OcspServiceProviderTest extends TestCase
         $service2015 = $ocspServiceProvider->getService(Certificates::getMariLiisEsteid2015Cert());
         $this->assertEquals($service2015->getAccessLocation(), new Uri("http://aia.demo.sk.ee/esteid2015"));
         $this->assertFalse($service2015->doesSupportNonce());
-        
+
         $this->expectException(CertificateNotTrustedException::class);
         $this->expectExceptionMessage("Certificate C=EE, O=AS Sertifitseerimiskeskus/2.5.4.97=NTREE-10747013, CN=TEST of ESTEID-SK 2015 is not trusted");
         $service2015->validateResponderCertificate(Certificates::getTestEsteid2015CA(), new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
-
     }
 
     public function testWhenAiaOcspServiceConfigurationDoesNotHaveResponderCertTrustedCaThenThrows(): void
@@ -87,8 +85,5 @@ class OcspServiceProviderTest extends TestCase
         $this->expectException(OCSPCertificateException::class);
 
         $service2018->validateResponderCertificate($wrongResponderCert, new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
-
-
     }
-
 }

@@ -1,5 +1,27 @@
 <?php
 
+/*
+ * Copyright (c) 2020-2021 Estonian Information System Authority
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateData;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
@@ -17,7 +39,8 @@ class Auth
     public function trustedIntermediateCACertificates(): array
     {
         return CertificateLoader::loadCertificatesFromResources(
-            __DIR__ . "/../certificates/esteid2018.der.crt", __DIR__ . "/../certificates/ESTEID-SK_2015.der.crt"
+            __DIR__ . "/../certificates/esteid2018.der.crt",
+            __DIR__ . "/../certificates/ESTEID-SK_2015.der.crt"
         );
     }
 
@@ -40,19 +63,18 @@ class Auth
      * Get challenge nonce
      *
      * @return string
-     */    
+     */
     public function getNonce()
     {
         try {
             header('Content-Type: application/json; charset=utf-8');
-            $generator = $this->generator();
-            $challengeNonce = $generator->generateAndStoreNonce();
+            $challengeNonce = $this->generator()->generateAndStoreNonce();
             $responseArr = [];
-            $responseArr["nonce"] = $challengeNonce->getBase64EncodedNonce();
+            $responseArr = ["nonce" => $challengeNonce->getBase64EncodedNonce()];
             echo json_encode($responseArr);
         } catch (Exception $e) {
             header("HTTP/1.0 400 Bad Request");
-            echo $e->getMessage();
+            echo "Nonce generation failed";
         }
     }
 
@@ -60,9 +82,16 @@ class Auth
      * Authenticate
      *
      * @return string
-     */    
+     */
     public function validate()
     {
+        $headers = getallheaders();
+        if (!isset($headers["X-CSRF-TOKEN"]) || ($headers["X-CSRF-TOKEN"] != $_SESSION["csrf-token"])) {
+            header("HTTP/1.0 405 Method Not Allowed");
+            echo "Unable to process your request";
+            return;
+        }
+
         $authToken = file_get_contents('php://input');
 
         try {
@@ -72,11 +101,8 @@ class Auth
 
             try {
 
-                // Build token validator
-                $tokenValidator = $this->tokenValidator();
-
                 // Validate token
-                $cert = $tokenValidator->validate(new WebEidAuthToken($authToken), $challengeNonce->getBase64EncodedNonce());
+                $cert = $this->tokenValidator()->validate(new WebEidAuthToken($authToken), $challengeNonce->getBase64EncodedNonce());
 
                 session_regenerate_id();
 
@@ -88,15 +114,13 @@ class Auth
                 $_SESSION["auth-user"] = $subjectName;
 
                 echo json_encode($result);
-
             } catch (Exception $e) {
                 header("HTTP/1.0 400 Bad Request");
-                echo $e->getMessage();
+                echo "Validation failed";
             }
-
         } catch (ChallengeNonceExpiredException $e) {
             header("HTTP/1.0 400 Bad Request");
-            echo $e->getMessage();
+            echo "Challenge nonce not found or expired";
         }
     }
 
@@ -111,5 +135,4 @@ class Auth
         // Redirect to login
         header("location:/");
     }
-
 }

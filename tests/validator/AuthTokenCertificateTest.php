@@ -43,10 +43,10 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheck
 class AuthTokenCertificateTest extends AbstractTestWithValidator
 {
 
-    private const AUTH_TOKEN = '{"algorithm":"ES384",'.
-        '"unverifiedCertificate":"X5C",'.
-        '"appVersion":"https://web-eid.eu/web-eid-app/releases/2.0.0+0",'.
-        '"signature":"arx164xRiwhIQDINe0J+ZxJWZFOQTx0PBtOaWaxAe7gofEIHRIbV1w0sOCYBJnvmvMem9hU4nc2+iJx2x8poYck4Z6eI3GwtiksIec3XQ9ZIk1n/XchXnmPn3GYV+HzJ",'.
+    private const AUTH_TOKEN = '{"algorithm":"ES384",' .
+        '"unverifiedCertificate":"X5C",' .
+        '"appVersion":"https://web-eid.eu/web-eid-app/releases/2.0.0+0",' .
+        '"signature":"arx164xRiwhIQDINe0J+ZxJWZFOQTx0PBtOaWaxAe7gofEIHRIbV1w0sOCYBJnvmvMem9hU4nc2+iJx2x8poYck4Z6eI3GwtiksIec3XQ9ZIk1n/XchXnmPn3GYV+HzJ",' .
         '"format":"web-eid:1"}';
 
     private const MISSING_PURPOSE_CERT = 'MIICxjCCAa6gAwIBAgIJANTbd26vS6fmMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNVBAMTCndlYi1laWQuZXUwHhcNMjAwOTI0MTIyNDMzWhcNMzAwOTIyMTIyNDMzWjAVMRMwEQYDVQQDEwp3ZWItZWlkLmV1MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAza5qBFu5fvs47rx3o9yzBVfIxHjMotID8ppkwWVen/uFxlqsRVi+XnWkggW+K8X45inAnBAVi1rIw7GQNdacSHglyvQfwM64AallmD0+K+QgbqxcO9fvRvlAeISENBc2bGgqTIytPEON5ZmazzbOZjqY3M1QcPlPZOeUm6M9ZcZFhsxpiB4gwZUic9tnCz9eujd6k6DzNVfSRaJcpGA5hJ9aKH4vXS3x7anewna+USEXkRb4Il5zSlZR0i1yrVA1YNOxCG/+GgWvXfvXwdQ0z9BpGwNEyc0mRDNx+umaTukz9t+7/qTcB2JLTuiwM9Gqg5sDDnzPlcZSa7GnIU0MLQIDAQABoxkwFzAVBgNVHREEDjAMggp3ZWItZWlkLmV1MA0GCSqGSIb3DQEBBQUAA4IBAQAYGkBhTlet47uw3JYunYo6dj4nGWSGV4x6LYjCp5QlAmGd28HpC1RFB3ba+inwW8SP69kEOcB0sJQAZ/tV90oCATNsy/Whg/TtiHISL2pr1dyBoKDRWbgTp8jjzcp2Bj9nL14aqpj1t4K1lcoYETX41yVmyyJu6VFs80M5T3yikm2giAhszjChnjyoT2kaEKoua9EUK9SS27pVltgbbvtmeTp3ZPHtBfiDOATL6E03RZ5WfMLRefI796a+RcznnudzQHhMSwcjLpMDgIWpUU4OU7RiwrU+S3MrvgzCjkWh2MGu/OGLB+d3JZoW+eCvigoshmAsbJCMLbh4N78BCPqk';
@@ -92,7 +92,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
     public function testWhenCertificateFieldIsArrayThenParsingFails(): void
     {
         try {
-            $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", [1,2,3,4]);
+            $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", [1, 2, 3, 4]);
         } catch (AuthTokenParseException $e) {
             $this->assertEquals("Error parsing Web eID authentication token", $e->getMessage());
 
@@ -148,7 +148,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
 
         $this->expectException(UserCertificateWrongPurposeException::class);
         $this->validator->validate($token, self::VALID_CHALLENGE_NONCE);
-    }    
+    }
 
     public function testWhenCertificatePolicyIsWrongThenValidationFails(): void
     {
@@ -207,7 +207,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
     // Issuer certificate validity:
     // - not before: Thu Sep 06 12:03:52 EEST 2018
     // - not after: Tue Aug 30 15:48:28 EEST 2033
-    
+
     public function testWhenUserCertificateIsNotYetValidThenValidationFails()
     {
         $this->mockDate("2018-10-17");
@@ -232,7 +232,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
         $this->expectExceptionMessage("User certificate has expired");
         $this->validator->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
     }
-    
+
     public function testWhenTrustedCaCertificateIsNoLongerValidThenValidationFails()
     {
         $this->mockDate("2033-10-19");
@@ -278,6 +278,5 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
     private function mockDate(string $date)
     {
         Dates::setMockedCertificateValidatorDate(new DateTime($date));
-    }    
-
+    }
 }

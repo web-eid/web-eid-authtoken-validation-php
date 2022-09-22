@@ -35,7 +35,7 @@ class AiaOcspServiceConfiguration
     public function __construct(UriCollection $nonceDisabledOcspUrls, TrustedCertificates $trustedCACertificates)
     {
         $this->nonceDisabledOcspUrls = $nonceDisabledOcspUrls;
-        $this->trustedCACertificates = $trustedCACertificates;        
+        $this->trustedCACertificates = $trustedCACertificates;
     }
 
     public function getNonceDisabledOcspUrls()
@@ -47,5 +47,4 @@ class AiaOcspServiceConfiguration
     {
         return $this->trustedCACertificates;
     }
-
 }

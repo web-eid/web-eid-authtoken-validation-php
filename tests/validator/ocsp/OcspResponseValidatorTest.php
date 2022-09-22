@@ -44,12 +44,12 @@ class OcspResponseValidatorTest extends TestCase
         $producedAt = new DateTime("2021-09-02T00:00:00.000Z");
 
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: ".
-            "Certificate status update time check failed: ".
-            "notAllowedBefore: 2021-09-01 23:59:45 UTC". 
-            ", notAllowedAfter: 2021-09-02 00:00:15 UTC". 
-            ", thisUpdate: 2021-09-01 00:00:00 UTC". 
-            ", nextUpdate: null"); 
+        $this->expectExceptionMessage("User certificate revocation check has failed: " .
+            "Certificate status update time check failed: " .
+            "notAllowedBefore: 2021-09-01 23:59:45 UTC" .
+            ", notAllowedAfter: 2021-09-02 00:00:15 UTC" .
+            ", thisUpdate: 2021-09-01 00:00:00 UTC" .
+            ", nextUpdate: null");
 
         OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
     }
@@ -65,12 +65,12 @@ class OcspResponseValidatorTest extends TestCase
         $producedAt = new DateTime("2021-09-01T00:00:00.000Z");
 
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: ". 
-            "Certificate status update time check failed: ".
-            "notAllowedBefore: 2021-08-31 23:59:45 UTC".
-            ", notAllowedAfter: 2021-09-01 00:00:15 UTC".
-            ", thisUpdate: 2021-09-02 00:00:00 UTC".
-            ", nextUpdate: null"); 
+        $this->expectExceptionMessage("User certificate revocation check has failed: " .
+            "Certificate status update time check failed: " .
+            "notAllowedBefore: 2021-08-31 23:59:45 UTC" .
+            ", notAllowedAfter: 2021-09-01 00:00:15 UTC" .
+            ", thisUpdate: 2021-09-02 00:00:00 UTC" .
+            ", nextUpdate: null");
 
 
         OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
@@ -89,13 +89,12 @@ class OcspResponseValidatorTest extends TestCase
         $producedAt = new DateTime("2021-09-02T00:00:00.000Z");
 
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: ".
-        "Certificate status update time check failed: ".
-        "notAllowedBefore: 2021-09-01 23:59:45 UTC".
-        ", notAllowedAfter: 2021-09-02 00:00:15 UTC".
-        ", thisUpdate: 2021-09-02 00:00:00 UTC".
-        ", nextUpdate: 2021-09-01 00:00:00 UTC");
+        $this->expectExceptionMessage("User certificate revocation check has failed: " .
+            "Certificate status update time check failed: " .
+            "notAllowedBefore: 2021-09-01 23:59:45 UTC" .
+            ", notAllowedAfter: 2021-09-02 00:00:15 UTC" .
+            ", thisUpdate: 2021-09-02 00:00:00 UTC" .
+            ", nextUpdate: 2021-09-01 00:00:00 UTC");
         OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
     }
-
 }

@@ -39,5 +39,4 @@ class CertificateDataTest extends TestCase
         $this->assertEquals("JÕEORG", CertificateData::getSubjectSurname($cert));
         $this->assertEquals("PNOEE-38001085718", CertificateData::getSubjectIdCode($cert));
     }
-
 }

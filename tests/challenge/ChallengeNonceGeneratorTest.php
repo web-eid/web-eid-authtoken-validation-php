@@ -57,7 +57,7 @@ class ChallengeNonceGeneratorTest extends TestCase
         $challengeNonceGenerator = (new ChallengeNonceGeneratorBuilder())->withChallengeNonceStore($this->challengeNonceStore)->withNonceTtl(2)->build();
         $challengeNonceGenerator->generateAndStoreNonce();
         sleep(1);
-        $this->challengeNonceStore->getAndRemove();        
+        $this->challengeNonceStore->getAndRemove();
     }
 
     public function testValidateNonceExpiration()
@@ -80,5 +80,4 @@ class ChallengeNonceGeneratorTest extends TestCase
         $this->expectException(SessionNotExistException::class);
         new ChallengeNonceStore();
     }
-
 }

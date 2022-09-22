@@ -42,7 +42,7 @@ class AuthTokenValidatorBuilder
         $this->configuration = new AuthTokenValidationConfiguration();
         $this->logger = Log::getLogger(self::class);
     }
-    
+
     /**
      * Sets the expected site origin, i.e. the domain that the application is running on.
      * <p>
@@ -51,8 +51,8 @@ class AuthTokenValidatorBuilder
      * @param origin origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
      *               in the form of {@code <scheme> "://" <hostname> [ ":" <port> ]}
      * @return the builder instance for method chaining
-     */    
-    public function withSiteOrigin(Uri $origin): AuthTokenValidatorBuilder 
+     */
+    public function withSiteOrigin(Uri $origin): AuthTokenValidatorBuilder
     {
         $this->configuration->setSiteOrigin($origin);
         $this->logger->debug("Origin set to " . $this->configuration->getSiteOrigin()->getUrl());
@@ -69,12 +69,12 @@ class AuthTokenValidatorBuilder
      *
      * @param X509 $certificates trusted intermediate Certificate Authority certificates
      * @return the builder instance for method chaining
-     */    
-    public function withTrustedCertificateAuthorities(X509 ...$certificates): AuthTokenValidatorBuilder 
+     */
+    public function withTrustedCertificateAuthorities(X509 ...$certificates): AuthTokenValidatorBuilder
     {
         array_push($this->configuration->getTrustedCACertificates(), ...$certificates);
 
-        $this->logger->debug("Trusted intermediate certificate authorities set to ". json_encode(X509Collection::getSubjectDNs(null, ...$this->configuration->getTrustedCACertificates())));
+        $this->logger->debug("Trusted intermediate certificate authorities set to " . json_encode(X509Collection::getSubjectDNs(null, ...$this->configuration->getTrustedCACertificates())));
 
         return $this;
     }
@@ -86,12 +86,12 @@ class AuthTokenValidatorBuilder
      *
      * @param string $policies disallowed user certificate policies as string array
      * @return the builder instance for method chaining
-     */    
-    public function withDisallowedCertificatePolicies(string ...$policies): AuthTokenValidatorBuilder 
+     */
+    public function withDisallowedCertificatePolicies(string ...$policies): AuthTokenValidatorBuilder
     {
         array_push($this->configuration->getDisallowedSubjectCertificatePolicies(), ...$policies);
 
-        $this->logger->debug("Disallowed subject certificate policies set to ". json_encode($this->configuration->getDisallowedSubjectCertificatePolicies()));
+        $this->logger->debug("Disallowed subject certificate policies set to " . json_encode($this->configuration->getDisallowedSubjectCertificatePolicies()));
 
         return $this;
     }
@@ -104,7 +104,7 @@ class AuthTokenValidatorBuilder
      * By default, the revocation check is turned on.
      *
      * @return the builder instance for method chaining.
-     */    
+     */
     public function withoutUserCertificateRevocationCheckWithOcsp(): AuthTokenValidatorBuilder
     {
         $this->configuration->setUserCertificateRevocationCheckWithOcspDisabled();
@@ -119,7 +119,7 @@ class AuthTokenValidatorBuilder
      *
      * @param int $ocspRequestTimeout the duration of OCSP request connection and response timeout
      * @return the builder instance for method chaining.
-     */    
+     */
     public function withOcspRequestTimeout(int $ocspRequestTimeout): AuthTokenValidatorBuilder
     {
         $this->configuration->setOcspRequestTimeout($ocspRequestTimeout);
@@ -135,7 +135,7 @@ class AuthTokenValidatorBuilder
      *
      * @param URI $urls OCSP URLs for which the nonce protocol extension will be disabled
      * @return the builder instance for method chaining
-     */    
+     */
     public function withNonceDisabledOcspUrls(URI ...$uris): AuthTokenValidatorBuilder
     {
         foreach ($uris as $uri) {
@@ -161,5 +161,4 @@ class AuthTokenValidatorBuilder
         $this->configuration->validate();
         return new AuthTokenValidatorImpl($this->configuration);
     }
-
 }

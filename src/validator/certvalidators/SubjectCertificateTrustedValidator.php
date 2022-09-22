@@ -46,8 +46,8 @@ final class SubjectCertificateTrustedValidator implements SubjectCertificateVali
         $this->subjectCertificateIssuerCertificate = CertificateValidator::validateIsSignedByTrustedCA(
             $subjectCertificate,
             $this->trustedCertificates
-        );    
-        
+        );
+
         $this->logger->debug("Subject certificate is signed by a trusted CA");
     }
 

@@ -46,18 +46,18 @@ class Uri
      * @link https://tools.ietf.org/html/rfc3986#section-2.3
      */
     private const CHAR_UNRESERVED = 'a-zA-Z0-9_\-\.~';
-    
+
     /**
      * Sub-delims for use in a regex.
      *
      * @link https://tools.ietf.org/html/rfc3986#section-2.2
      */
-    private const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';    
+    private const CHAR_SUB_DELIMS = '!\$&\'\(\)\*\+,;=';
 
 
     public function __construct(string $uri = '')
     {
-        if ($uri !== '') {            
+        if ($uri !== '') {
             $parts = self::parse($uri);
             if ($parts === false) {
                 throw new MalformedUriException($uri);
@@ -74,12 +74,12 @@ class Uri
     public function getUser(): string
     {
         return $this->user;
-    }    
+    }
 
     public function getPassword(): string
     {
         return $this->password;
-    }    
+    }
 
     public function getHost(): string
     {
@@ -120,7 +120,7 @@ class Uri
      * @see https://curl.haxx.se/libcurl/c/CURLOPT_URL.html#ENCODING
      *
      * @return array|false
-     */    
+     */
     private static function parse(string $url)
     {
         // If IPv6
@@ -146,15 +146,14 @@ class Uri
             return false;
         }
 
-        return array_map('urldecode', $result);        
-
+        return array_map('urldecode', $result);
     }
 
     /**
      * Sets parse_url parts to a URI.
      *
      * @param array $parts Array of parse_url parts to apply.
-     */    
+     */
     private function setParts(array $parts): void
     {
         $this->scheme = isset($parts['scheme']) ? $this->filterScheme($parts['scheme']) : '';
@@ -196,7 +195,7 @@ class Uri
             [$this, 'rawurlencodeMatchZero'],
             $component
         );
-    }    
+    }
 
     /**
      * @param mixed $host
@@ -211,7 +210,7 @@ class Uri
 
         return \strtr($host, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
-    
+
     /**
      * @param mixed $port
      *
@@ -271,7 +270,7 @@ class Uri
             [$this, 'rawurlencodeMatchZero'],
             $str
         );
-    }    
+    }
 
     private function rawurlencodeMatchZero(array $match): string
     {
@@ -289,7 +288,7 @@ class Uri
         $path     = ($this->getPath() !== "") ? $this->getPath() : '';
         $query    = ($this->getQuery() !== "") ? '?' . $this->getQuery() : '';
         $fragment = ($this->getFragment() !== "") ? '#' . $this->getFragment() : '';
-        return "$scheme$user$pass$host$port$path$query$fragment";        
+        return "$scheme$user$pass$host$port$path$query$fragment";
     }
 
     /**
@@ -307,7 +306,7 @@ class Uri
         (?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?]
         (?:[\w#!:\.\?\+=&@$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/xi";
         return (bool) preg_match($pattern, $url);
-    } 
+    }
 
     public function verifyComponents(array $components): bool
     {
