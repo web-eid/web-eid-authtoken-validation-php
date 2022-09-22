@@ -79,7 +79,6 @@ class WebEidAuthToken
         if (isset($jsonDecoded['appVersion'])) {
             $this->appVersion = $this->filterString('appVersion', $jsonDecoded['appVersion']);
         }
-
     }
 
     public function getUnverifiedCertificate(): ?string
@@ -135,6 +134,4 @@ class WebEidAuthToken
         }
         return $data;
     }
-
-
 }

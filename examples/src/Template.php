@@ -15,7 +15,5 @@ class Template
             return $contents;
         }
         throw new Exception("Could not load template file " . $template);
-    
     }
-
 }

@@ -36,7 +36,7 @@ class UserCertificateRevokedException extends AuthTokenException
         if (is_null($message)) {
             parent::__construct("User certificate has been revoked");
         } else {
-            parent::__construct("User certificate has been revoked: ".$message);
+            parent::__construct("User certificate has been revoked: " . $message);
         }
     }
 }

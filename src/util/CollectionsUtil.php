@@ -18,42 +18,47 @@ abstract class Collection implements Countable, IteratorAggregate, ArrayAccess
 
     abstract public function __construct();
     abstract public function validate($value): void;
-    
-    public function offsetExists(mixed $offset) : bool {
+
+    public function offsetExists(mixed $offset): bool
+    {
         return isset($this->array[$offset]);
     }
 
-    #[\ReturnTypeWillChange]    
-    public function offsetGet(mixed $offset): mixed {
+    #[\ReturnTypeWillChange]
+    public function offsetGet(mixed $offset): mixed
+    {
         return $this->array[$offset];
-    }    
+    }
 
-    public function offsetSet(mixed $offset, mixed $value) : void {
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
         $this->validate($value);
         $this->array[$offset] = $value;
     }
- 
-    public function offsetUnset(mixed $offset) : void {
-        unset($this ->array[$offset]);
+
+    public function offsetUnset(mixed $offset): void
+    {
+        unset($this->array[$offset]);
     }
-     
-    public function count() : int {
+
+    public function count(): int
+    {
         return count($this->array);
     }
 
-    public function getIterator() : ArrayIterator {
+    public function getIterator(): ArrayIterator
+    {
         return new ArrayIterator($this->array);
     }
-    
+
     public function pushItem($value): void
     {
         $this->validate($value);
         array_push($this->array, $value);
     }
-    
 }
 
-class X509Collection extends Collection 
+class X509Collection extends Collection
 {
     public function __construct(X509 ...$certificates)
     {
@@ -76,10 +81,10 @@ class X509Collection extends Collection
             $subjectDNs[] = $certificate->getSubjectDN(X509::DN_STRING);
         }
         return $subjectDNs;
-    }    
+    }
 }
 
-class SubjectCertificateValidatorCollection extends Collection 
+class SubjectCertificateValidatorCollection extends Collection
 {
     public function __construct(SubjectCertificateValidator ...$validators)
     {
@@ -94,7 +99,7 @@ class SubjectCertificateValidatorCollection extends Collection
     }
 }
 
-class UriCollection extends Collection 
+class UriCollection extends Collection
 {
     public function __construct(Uri ...$urls)
     {
@@ -111,7 +116,7 @@ class UriCollection extends Collection
     public function getUrls(): array
     {
         $result = [];
-        foreach($this->array as $uri) {
+        foreach ($this->array as $uri) {
             $result[] = $uri;
         }
         return $result;
@@ -120,10 +125,9 @@ class UriCollection extends Collection
     public function getUrlsArray(): array
     {
         $result = [];
-        foreach($this->array as $uri) {
+        foreach ($this->array as $uri) {
             $result[] = $uri->getUrl();
         }
         return $result;
     }
-
 }

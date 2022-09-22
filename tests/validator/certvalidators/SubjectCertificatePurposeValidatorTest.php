@@ -34,5 +34,4 @@ class SubjectCertificatePurposeValidatorTest extends TestCase
         $validator = new SubjectCertificatePurposeValidator();
         $this->assertNull($validator->validate($cert));
     }
-
 }

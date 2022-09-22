@@ -53,18 +53,18 @@ class OcspClientImpl implements OcspClient
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $uri->getUrl());
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_FAILONERROR, true);        
+        curl_setopt($curl, CURLOPT_FAILONERROR, true);
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ["Content-Type: " . self::OCSP_REQUEST_TYPE]);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $encodedOcspRequest);
-        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $this->requestTimeout); 
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $this->requestTimeout);
         curl_setopt($curl, CURLOPT_TIMEOUT, $this->requestTimeout);
         $result = curl_exec($curl);
 
         if (curl_errno($curl)) {
             throw new UserCertificateOCSPCheckFailedException(curl_error($curl));
         }
-        
+
         $info = curl_getinfo($curl);
         if ($info["http_code"] !== 200) {
             throw new UserCertificateOCSPCheckFailedException("OCSP request was not successful, response: " + $result);
@@ -74,9 +74,9 @@ class OcspClientImpl implements OcspClient
 
         $responseJson = json_encode($response->getResponse(), JSON_INVALID_UTF8_IGNORE);
         $this->logger->debug("OCSP response: ", json_encode($responseJson));
-        
+
         if ($info["content_type"] !== self::OCSP_RESPONSE_TYPE) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP response content type is not ". self::OCSP_RESPONSE_TYPE);
+            throw new UserCertificateOCSPCheckFailedException("OCSP response content type is not " . self::OCSP_RESPONSE_TYPE);
         }
 
         return $response;

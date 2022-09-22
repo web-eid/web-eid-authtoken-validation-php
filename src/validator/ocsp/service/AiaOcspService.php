@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
@@ -65,7 +66,7 @@ class AiaOcspService implements OcspService
     {
         CertificateValidator::certificateIsValidOnDate($cert, $producedAt, "AIA OCSP responder");
         // Trusted certificates' validity has been already verified in validateCertificateExpiry().
-        OcspResponseValidator::validateHasSigningExtension($cert);        
+        OcspResponseValidator::validateHasSigningExtension($cert);
         CertificateValidator::validateIsSignedByTrustedCA($cert, $this->trustedCACertificates);
     }
 

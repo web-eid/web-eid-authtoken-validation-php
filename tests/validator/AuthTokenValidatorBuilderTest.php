@@ -88,6 +88,5 @@ class AuthTokenValidatorBuilderTest extends TestCase
         $this->expectException(MalformedUriException::class);
         $this->expectExceptionMessage("Unable to parse URI: https:///ria.ee");
         AuthTokenValidators::getAuthTokenValidator("https:///ria.ee");
-    }    
-
+    }
 }

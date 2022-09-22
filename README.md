@@ -35,17 +35,14 @@ Add the following lines to `composer.json` to include the Web eID authentication
 
 ### Configure the log file location
 
-Define the constant `LOGFILE` for log file location.
+By default, log entries are written to the server log. If there is a need to collect log entries in a separate file, define the constant `LOGFILE` for the log file location.
 
+Example:
 ```php
 define("LOGFILE", dirname(__FILE__) . "/../log/web-eid-authtoken-validation-php.log");
 ```
 
-In case, when you don't want to collect log at all, define this constant like so:
-
-```php
-define("LOGFILE", false);
-```
+It is essential, that your log file directory has write access.
 
 ## 2. Configure the challenge nonce store
 
@@ -231,44 +228,6 @@ The Web eID authentication token validation library for PHP contains the impleme
 
 The authentication protocol, authentication token format, validation requirements and challenge nonce usage is described in more detail in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
-# Authentication token format
-
-In the following, 
-
-- **origin** is defined as the website origin, the URL serving the web application,
-- **challenge nonce** (or challenge) is defined as a cryptographic nonce, a large random number that can be used only once, with at least 256 bits of entropy.
-
-The Web eID authentication token is a JSON data structure that looks like the following example:
-
-```json
-{
-  "unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4...",
-  "algorithm": "RS256",
-  "signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZha...",
-  "format": "web-eid:1.0",
-  "appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"
-}
-```
-
-It contains the following fields:
-
-- `unverifiedCertificate`: the base64-encoded DER-encoded authentication certificate of the eID user; the public key contained in this certificate should be used to verify the signature; the certificate cannot be trusted as it is received from client side and the client can submit a malicious certificate; to establish trust, it must be verified that the certificate is signed by a trusted certificate authority,
-
-- `algorithm`: the signature algorithm used to produce the signature; the allowed values are the algorithms specified in [JWA RFC](https://www.ietf.org/rfc/rfc7518.html) sections 3.3, 3.4 and 3.5:
-
-    ```
-      "ES256", "ES384", "ES512", // ECDSA
-      "PS256", "PS384", "PS512", // RSASSA-PSS
-      "RS256", "RS384", "RS512"  // RSASSA-PKCS1-v1_5
-    ```
-
-- `signature`: the base64-encoded signature of the token (see the description below),
-
-- `format`: the type identifier and version of the token format separated by a colon character '`:`', `web-eid:1.0` as of now; the version number consists of the major and minor number separated by a dot, major version changes are incompatible with previous versions, minor version changes are backwards-compatible within the given major version,
-
-- `appVersion`: the URL identifying the name and version of the application that issued the token; informative purpose, can be used to identify the affected application in case of faulty tokens.
-
-The value that is signed by the user’s authentication private key and included in the `signature` field is `hash(origin)+hash(challenge)`. The hash function is used before concatenation to ensure field separation as the hash of a value is guaranteed to have a fixed length. Otherwise the origin `example.com` with challenge nonce `.eu1234` and another origin `example.com.eu` with challenge nonce `1234` would result in the same value after concatenation. The hash function `hash` is the same hash function that is used in the signature algorithm, for example SHA256 in case of RS256.
 
 # Authentication token validation
 

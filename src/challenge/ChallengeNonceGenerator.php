@@ -29,9 +29,9 @@ namespace web_eid\web_eid_authtoken_validation_php\challenge;
  */
 interface ChallengeNonceGenerator
 {
-	/** 
-	 * @var int Integer indicating the length of bytes for challenge nonce
-	 */
+    /** 
+     * @var int Integer indicating the length of bytes for challenge nonce
+     */
     public const NONCE_LENGTH = 32;
 
     /**

@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
@@ -50,7 +51,7 @@ class AuthTokenSignatureValidator
     {
         $this->siteOrigin = $siteOrigin;
     }
-    
+
     public function validate(string $algorithm, string $signature, $publicKey, string $currentChallengeNonce): void
     {
         $this->requireNotEmpty($algorithm, 'algorithm');
@@ -79,25 +80,23 @@ class AuthTokenSignatureValidator
 
         $originHash = openssl_digest($this->siteOrigin->getUrl(), $hashAlgorithm, true);
         $nonceHash = openssl_digest($currentChallengeNonce, $hashAlgorithm, true);
-        $concatSignedFields = $originHash.$nonceHash;
+        $concatSignedFields = $originHash . $nonceHash;
 
         $result = openssl_verify($concatSignedFields, $decodedSignature, $publicKey, $hashAlgorithm);
         if (!$result) {
             throw new AuthTokenSignatureValidationException();
         }
-        
     }
 
     private function hashAlgorithmForName(string $algorithm): string
     {
-        return "sha".substr($algorithm, -3);
+        return "sha" . substr($algorithm, -3);
     }
 
     private function requireNotEmpty(string $argument, string $fieldName): void
     {
         if (empty($argument)) {
-            throw new AuthTokenParseException("'".$fieldName."' is null or empty");
+            throw new AuthTokenParseException("'" . $fieldName . "' is null or empty");
         }
-    }    
-
+    }
 }

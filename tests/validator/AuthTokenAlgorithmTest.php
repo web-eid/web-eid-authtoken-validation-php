@@ -56,5 +56,4 @@ class AuthTokenAlgorithmTest extends AbstractTestWithValidator
         $this->expectExceptionMessage("Invalid signature algorithm");
         $this->validator->validate($authToken, self::VALID_AUTH_TOKEN);
     }
-
 }

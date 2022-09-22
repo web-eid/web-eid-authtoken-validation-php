@@ -42,7 +42,7 @@ final class CertificateData
      * Get commonName from x509 certificate
      *
      * @throws UnexpectedValueException
-     */    
+     */
     public static function getSubjectCN(X509 $certificate): string
     {
         return self::getField($certificate, 'id-at-commonName');
@@ -52,7 +52,7 @@ final class CertificateData
      * Get surname from x509 certificate
      *
      * @throws UnexpectedValueException
-     */    
+     */
     public static function getSubjectSurname(X509 $certificate): string
     {
         return self::getField($certificate, 'id-at-surname');
@@ -62,7 +62,7 @@ final class CertificateData
      * Get given name from x509 certificate
      *
      * @throws UnexpectedValueException
-     */    
+     */
     public static function getSubjectGivenName(X509 $certificate): string
     {
         return self::getField($certificate, 'id-at-givenName');
@@ -72,7 +72,7 @@ final class CertificateData
      * Get serialNumber (ID-code) from x509 certificate
      *
      * @throws UnexpectedValueException
-     */    
+     */
     public static function getSubjectIdCode(X509 $certificate): string
     {
         return self::getField($certificate, 'id-at-serialNumber');
@@ -82,7 +82,7 @@ final class CertificateData
      * Get country code from x509 certificate
      *
      * @throws UnexpectedValueException
-     */    
+     */
     public static function getSubjectCountryCode(X509 $certificate): string
     {
         return self::getField($certificate, 'id-at-countryName');
@@ -93,15 +93,13 @@ final class CertificateData
      *
      * @throws UnexpectedValueException field identifier not found
      * @return string
-     */    
+     */
     private static function getField(X509 $certificate, string $fieldId): string
     {
         $result = $certificate->getSubjectDNProp($fieldId);
         if ($result) {
             return $result[0];
-        } 
-        throw new UnexpectedValueException('fieldId '.$fieldId.' not found in certificate subject');
+        }
+        throw new UnexpectedValueException('fieldId ' . $fieldId . ' not found in certificate subject');
     }
-
-
 }

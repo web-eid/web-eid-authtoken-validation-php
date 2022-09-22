@@ -40,7 +40,7 @@ final class CertificateValidator
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
-    }    
+    }
 
     public static function certificateIsValidOnDate(X509 $subjectCertificate, DateTime $date, string $subject): void
     {
@@ -52,14 +52,13 @@ final class CertificateValidator
 
             if ($date > new DateTime($subjectCertificate->getCurrentCert()['tbsCertificate']['validity']['notAfter']['utcTime'])) {
                 throw new CertificateExpiredException($subject);
-            }            
-
+            }
         }
     }
 
     public static function trustedCACertificatesAreValidOnDate(TrustedCertificates $trustedCertificates, DateTime $date): void
     {
-        foreach($trustedCertificates->getCertificates() as $cert) {
+        foreach ($trustedCertificates->getCertificates() as $cert) {
             self::certificateIsValidOnDate($cert, $date, "Trusted CA");
         }
     }
@@ -84,5 +83,4 @@ final class CertificateValidator
     {
         return new TrustedCertificates($certificates);
     }
-
 }

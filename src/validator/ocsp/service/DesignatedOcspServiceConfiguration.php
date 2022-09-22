@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
@@ -45,7 +46,7 @@ class DesignatedOcspServiceConfiguration
      * @param X509Collection $supportedCertificateIssuers - the certificate issuers supported by the service
      * @param bool $doesSupportNonce - true if the service supports the OCSP protocol nonce extension
      * @throws OCSPCertificateException when an error occurs while extracting issuer names from certificates
-     */    
+     */
     public function __construct(Uri $ocspServiceAccessLocation, X509 $responderCertificate, X509Collection $supportedCertificateIssuers, bool $doesSupportNonce)
     {
 
@@ -80,10 +81,9 @@ class DesignatedOcspServiceConfiguration
     private function getIssuerX500Names(X509Collection $supportedCertificateIssuers): array
     {
         $supportedIssuers = [];
-        foreach($supportedCertificateIssuers as $issuer) {
+        foreach ($supportedCertificateIssuers as $issuer) {
             $supportedIssuers[] = $issuer->getSubjectDN(X509::DN_STRING);
         }
         return $supportedIssuers;
     }
-
 }

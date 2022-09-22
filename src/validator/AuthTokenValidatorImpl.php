@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
@@ -61,7 +62,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     public function __construct(AuthTokenValidationConfiguration $configuration)
     {
         $this->logger = Log::getLogger(self::class);
-        
+
         // Copy the configuration object to make AuthTokenValidatorImpl immutable and thread-safe.
         $this->configuration = clone $configuration;
 
@@ -85,7 +86,6 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         }
 
         $this->authTokenSignatureValidator = new AuthTokenSignatureValidator($this->configuration->getSiteOrigin());
-
     }
 
     private function validateTokenLength(string $authToken): void
@@ -122,7 +122,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
             $this->logger->warning("Token parsing was interrupted: " . $e->getMessage());
             throw $e;
         }
-    } 
+    }
 
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
     {
@@ -139,7 +139,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     private function validateToken(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
     {
         if (is_null($authToken->getFormat()) || substr($authToken->getFormat(), 0, strlen(self::CURRENT_TOKEN_FORMAT_VERSION)) != self::CURRENT_TOKEN_FORMAT_VERSION) {
-            throw new AuthTokenParseException("Only token format version '".self::CURRENT_TOKEN_FORMAT_VERSION."' is currently supported");
+            throw new AuthTokenParseException("Only token format version '" . self::CURRENT_TOKEN_FORMAT_VERSION . "' is currently supported");
         }
         if (is_null($authToken->getUnverifiedCertificate()) || empty($authToken->getUnverifiedCertificate())) {
             throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
@@ -154,7 +154,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
 
         // It is guaranteed that if the signature verification succeeds, then the origin and challenge
         // have been implicitly and correctly verified without the need to implement any additional checks.
-        
+
         $this->authTokenSignatureValidator->validate(
             $authToken->getAlgorithm(),
             $authToken->getSignature(),

@@ -53,13 +53,12 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
         }
 
         // Loop through disallowed policies array
-        foreach($policies as $policy) {
+        foreach ($policies as $policy) {
             if (in_array($policy['policyIdentifier'], $this->disallowedSubjectCertificatePolicyIds)) {
                 throw new UserCertificateDisallowedPolicyException();
             }
         }
 
         $this->logger->debug("User certificate does not contain disallowed policies.");
-
     }
 }

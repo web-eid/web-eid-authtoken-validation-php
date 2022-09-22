@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
- declare(strict_types=1);
+declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\util;
+
 use Countable;
 
 final class TrustedCertificates implements Countable

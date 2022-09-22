@@ -37,7 +37,7 @@ final class ChallengeNonceGeneratorImpl implements ChallengeNonceGenerator
         $this->challengeNonceStore = $challengeNonceStore;
         $this->secureRandom = $secureRandom;
         $this->ttlSeconds = $ttlSeconds;
-    }    
+    }
 
     public function generateAndStoreNonce(): ChallengeNonce
     {
@@ -47,5 +47,5 @@ final class ChallengeNonceGeneratorImpl implements ChallengeNonceGenerator
         $challengeNonce = new ChallengeNonce($base64Nonce, $expirationTime);
         $this->challengeNonceStore->put($challengeNonce);
         return $challengeNonce;
-    }    
+    }
 }

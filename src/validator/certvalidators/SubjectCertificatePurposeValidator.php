@@ -38,7 +38,7 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
 
     public function __construct()
     {
-        $this->logger = Log::getLogger(self::class);    
+        $this->logger = Log::getLogger(self::class);
     }
 
     /**
@@ -46,7 +46,7 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
      *
      * @param subjectCertificate user certificate to be validated
      * @throws UserCertificateMissingPurposeException
-     */    
+     */
     public function validate(X509 $subjectCertificate): void
     {
         $usages = $subjectCertificate->getExtension('id-ce-extKeyUsage');

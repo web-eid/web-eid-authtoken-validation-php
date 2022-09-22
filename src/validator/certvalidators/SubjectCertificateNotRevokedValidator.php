@@ -44,7 +44,7 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
     private SubjectCertificateTrustedValidator $trustValidator;
     private OcspClient $ocspClient;
-    private OcspServiceProvider $ocspServiceProvider;    
+    private OcspServiceProvider $ocspServiceProvider;
 
     public function __construct(SubjectCertificateTrustedValidator $trustValidator, OcspClient $ocspClient, OcspServiceProvider $ocspServiceProvider)
     {
@@ -63,7 +63,7 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
             if (!$ocspService->doesSupportNonce()) {
                 $this->logger->debug("Disabling OCSP nonce extension");
             }
-    
+
             $certificateId = (new Ocsp())->generateCertificateId($subjectCertificate, $this->trustValidator->getSubjectCertificateIssuerCertificate());
             $request = (new OcspRequestBuilder())->withCertificateId($certificateId)->enableOcspNonce($ocspService->doesSupportNonce())->build();
 
@@ -81,11 +81,9 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
             if ($ocspService->doesSupportNonce()) {
                 $this->checkNonce($request, $response->getBasicResponse());
             }
-
         } catch (Throwable $e) {
             throw new UserCertificateOCSPCheckFailedException("Exception: " . $e->getMessage(), $e);
         }
-
     }
 
     private function verifyOcspResponse(OcspResponse $response, OcspService $ocspService, array $requestCertificateId): void
@@ -130,7 +128,7 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         //
         //   4. The signer is currently authorized to provide a response for the
         //      certificate in question.
-        
+
         $producedAt = $basicResponse->getProducedAt();
         $ocspService->validateResponderCertificate($responderCert, $producedAt);
 
@@ -146,7 +144,6 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         // Now we can accept the signed response as valid and validate the certificate status.
         OcspResponseValidator::validateSubjectCertificateStatus($response);
         $this->logger->debug("OCSP check result is GOOD");
-
     }
 
     private static function checkNonce(OcspRequest $request, OcspBasicResponse $basicResponse): void
@@ -158,5 +155,4 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
             throw new UserCertificateOCSPCheckFailedException("OCSP request and response nonces differ, possible replay attack");
         }
     }
-
 }

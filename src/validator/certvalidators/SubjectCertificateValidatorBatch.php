@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
@@ -35,7 +36,7 @@ class SubjectCertificateValidatorBatch
     public function __construct(SubjectCertificateValidator ...$validatorList)
     {
         $this->validatorList = new SubjectCertificateValidatorCollection(...$validatorList);
-    }    
+    }
 
     public function executeFor(X509 $subjectCertificate): void
     {

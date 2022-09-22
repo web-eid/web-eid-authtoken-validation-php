@@ -76,5 +76,4 @@ class AuthTokenValidationConfigurationTest extends TestCase
         array_push($configuration->getTrustedCACertificates(), "1");
         $configuration->validate();
     }
-
 }

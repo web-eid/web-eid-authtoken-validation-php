@@ -56,5 +56,4 @@ class CertificateValidatorTest extends TestCase
         $cert = Certificates::getJaakKristjanEsteid2018Cert();
         $this->assertNull(CertificateValidator::certificateIsValidOnDate($cert, new DateTime("20.01.2050 16:00:00"), "User"));
     }
-
 }

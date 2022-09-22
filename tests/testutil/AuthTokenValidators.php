@@ -50,7 +50,7 @@ final class AuthTokenValidators
 
     public static function getAuthTokenValidatorWithOcspCheck(): AuthTokenValidator
     {
-        return (self::getAuthTokenValidatorBuilder(self::TOKEN_ORIGIN_URL, self::getCACertificates()))->build();    
+        return (self::getAuthTokenValidatorBuilder(self::TOKEN_ORIGIN_URL, self::getCACertificates()))->build();
     }
 
     public static function getAuthTokenValidatorWithDesignatedOcspCheck()
@@ -77,13 +77,12 @@ final class AuthTokenValidators
     {
         return self::getAuthTokenValidator(
             self::TOKEN_ORIGIN_URL,
-            ...CertificateLoader::loadCertificatesFromResources(__DIR__."/../_resources/ESTEID2018.cer")
+            ...CertificateLoader::loadCertificatesFromResources(__DIR__ . "/../_resources/ESTEID2018.cer")
         );
-    }    
+    }
 
     private static function getCACertificates(): array
     {
-        return CertificateLoader::loadCertificatesFromResources(__DIR__."/../_resources/TEST_of_ESTEID2018.cer");
+        return CertificateLoader::loadCertificatesFromResources(__DIR__ . "/../_resources/TEST_of_ESTEID2018.cer");
     }
-
 }

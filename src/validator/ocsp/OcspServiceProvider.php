@@ -50,7 +50,7 @@ class OcspServiceProvider
      *
      * @param certificate subject certificate that is to be checked with OCSP
      * @return OcspService either the designated or AIA OCSP service instance
-     */    
+     */
     public function getService(X509 $certificate): OcspService
     {
         if (!is_null($this->designatedOcspService) && $this->designatedOcspService->supportsIssuerOf($certificate)) {
@@ -59,5 +59,4 @@ class OcspServiceProvider
 
         return new AiaOcspService($this->aiaOcspServiceConfiguration, $certificate);
     }
-
 }
