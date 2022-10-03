@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\util;
+namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
 use BadFunctionCallException;
 
