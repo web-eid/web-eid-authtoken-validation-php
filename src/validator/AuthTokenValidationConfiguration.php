@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
-use web_eid\web_eid_authtoken_validation_php\util\SubjectCertificatePolicies;
+use web_eid\web_eid_authtoken_validation_php\certificate\SubjectCertificatePolicies;
 use web_eid\web_eid_authtoken_validation_php\util\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
@@ -38,7 +38,7 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOc
 final class AuthTokenValidationConfiguration
 {
     private ?Uri $siteOrigin = null;
-    private array $trustedCACertificates = array();
+    private array $trustedCACertificates = [];
     private bool $isUserCertificateRevocationCheckWithOcspEnabled = true;
     private int $ocspRequestTimeout = 5;
     private array $disallowedSubjectCertificatePolicies;
