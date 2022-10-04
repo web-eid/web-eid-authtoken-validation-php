@@ -42,6 +42,9 @@ final class CertificateValidator
         throw new BadFunctionCallException("Utility class");
     }
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public static function certificateIsValidOnDate(X509 $subjectCertificate, DateTime $date, string $subject): void
     {
         if (!$subjectCertificate->validateDate($date)) {
@@ -63,6 +66,9 @@ final class CertificateValidator
         }
     }
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public static function validateIsSignedByTrustedCA(X509 $certificate, TrustedCertificates $trustedCertificates): X509
     {
         foreach ($trustedCertificates->getCertificates() as $trustedCertificate) {

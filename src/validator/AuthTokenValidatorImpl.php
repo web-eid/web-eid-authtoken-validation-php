@@ -44,6 +44,7 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClientImpl;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServiceConfiguration;
+use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 
 final class AuthTokenValidatorImpl implements AuthTokenValidator
 {
@@ -54,11 +55,15 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     private AuthTokenValidationConfiguration $configuration;
     private SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators;
     private AuthTokenSignatureValidator $authTokenSignatureValidator;
+    private TrustedCertificates $trustedCACertificates;
     private Log $logger;
 
     private OcspClient $ocspClient;
     private OcspServiceProvider $ocspServiceProvider;
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public function __construct(AuthTokenValidationConfiguration $configuration)
     {
         $this->logger = Log::getLogger(self::class);
@@ -67,9 +72,10 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         $this->configuration = clone $configuration;
 
         // Create and cache trusted CA certificate JCA objects for SubjectCertificateTrustedValidator and AiaOcspService.
-        $this->trustedCertificates = CertificateValidator::buildTrustFromCertificates($configuration->getTrustedCACertificates());
+        $this->trustedCACertificates = CertificateValidator::buildTrustFromCertificates($configuration->getTrustedCACertificates());
+
         $this->simpleSubjectCertificateValidators = new SubjectCertificateValidatorBatch(
-            new SubjectCertificateExpiryValidator($this->trustedCertificates),
+            new SubjectCertificateExpiryValidator($this->trustedCACertificates),
             new SubjectCertificatePurposeValidator(),
             new SubjectCertificatePolicyValidator($configuration->getDisallowedSubjectCertificatePolicies())
         );
@@ -80,7 +86,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
                 $configuration->getDesignatedOcspServiceConfiguration(),
                 new AiaOcspServiceConfiguration(
                     $configuration->getNonceDisabledOcspUrls(),
-                    $this->trustedCertificates
+                    $this->trustedCACertificates
                 )
             );
         }
@@ -91,10 +97,10 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     private function validateTokenLength(string $authToken): void
     {
         if (is_null($authToken) || strlen($authToken) < self::TOKEN_MIN_LENGTH) {
-            throw new AuthTokenParseException('Auth token is null or too short');
+            throw new AuthTokenParseException("Auth token is null or too short");
         }
         if (strlen($authToken) > self::TOKEN_MAX_LENGTH) {
-            throw new AuthTokenParseException('Auth token is too long');
+            throw new AuthTokenParseException("Auth token is too long");
         }
     }
 
@@ -136,16 +142,16 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         }
     }
 
-    private function validateToken(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
+    private function validateToken(WebEidAuthToken $token, string $currentChallengeNonce): X509
     {
-        if (is_null($authToken->getFormat()) || substr($authToken->getFormat(), 0, strlen(self::CURRENT_TOKEN_FORMAT_VERSION)) != self::CURRENT_TOKEN_FORMAT_VERSION) {
+        if (is_null($token->getFormat()) || substr($token->getFormat(), 0, strlen(self::CURRENT_TOKEN_FORMAT_VERSION)) != self::CURRENT_TOKEN_FORMAT_VERSION) {
             throw new AuthTokenParseException("Only token format version '" . self::CURRENT_TOKEN_FORMAT_VERSION . "' is currently supported");
         }
-        if (is_null($authToken->getUnverifiedCertificate()) || empty($authToken->getUnverifiedCertificate())) {
+        if (is_null($token->getUnverifiedCertificate()) || empty($token->getUnverifiedCertificate())) {
             throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
         }
         $subjectCertificate = new X509();
-        if (!$subjectCertificate->loadX509($authToken->getUnverifiedCertificate())) {
+        if (!$subjectCertificate->loadX509($token->getUnverifiedCertificate())) {
             throw new CertificateDecodingException("'unverifiedCertificate' decode failed");
         }
 
@@ -156,8 +162,8 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         // have been implicitly and correctly verified without the need to implement any additional checks.
 
         $this->authTokenSignatureValidator->validate(
-            $authToken->getAlgorithm(),
-            $authToken->getSignature(),
+            $token->getAlgorithm(),
+            $token->getSignature(),
             $subjectCertificate->getPublicKey(),
             $currentChallengeNonce
         );
@@ -168,7 +174,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     private function getCertTrustValidators(): SubjectCertificateValidatorBatch
     {
 
-        $certTrustedValidator = new SubjectCertificateTrustedValidator($this->trustedCertificates);
+        $certTrustedValidator = new SubjectCertificateTrustedValidator($this->trustedCACertificates);
 
         $validatorBatch = new SubjectCertificateValidatorBatch(
             $certTrustedValidator

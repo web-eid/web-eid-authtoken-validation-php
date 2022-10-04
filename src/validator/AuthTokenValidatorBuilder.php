@@ -67,6 +67,8 @@ class AuthTokenValidatorBuilder
      * <p>
      * At least one trusted intermediate Certificate Authority must be provided as a mandatory configuration parameter.
      *
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     * 
      * @param X509 $certificates trusted intermediate Certificate Authority certificates
      * @return the builder instance for method chaining
      */
@@ -83,6 +85,8 @@ class AuthTokenValidatorBuilder
      * Adds the given policies to the list of disallowed user certificate policies.
      * In order for the user certificate to be considered valid, it must not contain any policies
      * present in this list.
+     * 
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      *
      * @param string $policies disallowed user certificate policies as string array
      * @return the builder instance for method chaining
@@ -133,6 +137,8 @@ class AuthTokenValidatorBuilder
      * Adds the given URLs to the list of OCSP URLs for which the nonce protocol extension will be disabled.
      * The OCSP URL is extracted from the user certificate and some OCSP services don't support the nonce extension.
      *
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     * 
      * @param URI $urls OCSP URLs for which the nonce protocol extension will be disabled
      * @return the builder instance for method chaining
      */

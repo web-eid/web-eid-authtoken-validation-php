@@ -45,6 +45,9 @@ final class AuthTokenValidationConfiguration
     private UriCollection $nonceDisabledOcspUrls;
     private ?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration = null;
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public function __construct()
     {
         // Don't allow Estonian Mobile-ID policy by default.
@@ -120,13 +123,13 @@ final class AuthTokenValidationConfiguration
     public function validate(): void
     {
         if (is_null($this->siteOrigin)) {
-            throw new InvalidArgumentException('Origin URI must not be null');
+            throw new InvalidArgumentException("Origin URI must not be null");
         }
 
         self::validateIsOriginURL($this->siteOrigin);
 
         if (count($this->trustedCACertificates) == 0) {
-            throw new InvalidArgumentException('At least one trusted certificate authority must be provided');
+            throw new InvalidArgumentException("At least one trusted certificate authority must be provided");
         }
 
         DateAndTime::requirePositiveDuration($this->ocspRequestTimeout, "OCSP request timeout");
@@ -143,7 +146,7 @@ final class AuthTokenValidationConfiguration
     {
         // 1. Verify that the URI can be converted to absolute URL.
         if (!$uri->isAbsolute()) {
-            throw new InvalidArgumentException('Provided URI is not a valid URL');
+            throw new InvalidArgumentException("Provided URI is not a valid URL");
         }
 
         $reference = $uri->createFromArray([
@@ -154,7 +157,7 @@ final class AuthTokenValidationConfiguration
 
         // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
         if ($uri->getUrl() !== $reference->getUrl()) {
-            throw new InvalidArgumentException('Origin URI must only contain the HTTPS scheme, host and optional port component');
+            throw new InvalidArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component");
         }
     }
 }

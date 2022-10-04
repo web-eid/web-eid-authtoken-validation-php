@@ -33,6 +33,9 @@ class SubjectCertificateValidatorBatch
 {
     private SubjectCertificateValidatorCollection $validatorList;
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public function __construct(SubjectCertificateValidator ...$validatorList)
     {
         $this->validatorList = new SubjectCertificateValidatorCollection(...$validatorList);
