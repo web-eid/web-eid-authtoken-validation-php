@@ -44,6 +44,9 @@ class ChallengeNonceGeneratorBuilder
      */
     private $secureRandom;
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public function __construct()
     {
         // 5 minutes
@@ -57,6 +60,8 @@ class ChallengeNonceGeneratorBuilder
      * Override default nonce time-to-live duration.
      * <p>
      * When the time-to-live passes, the nonce is considered to be expired.
+     * 
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      *
      * @param int $seconds - challenge nonce time-to-live duration in seconds
      * @return ChallengeNonceGeneratorBuilder builder instance
@@ -92,6 +97,11 @@ class ChallengeNonceGeneratorBuilder
         return $this;
     }
 
+    /**
+     * Validates the configuration and builds the {@link ChallengeNonceGenerator} instance.
+     *
+     * @return new challenge nonce generator instance
+     */
     public function build(): ChallengeNonceGenerator
     {
         // Force to use PHP session based nounce store when store is not set
@@ -102,7 +112,7 @@ class ChallengeNonceGeneratorBuilder
         return new ChallengeNonceGeneratorImpl($this->challengeNonceStore, $this->secureRandom, $this->ttl);
     }
 
-    private function  validateParameters(): void
+    private function validateParameters(): void
     {
         if (is_null($this->challengeNonceStore)) {
             throw new InvalidArgumentException("Challenge nonce store must not be null");

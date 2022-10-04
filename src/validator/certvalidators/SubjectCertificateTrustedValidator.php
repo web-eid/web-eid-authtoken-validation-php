@@ -31,21 +31,21 @@ use web_eid\web_eid_authtoken_validation_php\util\Log;
 
 final class SubjectCertificateTrustedValidator implements SubjectCertificateValidator
 {
-    private TrustedCertificates $trustedCertificates;
+    private TrustedCertificates $trustedCACertificates;
     private X509 $subjectCertificateIssuerCertificate;
     private Log $logger;
 
-    public function __construct(TrustedCertificates $trustedCertificates)
+    public function __construct(TrustedCertificates $trustedCACertificates)
     {
         $this->logger = Log::getLogger(self::class);
-        $this->trustedCertificates = $trustedCertificates;
+        $this->trustedCACertificates = $trustedCACertificates;
     }
 
     public function validate(X509 $subjectCertificate): void
     {
         $this->subjectCertificateIssuerCertificate = CertificateValidator::validateIsSignedByTrustedCA(
             $subjectCertificate,
-            $this->trustedCertificates
+            $this->trustedCACertificates
         );
 
         $this->logger->debug("Subject certificate is signed by a trusted CA");

@@ -67,6 +67,9 @@ final class DateAndTime
         }
     }
 
+    /**
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     */
     public static function toUtcString(?DateTime $date): string
     {
         if (is_null($date)) {
@@ -76,9 +79,13 @@ final class DateAndTime
     }
 }
 
+/**
+ * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+ */
 final class DefaultClock
 {
     private static DefaultClock $instance;
+    private DateTime $mockedClock;
 
     public static function getInstance()
     {

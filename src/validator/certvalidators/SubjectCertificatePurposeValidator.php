@@ -44,6 +44,8 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
     /**
      * Validates that the purpose of the user certificate from the authentication token contains client authentication.
      *
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+     * 
      * @param subjectCertificate user certificate to be validated
      * @throws UserCertificateMissingPurposeException
      */

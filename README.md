@@ -4,6 +4,8 @@
 
 web-eid-authtoken-validation-php is a PHP library for issuing challenge nonces and validating Web eID authentication tokens during secure authentication with electronic ID (eID) smart cards in web applications.
 
+The logic of this repository is based on the [Java library](https://github.com/web-eid/web-eid-authtoken-validation-java). We also draw inspiration from the [PHP library](https://github.com/Muzosh/web-eid-authtoken-validation-php) created by Petr Muzikant and used some of his code.
+
 More information about the Web eID project is available on the project [website](https://web-eid.eu/).
 
 # Quickstart

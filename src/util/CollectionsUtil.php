@@ -12,6 +12,9 @@ use phpseclib3\File\X509;
 use TypeError;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificateValidator;
 
+/**
+ * @copyright 2022 Petr Muzikant pmuzikant@email.cz
+ */
 abstract class Collection implements Countable, IteratorAggregate, ArrayAccess
 {
     protected array $array;

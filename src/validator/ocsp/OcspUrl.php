@@ -40,6 +40,8 @@ final class OcspUrl
 
     /**
      * Returns the OCSP responder {@link URI} or {@code null} if it doesn't have one.
+     * 
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      */
     public static function getOcspUri(X509 $certificate): ?Uri
     {
