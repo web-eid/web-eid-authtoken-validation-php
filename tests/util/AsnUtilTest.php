@@ -22,15 +22,31 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\exceptions;
+namespace web_eid\web_eid_authtoken_validation_php\util;
 
-/**
- * Thrown when PHP session is not started (session_start() is not executed)
- */
-class SessionNotExistException extends AuthTokenException
+use PHPUnit\Framework\TestCase;
+
+class AsnUtilTest extends TestCase
 {
-    public function __construct()
+    public function testTranscodeSignatureToDer(): void
     {
-        parent::__construct("PHP session not started");
+        $signature = "7V8AcyP23QWuVZAOSJuZ2cLLn3l41VgTmQ4q9GTjV8ENkFKAXtwVk8cTvfVODl3ZU4xEA9CvF6xJ8ysBdAew8Q";
+        $decodedSignature = base64_decode($signature);
+        $result = AsnUtil::transcodeSignatureToDER($decodedSignature);
+        $valueArr = [];
+        for ($i = 0; $i < strlen($result); $i++) {
+            $valueArr[$i] = ord(substr($result, $i));
+        }
+        // First byte value
+        $this->assertEquals($valueArr[0], 48);
+        // Length
+        $this->assertEquals($valueArr[1], count($valueArr) - 2);
+        // Third byte value must be 2
+        $this->assertEquals($valueArr[2], 2);
+        // Next byte value 2 positon
+        $separator = $valueArr[$valueArr[3] + 4];
+        $this->assertEquals($separator, 2);
+        
+        $this->assertEquals($valueArr[$separator + 1], count($valueArr) - $valueArr[3] - 5);
     }
 }

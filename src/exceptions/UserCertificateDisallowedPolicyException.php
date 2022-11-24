@@ -31,6 +31,6 @@ class UserCertificateDisallowedPolicyException extends AuthTokenException
 {
     public function __construct()
     {
-        parent::__construct('Disallowed user certificate policy');
+        parent::__construct("Disallowed user certificate policy");
     }
 }

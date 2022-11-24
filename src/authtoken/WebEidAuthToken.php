@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\authtoken;
 
 use UnexpectedValueException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class WebEidAuthToken
 {
@@ -56,7 +57,7 @@ class WebEidAuthToken
     {
         $jsonDecoded = json_decode($authenticationTokenJSON, true);
         if (is_null($jsonDecoded)) {
-            return null;
+            throw new AuthTokenParseException("Web eID authentication token is null");
         }
 
         // unverifiedCertificate
@@ -86,19 +87,9 @@ class WebEidAuthToken
         return $this->unverifiedCertificate;
     }
 
-    public function setUnverifiedCertificate(string $unverifiedCertificate): void
-    {
-        $this->unverifiedCertificate = $unverifiedCertificate;
-    }
-
     public function getAlgorithm(): ?string
     {
         return $this->algorithm;
-    }
-
-    public function setAlgorithm(string $algorithm): void
-    {
-        $this->algorithm = $algorithm;
     }
 
     public function getSignature(): ?string
@@ -106,19 +97,9 @@ class WebEidAuthToken
         return $this->signature;
     }
 
-    public function setSignature(string $signature): void
-    {
-        $this->signature = $signature;
-    }
-
     public function getFormat(): ?string
     {
         return $this->format;
-    }
-
-    public function setFormat(string $format): void
-    {
-        $this->format = $format;
     }
 
     public function getAppVersion(): ?string
@@ -130,7 +111,7 @@ class WebEidAuthToken
     {
         $type = gettype($data);
         if ($type != "string") {
-            throw new UnexpectedValueException("'{$key}' is {$type}, string expected");
+            throw new UnexpectedValueException("Error parsing Web eID authentication token: '{$key}' is {$type}, string expected");
         }
         return $data;
     }

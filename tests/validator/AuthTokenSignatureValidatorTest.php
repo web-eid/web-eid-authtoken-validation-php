@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use PHPUnit\Framework\TestCase;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
 use phpseclib3\File\X509;

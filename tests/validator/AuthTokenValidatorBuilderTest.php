@@ -24,11 +24,12 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
+use GuzzleHttp\Psr7\Exception\MalformedUriException;
 use PHPUnit\Framework\TestCase;
 use InvalidArgumentException;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
-use web_eid\web_eid_authtoken_validation_php\exceptions\MalformedUriException;
+use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
 
 class AuthTokenValidatorBuilderTest extends TestCase
 {
@@ -37,7 +38,7 @@ class AuthTokenValidatorBuilderTest extends TestCase
 
     protected function setUp(): void
     {
-        self::$builder = new AuthTokenValidatorBuilder();
+        self::$builder = new AuthTokenValidatorBuilder(new Logger());
     }
 
     public function testOriginMissing(): void
@@ -79,7 +80,7 @@ class AuthTokenValidatorBuilderTest extends TestCase
     public function testValidatorOriginNotValidUrl(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Provided URI is not a valid URL");
+        $this->expectExceptionMessage("Origin URI must only contain the HTTPS scheme, host and optional port component");
         AuthTokenValidators::getAuthTokenValidator("ria://ria.ee");
     }
 

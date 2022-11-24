@@ -6,18 +6,20 @@
     <div class="details"></div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script type="module">
     "use strict";
     import * as webeid from "./js/web-eid.js";
-    import {hideErrorMessage, showErrorMessage, checkHttpError} from "./js/errors.js";
+    import {
+        hideErrorMessage,
+        showErrorMessage,
+        checkHttpError
+    } from "./js/errors.js";
 
     hideErrorMessage();
 
     const authButton = document.querySelector("#webeid-auth-button");
 
     const csrfToken = document.querySelector('#csrftoken').content;
-    const csrfHeaderName = document.querySelector('#csrfheadername').content;
 
     const lang = new URLSearchParams(window.location.search).get("lang") || "en";
 
@@ -33,15 +35,19 @@
                 }
             });
             await checkHttpError(challengeResponse);
-            const {nonce} = await challengeResponse.json();
+            const {
+                nonce
+            } = await challengeResponse.json();
 
-            const authToken = await webeid.authenticate(nonce, {lang});
+            const authToken = await webeid.authenticate(nonce, {
+                lang
+            });
 
             const authTokenResponse = await fetch("./validate", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    [csrfHeaderName]: csrfToken
+                    "X-CSRF-TOKEN": csrfToken
                 },
                 body: `${JSON.stringify(authToken)}`
             });
@@ -61,4 +67,4 @@
     });
 
     //# sourceURL=index.js
-</script>    
+</script>

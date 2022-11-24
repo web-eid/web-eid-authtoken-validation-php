@@ -29,6 +29,6 @@ class ChallengeNullOrEmptyException extends AuthTokenException
 
     public function __construct()
     {
-        parent::__construct('Provided challenge is null or empty');
+        parent::__construct("Provided challenge is null or empty");
     }
 }

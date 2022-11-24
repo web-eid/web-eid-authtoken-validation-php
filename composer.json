@@ -33,6 +33,11 @@
     ],
     "require": {
         "phpseclib/phpseclib": "3.0.14",
-        "web_eid/ocsp_php": "dev-main"
+        "guzzlehttp/psr7": "2.4.3",
+        "web_eid/ocsp_php": "dev-development",
+        "psr/log": "^3.0"
+    },
+    "scripts": {
+        "fix-php": ["prettier src/**/* --write", "prettier examples/src/* --write"]
     }
 }

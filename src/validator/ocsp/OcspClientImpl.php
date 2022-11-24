@@ -25,9 +25,9 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
-use web_eid\web_eid_authtoken_validation_php\util\Log;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\ocsp_php\OcspResponse;
+use Psr\Log\LoggerInterface;
 
 class OcspClientImpl implements OcspClient
 {
@@ -35,23 +35,23 @@ class OcspClientImpl implements OcspClient
     private const OCSP_REQUEST_TYPE = "application/ocsp-request";
     private const OCSP_RESPONSE_TYPE = "application/ocsp-response";
     private int $requestTimeout;
-    private Log $logger;
+    private $logger;
 
-    public function __construct(int $ocspRequestTimeout)
+    public function __construct(int $ocspRequestTimeout, LoggerInterface $logger = null)
     {
         $this->requestTimeout = $ocspRequestTimeout;
-        $this->logger = Log::getLogger(self::class);
+        $this->logger = $logger;
     }
 
-    public static function build(int $ocspRequestTimeout): OcspClient
+    public static function build(int $ocspRequestTimeout, LoggerInterface $logger = null): OcspClient
     {
-        return new OcspClientImpl($ocspRequestTimeout);
+        return new OcspClientImpl($ocspRequestTimeout, $logger);
     }
 
     public function request(Uri $uri, string $encodedOcspRequest): OcspResponse
     {
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $uri->getUrl());
+        curl_setopt($curl, CURLOPT_URL, $uri->jsonSerialize());
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_FAILONERROR, true);
         curl_setopt($curl, CURLOPT_POST, true);
@@ -73,7 +73,9 @@ class OcspClientImpl implements OcspClient
         $response = new OcspResponse($result);
 
         $responseJson = json_encode($response->getResponse(), JSON_INVALID_UTF8_IGNORE);
-        $this->logger->debug("OCSP response: ", json_encode($responseJson));
+        if ($this->logger) {
+            $this->logger->debug("OCSP response: " . $responseJson);
+        }
 
         if ($info["content_type"] !== self::OCSP_RESPONSE_TYPE) {
             throw new UserCertificateOCSPCheckFailedException("OCSP response content type is not " . self::OCSP_RESPONSE_TYPE);

@@ -26,7 +26,7 @@ namespace web_eid\web_eid_authtoken_validation_php\testutil;
 
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder;
 
@@ -60,7 +60,7 @@ final class AuthTokenValidators
 
     private static function getAuthTokenValidatorBuilder(string $uri, array $certificates): AuthTokenValidatorBuilder
     {
-        return (new AuthTokenValidatorBuilder)
+        return (new AuthTokenValidatorBuilder(new Logger()))
             ->withSiteOrigin(new Uri($uri))
             ->withTrustedCertificateAuthorities(...$certificates);
     }

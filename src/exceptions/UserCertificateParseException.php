@@ -31,6 +31,6 @@ class UserCertificateParseException extends AuthTokenException
 {
     public function __construct()
     {
-        parent::__construct('Error parsing certificate');
+        parent::__construct("Error parsing certificate");
     }
 }

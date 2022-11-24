@@ -31,6 +31,7 @@ use web_eid\ocsp_php\OcspResponse;
 use web_eid\ocsp_php\util\AsnUtil;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
+use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
 use web_eid\web_eid_authtoken_validation_php\testutil\OcspServiceMaker;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
@@ -50,7 +51,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     protected function setUp(): void
     {
         AsnUtil::loadOIDs();
-        $this->trustedValidator = new SubjectCertificateTrustedValidator(new TrustedCertificates([]));
+        $this->trustedValidator = new SubjectCertificateTrustedValidator(new TrustedCertificates([]), new Logger());
         self::setSubjectCertificateIssuerCertificate($this->trustedValidator);
         $this->estEid2018Cert = Certificates::getJaakKristjanEsteid2018Cert();
     }

@@ -24,10 +24,13 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\exceptions;
 
-class MalformedUriException extends AuthTokenException
+/**
+ * Thrown when PHP session is not started (session_start() is not executed)
+ */
+class SessionDoesNotExistException extends AuthTokenException
 {
-    public function __construct(string $uri)
+    public function __construct()
     {
-        parent::__construct("Unable to parse URI: $uri");
+        parent::__construct("PHP session not started");
     }
 }

@@ -35,16 +35,26 @@ Add the following lines to `composer.json` to include the Web eID authentication
 ]
 ```
 
-### Configure the log file location
+### Logging
 
-By default, log entries are written to the server log. If there is a need to collect log entries in a separate file, define the constant `LOGFILE` for the log file location.
+For logging, you have to create `LoggerInterface` and use it on `AuthTokenValidatorBuilder` initialization.
 
-Example:
+Example logger interface with Monolog:
 ```php
-define("LOGFILE", dirname(__FILE__) . "/../log/web-eid-authtoken-validation-php.log");
-```
+use Monolog\Level;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
-It is essential, that your log file directory has write access.
+...
+$log = new Logger("general");
+$log->pushHandler(new StreamHandler("/some/path/app.log", Level::Debug));
+
+return (new AuthTokenValidatorBuilder($log))
+      ->withSiteOrigin(new Uri("https://example.org"))
+      ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
+      ->build();
+```
+Read more about [LoggerInterface](https://www.php-fig.org/psr/psr-3/) and take a look from examples directory.
 
 ## 2. Configure the challenge nonce store
 
@@ -90,7 +100,7 @@ public function trustedIntermediateCACertificates(): array
 Once the prerequisites have been met, the authentication token validator itself can be configured. The mandatory parameters are the website origin and trusted certificate authorities. The authentication token validator will be used in the login processing component of your web application authentication framework
 
 ```php
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder;
 
@@ -98,7 +108,7 @@ use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder
 public function tokenValidator(): AuthTokenValidator
 {
     return (new AuthTokenValidatorBuilder())
-      ->withSiteOrigin(new Uri('https://example.org'))
+      ->withSiteOrigin(new Uri("https://example.org"))
       ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
       ->build();
 }
@@ -118,24 +128,24 @@ class Router
     {
 
         $router = new AltoRouter();
-        $router->setBasePath('');
+        $router->setBasePath("");
         
-        $router->map('GET', '', ['controller' => 'Pages', 'method' => 'login']);
-        $router->map('GET', '/nonce', ['controller' => 'Auth', 'method' => 'getNonce']);
+        $router->map("GET", "/", ["controller" => "Pages", "method" => "login"]);
+        $router->map("GET", "/nonce", ["controller" => "Auth", "method" => "getNonce"]);
         
         $match = $router->match();
 
         if (!$match) {
             // Redirect to main
-            header("location:/");
+            header('Location: /');
             return;
         }
 
 
-        $controller = new $match['target']['controller'];
-        $method = $match['target']['method'];
+        $controller = new $match["target"]["controller"];
+        $method = $match["target"]["method"];
 
-        call_user_func([$controller, $method], $match['params'], []);        
+        call_user_func([$controller, $method], $match["params"], []);
 
     }
 }
@@ -147,14 +157,13 @@ class Auth
     {
 
         try {
-            header('Content-Type: application/json; charset=utf-8');
+            header("Content-Type: application/json; charset=utf-8");
             $generator = $this->generator();
             $challengeNonce = $generator->generateAndStoreNonce();
-            $responseArr = [];
-            $responseArr["nonce"] = $challengeNonce->getBase64EncodedNonce();
+            $responseArr["nonce" => $challengeNonce->getBase64EncodedNonce()];
             echo json_encode($responseArr);
         } catch (Exception $e) {
-            header("HTTP/1.0 400 Bad Request");
+            header("HTTP/1.0 500 Internal Server Error");
             echo $e->getMessage();
         }
     }
@@ -222,6 +231,7 @@ See the complete example from the ***examples*** directory.
   - [Basic usage](#basic-usage-1)
   - [Extended configuration](#extended-configuration-1)  
 - [Example implementation](#example-implementation)
+- [Code formatting](#code-formatting)
 - [Testing](#testing)
 
 # Introduction
@@ -370,6 +380,18 @@ composer dump-autoload
 ```
 
 Please note, that there are no certificate files included in this example. You can find certificates from [here](https://www.skidsolutions.eu/en/repository/certs)
+
+# Code formatting
+
+We are using `Prettier` for code formatting. To install Prettier, use following command:
+
+```
+npm install --global prettier @prettier/plugin-php
+```
+Run command for code formatting:
+```
+composer fix-php
+```
 
 # Testing
 

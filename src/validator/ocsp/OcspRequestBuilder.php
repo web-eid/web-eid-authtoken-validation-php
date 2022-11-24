@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use web_eid\ocsp_php\OcspRequest;
+use web_eid\web_eid_authtoken_validation_php\util\SecureRandom;
 
 final class OcspRequestBuilder
 {
@@ -38,7 +39,7 @@ final class OcspRequestBuilder
     public function __construct()
     {
         $this->secureRandom = function ($nonce_length): string {
-            return $this->generateSecureRandom($nonce_length);
+            return SecureRandom::generate($nonce_length);
         };
     }
 
@@ -65,17 +66,5 @@ final class OcspRequestBuilder
         }
 
         return $ocspRequest;
-    }
-
-    private function generateSecureRandom(int $nounce_length): string
-    {
-        // Try random_bytes function as default for generating random bytes 
-        if (function_exists('random_bytes')) {
-            return random_bytes($nounce_length);
-        }
-        // Try openssl_random_pseudo_bytes function as second option for generating random bytes 
-        if (function_exists('openssl_random_pseudo_bytes')) {
-            return openssl_random_pseudo_bytes($nounce_length);
-        }
     }
 }

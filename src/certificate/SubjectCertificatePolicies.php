@@ -36,6 +36,6 @@ final class SubjectCertificatePolicies
 
     public function __construct()
     {
-        throw new BadFunctionCallException('Utility class');
+        throw new BadFunctionCallException("Utility class");
     }
 }

@@ -25,7 +25,6 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
 use phpseclib3\File\X509;
-use web_eid\web_eid_authtoken_validation_php\util\Log;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspRequestBuilder;
@@ -37,18 +36,19 @@ use web_eid\ocsp_php\OcspRequest;
 use web_eid\ocsp_php\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\OcspService;
+use Psr\Log\LoggerInterface;
 
 final class SubjectCertificateNotRevokedValidator implements SubjectCertificateValidator
 {
-    private Log $logger;
+    private $logger;
 
     private SubjectCertificateTrustedValidator $trustValidator;
     private OcspClient $ocspClient;
     private OcspServiceProvider $ocspServiceProvider;
 
-    public function __construct(SubjectCertificateTrustedValidator $trustValidator, OcspClient $ocspClient, OcspServiceProvider $ocspServiceProvider)
+    public function __construct(SubjectCertificateTrustedValidator $trustValidator, OcspClient $ocspClient, OcspServiceProvider $ocspServiceProvider, LoggerInterface $logger = null)
     {
-        $this->logger = Log::getLogger(self::class);
+        $this->logger = $logger;
         $this->trustValidator = $trustValidator;
         $this->ocspClient = $ocspClient;
         $this->ocspServiceProvider = $ocspServiceProvider;
@@ -60,18 +60,19 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
             $ocspService = $this->ocspServiceProvider->getService($subjectCertificate);
 
-            if (!$ocspService->doesSupportNonce()) {
+            if ($this->logger && !$ocspService->doesSupportNonce()) {
                 $this->logger->debug("Disabling OCSP nonce extension");
             }
 
             $certificateId = (new Ocsp())->generateCertificateId($subjectCertificate, $this->trustValidator->getSubjectCertificateIssuerCertificate());
             $request = (new OcspRequestBuilder())->withCertificateId($certificateId)->enableOcspNonce($ocspService->doesSupportNonce())->build();
 
-            $this->logger->debug("Sending OCSP request");
+            if ($this->logger) {
+                $this->logger->debug("Sending OCSP request");
+            }
 
             $response = $this->ocspClient->request($ocspService->getAccessLocation(), $request->getEncodeDer());
 
-            // When status is not successful
             if ($response->getStatus() != "successful") {
                 throw new UserCertificateOCSPCheckFailedException("OCSP response status: " . $response->getStatus());
             }
@@ -143,7 +144,10 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
         // Now we can accept the signed response as valid and validate the certificate status.
         OcspResponseValidator::validateSubjectCertificateStatus($response);
-        $this->logger->debug("OCSP check result is GOOD");
+
+        if ($this->logger) {
+            $this->logger->debug("OCSP check result is GOOD");
+        }
     }
 
     private static function checkNonce(OcspRequest $request, OcspBasicResponse $basicResponse): void

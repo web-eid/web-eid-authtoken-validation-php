@@ -38,13 +38,13 @@ use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCer
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificatePurposeValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificateTrustedValidator;
 use UnexpectedValueException;
-use web_eid\web_eid_authtoken_validation_php\util\Log;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificateNotRevokedValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClientImpl;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServiceConfiguration;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
+use Psr\Log\LoggerInterface;
 
 final class AuthTokenValidatorImpl implements AuthTokenValidator
 {
@@ -56,7 +56,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     private SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators;
     private AuthTokenSignatureValidator $authTokenSignatureValidator;
     private TrustedCertificates $trustedCACertificates;
-    private Log $logger;
+    private $logger;
 
     private OcspClient $ocspClient;
     private OcspServiceProvider $ocspServiceProvider;
@@ -64,28 +64,26 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     /**
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      */
-    public function __construct(AuthTokenValidationConfiguration $configuration)
+    public function __construct(AuthTokenValidationConfiguration $configuration, LoggerInterface $logger = null)
     {
-        $this->logger = Log::getLogger(self::class);
+        $this->logger = $logger;
+        $this->configuration = $configuration;
 
-        // Copy the configuration object to make AuthTokenValidatorImpl immutable and thread-safe.
-        $this->configuration = clone $configuration;
-
-        // Create and cache trusted CA certificate JCA objects for SubjectCertificateTrustedValidator and AiaOcspService.
+        // Create trusted CA certificate objects for SubjectCertificateTrustedValidator and AiaOcspService.
         $this->trustedCACertificates = CertificateValidator::buildTrustFromCertificates($configuration->getTrustedCACertificates());
 
         $this->simpleSubjectCertificateValidators = new SubjectCertificateValidatorBatch(
-            new SubjectCertificateExpiryValidator($this->trustedCACertificates),
-            new SubjectCertificatePurposeValidator(),
-            new SubjectCertificatePolicyValidator($configuration->getDisallowedSubjectCertificatePolicies())
+            new SubjectCertificateExpiryValidator($this->trustedCACertificates, $logger),
+            new SubjectCertificatePurposeValidator($logger),
+            new SubjectCertificatePolicyValidator($this->configuration->getDisallowedSubjectCertificatePolicies(), $logger)
         );
 
-        if ($configuration->isUserCertificateRevocationCheckWithOcspEnabled()) {
-            $this->ocspClient = OcspClientImpl::build($configuration->getOcspRequestTimeout());
+        if ($this->configuration->isUserCertificateRevocationCheckWithOcspEnabled()) {
+            $this->ocspClient = OcspClientImpl::build($this->configuration->getOcspRequestTimeout(), $logger);
             $this->ocspServiceProvider = new OcspServiceProvider(
-                $configuration->getDesignatedOcspServiceConfiguration(),
+                $this->configuration->getDesignatedOcspServiceConfiguration(),
                 new AiaOcspServiceConfiguration(
-                    $configuration->getNonceDisabledOcspUrls(),
+                    $this->configuration->getNonceDisabledOcspUrls(),
                     $this->trustedCACertificates
                 )
             );
@@ -104,47 +102,42 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         }
     }
 
-    private function parseToken(string $authToken): WebEidAuthToken
-    {
-        try {
-            $token = new WebEidAuthToken($authToken);
-            if (is_null($token)) {
-                throw new AuthTokenParseException("Web eID authentication token is null");
-            }
-            return $token;
-        } catch (UnexpectedValueException $e) {
-            throw new AuthTokenParseException("Error parsing Web eID authentication token", $e);
-        }
-    }
-
     public function parse(string $authToken): WebEidAuthToken
     {
-        $this->logger->info("Starting token parsing");
+        if ($this->logger) {
+            $this->logger->info("Starting token parsing");
+        }
 
         try {
             $this->validateTokenLength($authToken);
-            return $this->parseToken($authToken);
+            return new WebEidAuthToken($authToken);
         } catch (Throwable $e) {
-            $this->logger->warning("Token parsing was interrupted: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->warning("Token parsing was interrupted: " . $e->getMessage());
+            }
             throw $e;
         }
     }
 
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
     {
-        $this->logger->info("Starting token validation");
+        if ($this->logger) {
+            $this->logger->info("Starting token validation");
+        }
 
         try {
             return $this->validateToken($authToken, $currentChallengeNonce);
         } catch (Throwable $e) {
-            $this->logger->warning("Token validation was interrupted: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->warning("Token validation was interrupted: " . $e->getMessage());
+            }
             throw $e;
         }
     }
 
     private function validateToken(WebEidAuthToken $token, string $currentChallengeNonce): X509
     {
-        if (is_null($token->getFormat()) || substr($token->getFormat(), 0, strlen(self::CURRENT_TOKEN_FORMAT_VERSION)) != self::CURRENT_TOKEN_FORMAT_VERSION) {
+        if (is_null($token->getFormat()) || !str_starts_with($token->getFormat(), self::CURRENT_TOKEN_FORMAT_VERSION)) {
             throw new AuthTokenParseException("Only token format version '" . self::CURRENT_TOKEN_FORMAT_VERSION . "' is currently supported");
         }
         if (is_null($token->getUnverifiedCertificate()) || empty($token->getUnverifiedCertificate())) {
@@ -174,7 +167,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     private function getCertTrustValidators(): SubjectCertificateValidatorBatch
     {
 
-        $certTrustedValidator = new SubjectCertificateTrustedValidator($this->trustedCACertificates);
+        $certTrustedValidator = new SubjectCertificateTrustedValidator($this->trustedCACertificates, $this->logger);
 
         $validatorBatch = new SubjectCertificateValidatorBatch(
             $certTrustedValidator
@@ -183,7 +176,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         if ($this->configuration->isUserCertificateRevocationCheckWithOcspEnabled()) {
             $validatorBatch->addOptional(
                 $this->configuration->isUserCertificateRevocationCheckWithOcspEnabled(),
-                new SubjectCertificateNotRevokedValidator($certTrustedValidator, $this->ocspClient, $this->ocspServiceProvider)
+                new SubjectCertificateNotRevokedValidator($certTrustedValidator, $this->ocspClient, $this->ocspServiceProvider, $this->logger)
             );
         }
 

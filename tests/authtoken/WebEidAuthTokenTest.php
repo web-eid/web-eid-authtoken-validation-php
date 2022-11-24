@@ -27,6 +27,7 @@ namespace web_eid\web_eid_authtoken_validation_php\authtoken;
 use PHPUnit\Framework\TestCase;
 
 use UnexpectedValueException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class WebEidAuthTokenTest extends TestCase
 {
@@ -52,7 +53,7 @@ class WebEidAuthTokenTest extends TestCase
 
     public function testWhenNotAuthToken(): void
     {
-        $authToken = new WebEidAuthToken("somestring");
-        $this->assertNotTrue($authToken);
+        $this->expectException(AuthTokenParseException::class);
+        new WebEidAuthToken("somestring");
     }
 }

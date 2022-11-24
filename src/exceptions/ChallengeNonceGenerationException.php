@@ -31,6 +31,6 @@ class ChallengeNonceGenerationException extends AuthTokenException
 {
     public function __construct()
     {
-        parent::__construct('Challenge nonce can not generated');
+        parent::__construct("Challenge nonce can not generated");
     }
 }
