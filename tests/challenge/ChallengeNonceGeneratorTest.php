@@ -27,7 +27,7 @@ namespace web_eid\web_eid_authtoken_validation_php\challenge;
 use PHPUnit\Framework\TestCase;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceNotFoundException;
-use web_eid\web_eid_authtoken_validation_php\exceptions\SessionNotExistException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\SessionDoesNotExistException;
 
 class ChallengeNonceGeneratorTest extends TestCase
 {
@@ -35,8 +35,9 @@ class ChallengeNonceGeneratorTest extends TestCase
 
     protected function setUp(): void
     {
-        $session = array();
-        $this->challengeNonceStore = new ChallengeNonceStore($session);
+        // Set session for tests
+        $_SESSION = [];
+        $this->challengeNonceStore = new ChallengeNonceStore();
     }
 
     public function testValidateNonceGeneration(): void
@@ -77,7 +78,9 @@ class ChallengeNonceGeneratorTest extends TestCase
 
     public function testWhenSessionNotStartedThenStoreFails()
     {
-        $this->expectException(SessionNotExistException::class);
+        $this->expectException(SessionDoesNotExistException::class);
+        unset($_SESSION);
         new ChallengeNonceStore();
     }
+
 }

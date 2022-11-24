@@ -25,7 +25,7 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use PHPUnit\Framework\TestCase;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use InvalidArgumentException;
 
 class AuthTokenValidationConfigurationTest extends TestCase

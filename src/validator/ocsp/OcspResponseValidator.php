@@ -49,7 +49,7 @@ final class OcspResponseValidator
 
     public function __construct()
     {
-        throw new BadFunctionCallException('Utility class');
+        throw new BadFunctionCallException("Utility class");
     }
 
     public static function validateHasSigningExtension(X509 $certificate): void

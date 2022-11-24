@@ -28,17 +28,17 @@ use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
-use web_eid\web_eid_authtoken_validation_php\util\Log;
+use Psr\Log\LoggerInterface;
 
 final class SubjectCertificateExpiryValidator implements SubjectCertificateValidator
 {
 
     private TrustedCertificates $trustedCertificates;
-    private Log $logger;
+    private $logger;
 
-    public function __construct(TrustedCertificates $trustedCertificates)
+    public function __construct(TrustedCertificates $trustedCertificates, LoggerInterface $logger = null)
     {
-        $this->logger = Log::getLogger(self::class);
+        $this->logger = $logger;
         $this->trustedCertificates = $trustedCertificates;
     }
 
@@ -46,8 +46,12 @@ final class SubjectCertificateExpiryValidator implements SubjectCertificateValid
     {
         $now = DefaultClock::getInstance()->now();
         CertificateValidator::trustedCACertificatesAreValidOnDate($this->trustedCertificates, $now);
-        $this->logger->debug("CA certificates are valid.");
+        if ($this->logger) {
+            $this->logger->debug("CA certificates are valid.");
+        }
         CertificateValidator::certificateIsValidOnDate($subjectCertificate, $now, "User");
-        $this->logger->debug("User certificate is valid.");
+        if ($this->logger) {
+            $this->logger->debug("User certificate is valid.");
+        }
     }
 }

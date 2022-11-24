@@ -26,21 +26,25 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateDisallowedPolicyException;
-use web_eid\web_eid_authtoken_validation_php\util\Log;
+use Psr\Log\LoggerInterface;
 
 final class SubjectCertificatePolicyValidator implements SubjectCertificateValidator
 {
     private $disallowedSubjectCertificatePolicyIds = [];
-    private Log $logger;
+    private $logger;
 
-    public function __construct(array $disallowedSubjectCertificatePolicyIds)
+    public function __construct(array $disallowedSubjectCertificatePolicyIds, LoggerInterface $logger = null)
     {
-        $this->logger = Log::getLogger(self::class);
+        $this->logger = $logger;
         $this->disallowedSubjectCertificatePolicyIds = $disallowedSubjectCertificatePolicyIds;
     }
 
     public function validate(X509 $subjectCertificate): void
     {
+        if ($this->logger) {
+            $this->logger->debug("Validating");
+        }
+
         // No need to validate
         if (count($this->disallowedSubjectCertificatePolicyIds) == 0) {
             return;
@@ -59,6 +63,8 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
             }
         }
 
-        $this->logger->debug("User certificate does not contain disallowed policies.");
+        if ($this->logger) {
+            $this->logger->debug("User certificate does not contain disallowed policies.");
+        }
     }
 }

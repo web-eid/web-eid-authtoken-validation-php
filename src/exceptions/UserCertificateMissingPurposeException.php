@@ -31,6 +31,6 @@ class UserCertificateMissingPurposeException extends AuthTokenException
 {
     public function __construct()
     {
-        parent::__construct('User certificate purpose is missing');
+        parent::__construct("User certificate purpose is missing");
     }
 }

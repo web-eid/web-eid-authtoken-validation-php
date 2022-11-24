@@ -25,9 +25,9 @@
 namespace web_eid\web_eid_authtoken_validation_php\challenge;
 
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
-use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceGenerationException;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use InvalidArgumentException;
+use web_eid\web_eid_authtoken_validation_php\util\SecureRandom;
 
 class ChallengeNonceGeneratorBuilder
 {
@@ -51,8 +51,8 @@ class ChallengeNonceGeneratorBuilder
     {
         // 5 minutes
         $this->ttl = 300;
-        $this->secureRandom = function ($nounce_length) {
-            return $this->generateSecureRandom($nounce_length);
+        $this->secureRandom = function ($nonce_length) {
+            return SecureRandom::generate($nonce_length);
         };
     }
 
@@ -120,19 +120,6 @@ class ChallengeNonceGeneratorBuilder
         if (is_null($this->secureRandom)) {
             throw new InvalidArgumentException("Secure random generator must not be null");
         }
-        DateAndtime::requirePositiveDuration($this->ttl, "Nonce TTL");
-    }
-
-    private function generateSecureRandom(int $nounce_length)
-    {
-        // Try random_bytes function as default for generating random bytes 
-        if (function_exists('random_bytes')) {
-            return random_bytes($nounce_length);
-        }
-        // Try openssl_random_pseudo_bytes function as second option for generating random bytes 
-        if (function_exists('openssl_random_pseudo_bytes')) {
-            return openssl_random_pseudo_bytes($nounce_length);
-        }
-        throw new ChallengeNonceGenerationException();
+        DateAndTime::requirePositiveDuration($this->ttl, "Nonce TTL");
     }
 }

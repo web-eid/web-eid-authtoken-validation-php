@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNullOrEmptyException;
 use InvalidArgumentException;
@@ -54,11 +54,11 @@ class AuthTokenSignatureValidator
 
     public function validate(string $algorithm, string $signature, $publicKey, string $currentChallengeNonce): void
     {
-        $this->requireNotEmpty($algorithm, 'algorithm');
-        $this->requireNotEmpty($signature, 'signature');
+        $this->requireNotEmpty($algorithm, "algorithm");
+        $this->requireNotEmpty($signature, "signature");
 
         if (is_null($publicKey)) {
-            throw new InvalidArgumentException('Public key is null');
+            throw new InvalidArgumentException("Public key is null");
         }
 
         if (empty($currentChallengeNonce)) {
@@ -66,7 +66,7 @@ class AuthTokenSignatureValidator
         }
 
         if (!in_array($algorithm, self::ALLOWED_SIGNATURE_ALGORITHMS)) {
-            throw new AuthTokenParseException('Invalid signature algorithm');
+            throw new AuthTokenParseException("Invalid signature algorithm");
         }
 
         $decodedSignature = base64_decode($signature);
@@ -78,7 +78,7 @@ class AuthTokenSignatureValidator
 
         $hashAlgorithm = $this->hashAlgorithmForName($algorithm);
 
-        $originHash = openssl_digest($this->siteOrigin->getUrl(), $hashAlgorithm, true);
+        $originHash = openssl_digest($this->siteOrigin->jsonSerialize(), $hashAlgorithm, true);
         $nonceHash = openssl_digest($currentChallengeNonce, $hashAlgorithm, true);
         $concatSignedFields = $originHash . $nonceHash;
 

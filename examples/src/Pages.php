@@ -32,7 +32,7 @@ class Pages
         $this->template = new Template();
     }
 
-    private function _generateToken()
+    private function _generateCsrfToken()
     {
         // Store token to session
         $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
@@ -48,7 +48,6 @@ class Pages
 
     public function welcome()
     {
-        $data = [];
         $data = ["auth_user" => $_SESSION["auth-user"]];
         $this->data = [
             "content" => $this->template->getHtml(__DIR__ . '/../tpl/welcome.phtml', $data)
@@ -57,7 +56,7 @@ class Pages
 
     public function __destruct()
     {
-        $this->data["token"] = $this->_generateToken();;
+        $this->data["token"] = $this->_generateCsrfToken();;
         echo $this->template->getHtml(__DIR__ . '/../tpl/site.phtml', $this->data);
     }
 }

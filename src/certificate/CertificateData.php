@@ -100,6 +100,6 @@ final class CertificateData
         if ($result) {
             return $result[0];
         }
-        throw new UnexpectedValueException('fieldId ' . $fieldId . ' not found in certificate subject');
+        throw new UnexpectedValueException("fieldId " . $fieldId . " not found in certificate subject");
     }
 }

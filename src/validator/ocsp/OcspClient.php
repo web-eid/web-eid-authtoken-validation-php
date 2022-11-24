@@ -24,7 +24,7 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\ocsp_php\OcspResponse;
 
 interface OcspClient

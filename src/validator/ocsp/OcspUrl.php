@@ -26,16 +26,16 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use BadFunctionCallException;
 use phpseclib3\File\X509;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use Exception;
 
 final class OcspUrl
 {
-    public const AIA_ESTEID_2015_URL = 'http://aia.sk.ee/esteid2015';
+    public const AIA_ESTEID_2015_URL = "http://aia.sk.ee/esteid2015";
 
     public function __construct()
     {
-        throw new BadFunctionCallException('Utility class');
+        throw new BadFunctionCallException("Utility class");
     }
 
     /**
@@ -46,20 +46,13 @@ final class OcspUrl
     public static function getOcspUri(X509 $certificate): ?Uri
     {
         $authorityInformationAccess = $certificate->getExtension("id-pe-authorityInfoAccess");
-        try {
-
-            if ($authorityInformationAccess) {
-
-                foreach ($authorityInformationAccess as $accessDescription) {
-
-                    if (in_array($accessDescription["accessMethod"], ["id-pkix-ocsp", "id-ad-ocsp"]) && array_key_exists("uniformResourceIdentifier", $accessDescription["accessLocation"])) {
-                        $accessLocationUrl = $accessDescription["accessLocation"]["uniformResourceIdentifier"];
-                        return new Uri($accessLocationUrl);
-                    }
+        if ($authorityInformationAccess) {
+            foreach ($authorityInformationAccess as $accessDescription) {
+                if (in_array($accessDescription["accessMethod"], ["id-pkix-ocsp", "id-ad-ocsp"]) && array_key_exists("uniformResourceIdentifier", $accessDescription["accessLocation"])) {
+                    $accessLocationUrl = $accessDescription["accessLocation"]["uniformResourceIdentifier"];
+                    return new Uri($accessLocationUrl);
                 }
             }
-        } catch (Exception $e) {
-            return null;
         }
 
         return null;

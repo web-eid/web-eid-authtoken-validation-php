@@ -31,6 +31,6 @@ class CertificateExpiredException extends AuthTokenException
 {
     public function __construct(string $subject)
     {
-        parent::__construct($subject . ' certificate has expired');
+        parent::__construct($subject . " certificate has expired");
     }
 }

@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use web_eid\web_eid_authtoken_validation_php\certificate\SubjectCertificatePolicies;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspUrl;
@@ -141,22 +141,26 @@ final class AuthTokenValidationConfiguration
      *
      * @param uri URI with origin URL
      * @throws IllegalArgumentException when the URI is not in the form of origin URL
+     * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      */
     public function validateIsOriginURL(Uri $uri): void
     {
         // 1. Verify that the URI can be converted to absolute URL.
-        if (!$uri->isAbsolute()) {
+        if (!Uri::isAbsolute($uri)) {
             throw new InvalidArgumentException("Provided URI is not a valid URL");
         }
 
-        $reference = $uri->createFromArray([
-            "scheme" => "https",
-            "host" => $uri->getHost(),
-            "port" => $uri->getPort(),
-        ]);
-
         // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
-        if ($uri->getUrl() !== $reference->getUrl()) {
+        if (!Uri::isSameDocumentReference(
+            $uri,
+            Uri::fromParts(
+                [
+                    "scheme" => "https",
+                    "host" => $uri->getHost(),
+                    "port" => $uri->getPort(),
+                ]
+            )
+        )) {
             throw new InvalidArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component");
         }
     }

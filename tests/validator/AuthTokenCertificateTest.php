@@ -93,12 +93,8 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
     {
         try {
             $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", [1, 2, 3, 4]);
-        } catch (AuthTokenParseException $e) {
-            $this->assertEquals("Error parsing Web eID authentication token", $e->getMessage());
-
-            $this->expectException(UnexpectedValueException::class);
-            $this->expectExceptionMessage("'unverifiedCertificate' is array, string expected");
-            throw $e->getPrevious();
+        } catch (UnexpectedValueException $e) {
+            $this->assertEquals("Error parsing Web eID authentication token: 'unverifiedCertificate' is array, string expected", $e->getMessage());
         }
     }
 
@@ -106,13 +102,8 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
     {
         try {
             $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", 1234);
-        } catch (AuthTokenParseException $e) {
-            $this->assertEquals('Error parsing Web eID authentication token', $e->getMessage());
-
-            $this->expectException(UnexpectedValueException::class);
-            $this->expectExceptionMessage("'unverifiedCertificate' is integer, string expected");
-
-            throw $e->getPrevious();
+        } catch (UnexpectedValueException $e) {
+            $this->assertEquals("Error parsing Web eID authentication token: 'unverifiedCertificate' is integer, string expected", $e->getMessage());
         }
     }
 

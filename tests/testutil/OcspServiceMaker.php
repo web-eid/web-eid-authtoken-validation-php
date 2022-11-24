@@ -25,7 +25,7 @@
 namespace web_eid\web_eid_authtoken_validation_php\testutil;
 
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
 use web_eid\web_eid_authtoken_validation_php\util\X509Collection;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
@@ -53,7 +53,7 @@ class OcspServiceMaker
     {
         return new AiaOcspServiceConfiguration(
             new UriCollection(new Uri(OcspUrl::AIA_ESTEID_2015_URL), new Uri(self::TEST_ESTEID_2015)),
-            CertificateValidator::buildTrustFromCertificates([Certificates::getTestEsteid2015CA(), Certificates::getTestEsteid2018CA(), Certificates::getTestEsteid2018CAGov()])
+            CertificateValidator::buildTrustFromCertificates([Certificates::getTestEsteid2018CA(), Certificates::getTestEsteid2018CAGov(), Certificates::getTestEsteid2015CA()])
         );
     }
 

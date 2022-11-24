@@ -29,11 +29,12 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspUrl;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use DateTime;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspResponseValidator;
+use Exception;
 
 /**
  * An OCSP service that uses the responders from the Certificates' Authority Information Access (AIA) extension.
@@ -49,7 +50,7 @@ class AiaOcspService implements OcspService
     {
         $this->url = self::getOcspAiaUrlFromCertificate($certificate);
         $this->trustedCACertificates = $configuration->getTrustedCACertificates();
-        $this->supportsNonce = !in_array($this->url->getUrl(), $configuration->getNonceDisabledOcspUrls()->getUrlsArray());
+        $this->supportsNonce = !in_array($this->url->jsonSerialize(), $configuration->getNonceDisabledOcspUrls()->getUrlsArray());
     }
 
     public function doesSupportNonce(): bool
@@ -72,7 +73,12 @@ class AiaOcspService implements OcspService
 
     private static function getOcspAiaUrlFromCertificate(X509 $certificate): Uri
     {
-        $uri = OcspUrl::getOcspUri($certificate);
+        try {
+            $uri = OcspUrl::getOcspUri($certificate);
+        } catch (Exception $e) {
+            throw new UserCertificateOCSPCheckFailedException("Getting the AIA OCSP responder field from the certificate failed");
+        }
+
         if (is_null($uri)) {
             throw new UserCertificateOCSPCheckFailedException("Getting the AIA OCSP responder field from the certificate failed");
         }

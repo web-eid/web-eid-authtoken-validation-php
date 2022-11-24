@@ -27,7 +27,7 @@ namespace web_eid\web_eid_authtoken_validation_php\challenge;
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonce;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceNotFoundException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
-use web_eid\web_eid_authtoken_validation_php\exceptions\SessionNotExistException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\SessionDoesNotExistException;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use DateTime;
 
@@ -37,19 +37,17 @@ use DateTime;
 class ChallengeNonceStore
 {
     private const CHALLENGE_NONCE_SESSION_KEY = "web-eid-challenge-nonce";
-    private $session;
 
-    public function __construct($session = null)
+    public function __construct()
     {
-        // When store session not provided
-        if (is_null($session)) {
-            if (!$this->isSessionExist()) {
-                throw new SessionNotExistException();
+        if (!isset($_SESSION)) {
+            if (PHP_SAPI === "cli") {
+                throw new SessionDoesNotExistException();
             }
-            $this->session = &$_SESSION;
-            return;
+            if (!$this->doesSessionExist()) {
+                throw new SessionDoesNotExistException();
+            }
         }
-        $this->session = $session;
     }
 
     /**
@@ -59,7 +57,7 @@ class ChallengeNonceStore
      */
     public function put(ChallengeNonce $challengeNonce)
     {
-        $this->session[self::CHALLENGE_NONCE_SESSION_KEY] = serialize($challengeNonce);
+        $_SESSION[self::CHALLENGE_NONCE_SESSION_KEY] = serialize($challengeNonce);
     }
 
     /**
@@ -70,13 +68,13 @@ class ChallengeNonceStore
     public function getAndRemove(): ?ChallengeNonce
     {
 
-        if (!isset($this->session[self::CHALLENGE_NONCE_SESSION_KEY])) {
+        if (!isset($_SESSION[self::CHALLENGE_NONCE_SESSION_KEY])) {
             throw new ChallengeNonceNotFoundException();
         }
 
         // Unserialize challenge nonce from session
-        $challengeNonce = unserialize($this->session[self::CHALLENGE_NONCE_SESSION_KEY], [
-            'allowed_classes' => [
+        $challengeNonce = unserialize($_SESSION[self::CHALLENGE_NONCE_SESSION_KEY], [
+            "allowed_classes" => [
                 ChallengeNonce::class,
                 DateTime::class
             ]
@@ -91,7 +89,7 @@ class ChallengeNonceStore
         }
 
         // Remove challenge nonce from session
-        unset($this->session[self::CHALLENGE_NONCE_SESSION_KEY]);
+        unset($_SESSION[self::CHALLENGE_NONCE_SESSION_KEY]);
 
         return $challengeNonce;
     }
@@ -101,7 +99,7 @@ class ChallengeNonceStore
      *
      * @return bool
      */
-    private function isSessionExist(): bool
+    private function doesSessionExist(): bool
     {
         return (session_status() !== PHP_SESSION_NONE);
     }

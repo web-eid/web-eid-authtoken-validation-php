@@ -27,18 +27,18 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateMissingPurposeException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateWrongPurposeException;
-use web_eid\web_eid_authtoken_validation_php\util\Log;
+use Psr\Log\LoggerInterface;
 
 final class SubjectCertificatePurposeValidator implements SubjectCertificateValidator
 {
 
     // oid 1.3.6.1.5.5.7.3.2
     private const EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION = "id-kp-clientAuth";
-    private Log $logger;
+    private $logger;
 
-    public function __construct()
+    public function __construct(LoggerInterface $logger = null)
     {
-        $this->logger = Log::getLogger(self::class);
+        $this->logger = $logger;
     }
 
     /**
@@ -59,6 +59,9 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
         if (!in_array(self::EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION, $usages)) {
             throw new UserCertificateWrongPurposeException();
         }
-        $this->logger->debug("User certificate can be used for client authentication.");
+
+        if ($this->logger) {
+            $this->logger->debug("User certificate can be used for client authentication.");
+        }
     }
 }

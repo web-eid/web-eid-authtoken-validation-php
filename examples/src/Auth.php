@@ -29,7 +29,7 @@ use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceGenerator;
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceGeneratorBuilder;
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
-use web_eid\web_eid_authtoken_validation_php\util\Uri;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder;
 
@@ -53,8 +53,11 @@ class Auth
 
     public function tokenValidator(): AuthTokenValidator
     {
-        return (new AuthTokenValidatorBuilder())
-            ->withSiteOrigin(new Uri('https://localhost:8443'))
+        $logger = new Logger();
+
+        return (new AuthTokenValidatorBuilder($logger))
+            // Change the URL when you run the example in your own machine.
+            ->withSiteOrigin(new Uri("https://localhost:8443"))
             ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
             ->build();
     }
@@ -67,13 +70,12 @@ class Auth
     public function getNonce()
     {
         try {
-            header('Content-Type: application/json; charset=utf-8');
+            header("Content-Type: application/json; charset=utf-8");
             $challengeNonce = $this->generator()->generateAndStoreNonce();
-            $responseArr = [];
             $responseArr = ["nonce" => $challengeNonce->getBase64EncodedNonce()];
             echo json_encode($responseArr);
         } catch (Exception $e) {
-            header("HTTP/1.0 400 Bad Request");
+            header("HTTP/1.0 500 Internal Server Error");
             echo "Nonce generation failed";
         }
     }
@@ -88,11 +90,11 @@ class Auth
         $headers = getallheaders();
         if (!isset($headers["X-CSRF-TOKEN"]) || ($headers["X-CSRF-TOKEN"] != $_SESSION["csrf-token"])) {
             header("HTTP/1.0 405 Method Not Allowed");
-            echo "Unable to process your request";
+            echo "CSRF token missing, unable to process your request";
             return;
         }
 
-        $authToken = file_get_contents('php://input');
+        $authToken = file_get_contents("php://input");
 
         try {
 
@@ -108,7 +110,7 @@ class Auth
 
                 $subjectName = CertificateData::getSubjectGivenName($cert) . " " . CertificateData::getSubjectSurname($cert);
                 $result = [
-                    'sub' => $subjectName
+                    "sub" => $subjectName
                 ];
 
                 $_SESSION["auth-user"] = $subjectName;
@@ -133,6 +135,6 @@ class Auth
         unset($_SESSION["auth-user"]);
         session_regenerate_id();
         // Redirect to login
-        header("location:/");
+        header("Location: /");
     }
 }

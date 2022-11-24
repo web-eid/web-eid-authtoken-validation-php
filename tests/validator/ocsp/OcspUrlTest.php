@@ -28,6 +28,7 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use phpseclib3\File\X509;
 use PHPUnit\Framework\TestCase;
+use GuzzleHttp\Psr7\Uri;
 
 class OcspUrlTest extends TestCase
 {
@@ -49,10 +50,10 @@ class OcspUrlTest extends TestCase
         ]);
 
         // We will get empty uri parts
-        $url = OcspUrl::getOcspUri($mockCertificate);
-        $this->assertFalse($url->isAbsolute());
-        $this->assertEmpty($url->getScheme());
-        $this->assertEmpty($url->getHost());
+        $uri = OcspUrl::getOcspUri($mockCertificate);
+        $this->assertFalse(Uri::isAbsolute($uri));
+        $this->assertEmpty($uri->getScheme());
+        $this->assertEmpty($uri->getHost());
     }
 
     public function testWhenExtensionValueIsNotAiaThenReturnsNull()
@@ -71,9 +72,9 @@ class OcspUrlTest extends TestCase
         ]);
 
         // We will get empty uri parts
-        $url = OcspUrl::getOcspUri($mockCertificate);
-        $this->assertFalse($url->isAbsolute());
-        $this->assertEmpty($url->getScheme());
-        $this->assertEmpty($url->getHost());
+        $uri = OcspUrl::getOcspUri($mockCertificate);
+        $this->assertFalse(Uri::isAbsolute($uri));
+        $this->assertEmpty($uri->getScheme());
+        $this->assertEmpty($uri->getHost());
     }
 }
