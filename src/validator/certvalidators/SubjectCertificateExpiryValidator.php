@@ -46,12 +46,8 @@ final class SubjectCertificateExpiryValidator implements SubjectCertificateValid
     {
         $now = DefaultClock::getInstance()->now();
         CertificateValidator::trustedCACertificatesAreValidOnDate($this->trustedCertificates, $now);
-        if ($this->logger) {
-            $this->logger->debug("CA certificates are valid.");
-        }
+        $this->logger?->debug("CA certificates are valid.");
         CertificateValidator::certificateIsValidOnDate($subjectCertificate, $now, "User");
-        if ($this->logger) {
-            $this->logger->debug("User certificate is valid.");
-        }
+        $this->logger?->debug("User certificate is valid.");
     }
 }

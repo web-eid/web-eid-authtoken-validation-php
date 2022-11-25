@@ -104,33 +104,25 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
 
     public function parse(string $authToken): WebEidAuthToken
     {
-        if ($this->logger) {
-            $this->logger->info("Starting token parsing");
-        }
+        $this->logger?->info("Starting token parsing");
 
         try {
             $this->validateTokenLength($authToken);
             return new WebEidAuthToken($authToken);
         } catch (Throwable $e) {
-            if ($this->logger) {
-                $this->logger->warning("Token parsing was interrupted: " . $e->getMessage());
-            }
+            $this->logger?->warning("Token parsing was interrupted: " . $e->getMessage());
             throw $e;
         }
     }
 
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
     {
-        if ($this->logger) {
-            $this->logger->info("Starting token validation");
-        }
+        $this->logger?->info("Starting token validation");
 
         try {
             return $this->validateToken($authToken, $currentChallengeNonce);
         } catch (Throwable $e) {
-            if ($this->logger) {
-                $this->logger->warning("Token validation was interrupted: " . $e->getMessage());
-            }
+            $this->logger?->warning("Token validation was interrupted: " . $e->getMessage());
             throw $e;
         }
     }

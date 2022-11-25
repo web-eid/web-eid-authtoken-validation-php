@@ -60,8 +60,6 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
             throw new UserCertificateWrongPurposeException();
         }
 
-        if ($this->logger) {
-            $this->logger->debug("User certificate can be used for client authentication.");
-        }
+        $this->logger?->debug("User certificate can be used for client authentication.");
     }
 }

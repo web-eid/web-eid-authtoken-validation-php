@@ -41,9 +41,7 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
 
     public function validate(X509 $subjectCertificate): void
     {
-        if ($this->logger) {
-            $this->logger->debug("Validating");
-        }
+        $this->logger?->debug("Validating");
 
         // No need to validate
         if (count($this->disallowedSubjectCertificatePolicyIds) == 0) {
@@ -63,8 +61,6 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
             }
         }
 
-        if ($this->logger) {
-            $this->logger->debug("User certificate does not contain disallowed policies.");
-        }
+        $this->logger?->debug("User certificate does not contain disallowed policies.");
     }
 }
