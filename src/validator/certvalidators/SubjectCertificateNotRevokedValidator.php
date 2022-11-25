@@ -60,16 +60,14 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
             $ocspService = $this->ocspServiceProvider->getService($subjectCertificate);
 
-            if ($this->logger && !$ocspService->doesSupportNonce()) {
-                $this->logger->debug("Disabling OCSP nonce extension");
+            if (!$ocspService->doesSupportNonce()) {
+                $this->logger?->debug("Disabling OCSP nonce extension");
             }
 
             $certificateId = (new Ocsp())->generateCertificateId($subjectCertificate, $this->trustValidator->getSubjectCertificateIssuerCertificate());
             $request = (new OcspRequestBuilder())->withCertificateId($certificateId)->enableOcspNonce($ocspService->doesSupportNonce())->build();
 
-            if ($this->logger) {
-                $this->logger->debug("Sending OCSP request");
-            }
+            $this->logger?->debug("Sending OCSP request");
 
             $response = $this->ocspClient->request($ocspService->getAccessLocation(), $request->getEncodeDer());
 
@@ -145,9 +143,7 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         // Now we can accept the signed response as valid and validate the certificate status.
         OcspResponseValidator::validateSubjectCertificateStatus($response);
 
-        if ($this->logger) {
-            $this->logger->debug("OCSP check result is GOOD");
-        }
+        $this->logger?->debug("OCSP check result is GOOD");
     }
 
     private static function checkNonce(OcspRequest $request, OcspBasicResponse $basicResponse): void

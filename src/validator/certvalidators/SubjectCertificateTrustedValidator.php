@@ -48,9 +48,7 @@ final class SubjectCertificateTrustedValidator implements SubjectCertificateVali
             $this->trustedCACertificates
         );
 
-        if ($this->logger) {
-            $this->logger->debug("Subject certificate is signed by a trusted CA");
-        }
+        $this->logger?->debug("Subject certificate is signed by a trusted CA");
     }
 
     public function getSubjectCertificateIssuerCertificate(): X509
