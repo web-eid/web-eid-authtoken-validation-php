@@ -32,6 +32,7 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredExc
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder;
+use phpseclib3\File\X509;
 
 class Auth
 {
@@ -80,6 +81,15 @@ class Auth
         }
     }
 
+    private function getPrincipalNameFromCertificate(X509 $userCertificate): string
+    {
+        try {
+            return CertificateData::getSubjectGivenName($userCertificate) . " " . CertificateData::getSubjectSurname($userCertificate);
+        } catch (Exception $e) {
+            return CertificateData::getSubjectCN($userCertificate);
+        }
+    }
+
     /**
      * Authenticate
      *
@@ -108,7 +118,7 @@ class Auth
 
                 session_regenerate_id();
 
-                $subjectName = CertificateData::getSubjectGivenName($cert) . " " . CertificateData::getSubjectSurname($cert);
+                $subjectName = $this->getPrincipalNameFromCertificate($cert);
                 $result = [
                     "sub" => $subjectName
                 ];

@@ -181,8 +181,18 @@ use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateData;
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
-
 ...
+
+private function getPrincipalNameFromCertificate(X509 $userCertificate): string
+{
+    try {
+        return CertificateData::getSubjectGivenName($userCertificate) . " " . CertificateData::getSubjectSurname($userCertificate);
+    } catch (Exception $e) {
+        return CertificateData::getSubjectCN($userCertificate);
+    }
+}
+...
+
 try {
 
     /* Get and remove nonce from store */
@@ -198,7 +208,7 @@ try {
 
         session_regenerate_id();
 
-        $subjectName = CertificateData::getSubjectGivenName($cert) . " " . CertificateData::getSubjectSurname($cert);
+        $subjectName = $this->getPrincipalNameFromCertificate($cert);
         $result = [
             'sub' => $subjectName
         ];
