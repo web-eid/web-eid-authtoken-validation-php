@@ -26,6 +26,7 @@ namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
 use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
 use PHPUnit\Framework\TestCase;
+use UnexpectedValueException;
 
 class CertificateDataTest extends TestCase
 {
@@ -39,4 +40,41 @@ class CertificateDataTest extends TestCase
         $this->assertEquals("JÕEORG", CertificateData::getSubjectSurname($cert));
         $this->assertEquals("PNOEE-38001085718", CertificateData::getSubjectIdCode($cert));
     }
+
+    public function testWhenOrganizationCertificateThenSubjectCNAndIdCodeAndCountryCodeExtractionSucceeds(): void
+    {
+        $cert = Certificates::getOrganizationCert();
+        $this->assertEquals("Testijad.ee isikutuvastus", CertificateData::getSubjectCN($cert));
+        $this->assertEquals("12276279", CertificateData::getSubjectIdCode($cert));
+        $this->assertEquals("EE", CertificateData::getSubjectCountryCode($cert));
+    }
+
+    public function testWhenOrganizationCertificateThenSubjectGivenNameExtractionFails(): void
+    {
+        $cert = Certificates::getOrganizationCert();
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessage("fieldId id-at-givenName not found in certificate subject");
+        CertificateData::getSubjectGivenName($cert);
+    }
+
+    public function testWhenOrganizationCertificateThenSubjectSurnameExtractionFails(): void
+    {
+        $cert = Certificates::getOrganizationCert();
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessage("fieldId id-at-surname not found in certificate subject");
+        CertificateData::getSubjectSurname($cert);
+    }
+
+    public function testWhenOrganizationCertificateThenSucceeds(): void
+    {
+        $cert = Certificates::getOrganizationCert();
+        try {
+            $principalName = CertificateData::getSubjectSurname($cert) . " " . CertificateData::getSubjectSurname($cert);
+        } catch (UnexpectedValueException $e) {
+            $principalName = CertificateData::getSubjectCN($cert);
+        }
+        $this->assertEquals("Testijad.ee isikutuvastus", $principalName);
+
+    }
+
 }
