@@ -1,5 +1,5 @@
 {
-    "name": "web_eid/web_eid_authtoken_validation_php",
+    "name": "web-eid/web-eid-authtoken-validation-php",
     "description": "Web eID authentication token validation library for PHP",
     "license": "MIT",
     "type": "library",
@@ -34,7 +34,7 @@
     "require": {
         "phpseclib/phpseclib": "3.0.14",
         "guzzlehttp/psr7": "2.4.3",
-        "web_eid/ocsp_php": "dev-main",
+        "web-eid/ocsp-php": "dev-main",
         "psr/log": "^3.0"
     },
     "scripts": {
