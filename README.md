@@ -20,8 +20,8 @@ Add the following lines to `composer.json` to include the Web eID authentication
 
 ```json
 "require": {
-    "web_eid/web_eid_authtoken_validation_php": "dev-main",
-    "web_eid/ocsp_php": "dev-main",
+    "web-eid/web-eid-authtoken-validation-php": "dev-main",
+    "web-eid/ocsp-php": "dev-main",
 },
 "repositories": [
     {
