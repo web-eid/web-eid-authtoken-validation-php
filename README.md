@@ -16,23 +16,10 @@ A PHP web application that uses Composer to manage packages is needed for runnin
 
 ## 1. Add the library to your project
 
-Add the following lines to `composer.json` to include the Web eID authentication token validation library in your project:
+Install using Composer to include the Web eID authentication token validation library in your project:
 
-```json
-"require": {
-    "web-eid/web-eid-authtoken-validation-php": "dev-main",
-    "web-eid/ocsp-php": "dev-main",
-},
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "https://github.com/web-eid/web-eid-authtoken-validation-php.git"
-    },
-    {
-        "type": "vcs",
-        "url": "https://github.com/web-eid/ocsp-php.git"
-    }
-]
+```sh
+composer require web-eid/web-eid-authtoken-validation-php
 ```
 
 ### Logging
