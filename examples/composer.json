@@ -11,23 +11,12 @@
     ],
     "require": {
         "php": ">=7.4",
-        "web_eid/web_eid_authtoken_validation_php": "dev-main",
-        "web_eid/ocsp_php": "dev-main",
+        "web-eid/web-eid-authtoken-validation-php": "1.0.0",
         "altorouter/altorouter": "1.1.0",
         "guzzlehttp/psr7": "2.4.3",
         "psr/log": "^3.0"
     },
     "autoload": {
         "classmap": ["src"]
-    },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/web-eid/web-eid-authtoken-validation-php.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/web-eid/ocsp-php.git"
-        }        
-    ]        
+    }        
 }
