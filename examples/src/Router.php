@@ -35,6 +35,8 @@ class Router
         // Page routes
         $router->map("GET", "/", ["controller" => "Pages", "method" => "login"]);
         $router->map("GET", "/logout", ["controller" => "Auth", "method" => "logout"]);
+        // Endpoint for extension errors logging
+        $router->map("POST", "/logger", ["controller" => "LogWriter", "method" => "add"]);
 
         // Web eID routes
         $router->map("GET", "/nonce", ["controller" => "Auth", "method" => "getNonce"]);
