@@ -60,6 +60,11 @@
 
         } catch (error) {
             showErrorMessage(error);
+            // Log extension error
+            let formData = new FormData();
+            formData.append("code", error.code);
+            formData.append("message", error.message);
+            fetch("./logger", {method: "POST", body: formData});
             throw error;
         } finally {
             authButton.disabled = false;
