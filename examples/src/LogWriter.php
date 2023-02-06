@@ -27,7 +27,6 @@ class LogWriter
     public function add()
     {
         $code = isset($_POST["code"]) ? $_POST["code"] : "";
-        $message = isset($_POST["message"]) ? $_POST["message"] : "";
 
         // Allow only certain type error codes
         if ($code != "ERR_WEBEID_USER_CANCELLED" || $code != "ERR_WEBEID_EXTENSION_UNAVAILABLE") {
@@ -36,7 +35,7 @@ class LogWriter
         }
 
         $logger = new Logger();
-        $logger->error(sprintf("Code: %s Message: %s", $code, $message));
+        $logger->error(sprintf("Code: %s", $code));
         echo "success";
     }
 }
