@@ -32,8 +32,8 @@
         }
     ],
     "require": {
-        "phpseclib/phpseclib": "3.0.14",
-        "guzzlehttp/psr7": "2.4.3",
+        "phpseclib/phpseclib": "3.0.19",
+        "guzzlehttp/psr7": "2.4.5",
         "web-eid/ocsp-php": "1.0.0",
         "psr/log": "^3.0"
     },

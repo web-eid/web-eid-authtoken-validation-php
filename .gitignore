@@ -5,3 +5,4 @@ composer.lock
 web-eid-authtoken-validation-php.log
 build
 phpunit.xml
+*.swp
