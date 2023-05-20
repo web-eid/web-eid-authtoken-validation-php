@@ -84,8 +84,8 @@ class AuthTokenSignatureValidator
         $concatSignedFields = $originHash . $nonceHash;
 
         $result = openssl_verify($concatSignedFields, $decodedSignature, $publicKey, $hashAlgorithm);
-        if (!$result) {
-            throw new AuthTokenSignatureValidationException();
+        if ($result !== 1) {
+            throw new AuthTokenSignatureValidationException($result === -1 ? openssl_error_string() : "Signature is invalid");
         }
     }
 
