@@ -26,11 +26,12 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
-use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Psr7\Uri;
+use phpseclib3\Crypt\EC;
+use phpseclib3\File\X509;
+use PHPUnit\Framework\TestCase;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
-use phpseclib3\File\X509;
 
 class AuthTokenSignatureValidatorTest extends TestCase
 {
@@ -62,5 +63,22 @@ class AuthTokenSignatureValidatorTest extends TestCase
         $x509Certificate->loadX509($authToken->getUnverifiedCertificate());
 
         $signatureValidator->validate("RS256", $authToken->getSignature(), $x509Certificate->getPublicKey(), AbstractTestWithValidator::VALID_CHALLENGE_NONCE);
+    }
+
+    public function testESSignatureDecoding(): void
+    {
+        $this->expectNotToPerformAssertions();
+        $signatureValidator = new AuthTokenSignatureValidator(new Uri("https://localhost:8443"));
+
+        $algorithm = 'ES384';
+        $challengeNonce = 'aOakS4V5YCoHfCDhOoj+dr0wr+fQDZMBfWqG7lrM9vA=';
+        $nonAsn1Signature = "vQRLdiycmxodrzxpG2A6SYd8y/vA1ZaxnP3z99ZY5HybPzwGkjyA0vWJMB1UVXOZfyoPlxFPte2xdinsC8/rLbqt2fQbTCfL5WwqIpYN/aI7M7c2wK3NcQtIoy73xCfk";
+        $asn1Signature = "MGUCMQC9BEt2LJybGh2vPGkbYDpJh3zL+8DVlrGc/fP31ljkfJs/PAaSPIDS9YkwHVRVc5kCMH8qD5cRT7XtsXYp7AvP6y26rdn0G0wny+VsKiKWDf2iOzO3NsCtzXELSKMu98Qn5A==";
+        $publicKeyPEM = "-----BEGIN PUBLIC KEY-----\nMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEMeK51XgGgH291oz/mjO1dKNEgIXwoWEXGiCHb4SpAS28M7x3x1MEvTeig2kTgZsZ5Z7rwlQ2jCownZ7FzL0xnJbWWKf5xvLEejwO8iLkBmBBIOe4Ro9kJ638XyawNOoE\n-----END PUBLIC KEY-----";
+
+        $publicKey = EC::loadFormat('PKCS8', $publicKeyPEM);
+
+        $signatureValidator->validate($algorithm, $nonAsn1Signature, $publicKey, $challengeNonce);
+        $signatureValidator->validate($algorithm, $asn1Signature, $publicKey, $challengeNonce);
     }
 }

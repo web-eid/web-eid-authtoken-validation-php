@@ -34,6 +34,23 @@ final class AsnUtil
         throw new BadFunctionCallException("Utility class");
     }
 
+    public static function isSignatureInAsn1Format(string $signature): bool
+    {
+        $sigByteArray = unpack('C*', $signature);
+
+        // ASN.1 format: 0x30 b1 0x02 b2 r 0x02 b3 s.
+        // Note: unpack() returns an array indexed from 1, not 0.
+        $b1 = $sigByteArray[2];
+        $b2 = $sigByteArray[4];
+        $b3 = $sigByteArray[6 + $b2];
+
+        return $sigByteArray[1] == 0x30 // Sequence tag
+            && $sigByteArray[3] == 0x02 // First integer tag
+            && $sigByteArray[5 + $b2] == 0x02 // Second integer tag
+            && count($sigByteArray) == 2 + $b1 // Length of contents
+            && count($sigByteArray) == 6 + $b2 + $b3; // Total length
+    }
+
     public static function transcodeSignatureToDER(string $p1363): string
     {
         // P1363 format: r followed by s.
