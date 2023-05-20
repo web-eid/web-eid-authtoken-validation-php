@@ -27,11 +27,11 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use GuzzleHttp\Psr7\Uri;
-use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
-use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenSignatureValidationException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNullOrEmptyException;
+use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\util\AsnUtil;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenSignatureValidationException;
 
 class AuthTokenSignatureValidator
 {
@@ -73,7 +73,6 @@ class AuthTokenSignatureValidator
 
         // Note that in case of ECDSA, some eID cards output raw R||S, so we need to trascode it to DER
         if (in_array($algorithm, ["ES256", "ES384", "ES512"]) && !AsnUtil::isSignatureInAsn1Format($decodedSignature)) {
-
             $decodedSignature = AsnUtil::transcodeSignatureToDER($decodedSignature);
         }
 

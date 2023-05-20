@@ -26,12 +26,12 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
-use GuzzleHttp\Psr7\Uri;
-use phpseclib3\Crypt\EC;
-use phpseclib3\File\X509;
 use PHPUnit\Framework\TestCase;
+use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
+use phpseclib3\Crypt\EC;
+use phpseclib3\File\X509;
 
 class AuthTokenSignatureValidatorTest extends TestCase
 {
