@@ -112,7 +112,7 @@ class ExtensionUnavailableError extends Error {
 }
 
 var config = Object.freeze({
-    VERSION: "2.0.0",
+    VERSION: "2.0.1",
     EXTENSION_HANDSHAKE_TIMEOUT: 1000,
     NATIVE_APP_HANDSHAKE_TIMEOUT: 5 * 1000,
     DEFAULT_USER_INTERACTION_TIMEOUT: 2 * 60 * 1000,

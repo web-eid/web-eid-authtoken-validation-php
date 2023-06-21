@@ -13,7 +13,7 @@
         "php": ">=7.4",
         "web-eid/web-eid-authtoken-validation-php": "1.0.0",
         "altorouter/altorouter": "1.1.0",
-        "guzzlehttp/psr7": "2.4.3",
+        "guzzlehttp/psr7": "2.4.5",
         "psr/log": "^3.0"
     },
     "autoload": {
