@@ -66,6 +66,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     public function testWhenValidDesignatedOcspResponderConfigurationThenSucceeds(): void
     {
+        $this->markTestSkipped("As new designated test OCSP responder certificates are issued more frequently now, it is no longer feasible to keep the certificates up to date");
         $this->expectNotToPerformAssertions();
 
         $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider();
@@ -75,6 +76,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     public function testWhenValidOcspNonceDisabledConfigurationThenSucceeds(): void
     {
+        $this->markTestSkipped("As new designated test OCSP responder certificates are issued more frequently now, it is no longer feasible to keep the certificates up to date");
         $this->expectNotToPerformAssertions();
 
         $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(false);
@@ -156,7 +158,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     public function testWhenOcspResponseHasInvalidTagThenThrows(): void
     {
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Could not decode OcspResponse->responseBytes->responseType");
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Could not decode OcspResponse->responseBytes->response");
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
             pack("c*", ...self::buildOcspResponseBodyWithInvalidTag())
         );
