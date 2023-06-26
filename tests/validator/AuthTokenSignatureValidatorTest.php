@@ -30,7 +30,9 @@ use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
+use phpseclib3\Crypt\EC;
 use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\util\AsnUtil;
 
 class AuthTokenSignatureValidatorTest extends TestCase
 {
@@ -62,5 +64,20 @@ class AuthTokenSignatureValidatorTest extends TestCase
         $x509Certificate->loadX509($authToken->getUnverifiedCertificate());
 
         $signatureValidator->validate("RS256", $authToken->getSignature(), $x509Certificate->getPublicKey(), AbstractTestWithValidator::VALID_CHALLENGE_NONCE);
+    }
+
+    public function testESSignatureDecoding(): void
+    {
+        $this->expectNotToPerformAssertions();
+        $signatureValidator = new AuthTokenSignatureValidator(new Uri("https://ria.ee"));
+
+        $authToken = new WebEidAuthToken(AbstractTestWithValidator::VALID_AUTH_TOKEN);
+        $x509Certificate = new X509();
+        $x509Certificate->loadX509($authToken->getUnverifiedCertificate());
+
+        $asn1Signature = base64_encode(AsnUtil::transcodeSignatureToDER(base64_decode($authToken->getSignature())));
+
+        $signatureValidator->validate("ES384", $authToken->getSignature(), $x509Certificate->getPublicKey(), AbstractTestWithValidator::VALID_CHALLENGE_NONCE);
+        $signatureValidator->validate("ES384", $asn1Signature, $x509Certificate->getPublicKey(), AbstractTestWithValidator::VALID_CHALLENGE_NONCE);
     }
 }

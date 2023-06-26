@@ -72,7 +72,7 @@ class AuthTokenSignatureValidator
         $decodedSignature = base64_decode($signature);
 
         // Note that in case of ECDSA, some eID cards output raw R||S, so we need to trascode it to DER
-        if (in_array($algorithm, ["ES256", "ES384", "ES512"])) {
+        if (in_array($algorithm, ["ES256", "ES384", "ES512"]) && !AsnUtil::isSignatureInAsn1Format($decodedSignature)) {
             $decodedSignature = AsnUtil::transcodeSignatureToDER($decodedSignature);
         }
 
@@ -83,8 +83,8 @@ class AuthTokenSignatureValidator
         $concatSignedFields = $originHash . $nonceHash;
 
         $result = openssl_verify($concatSignedFields, $decodedSignature, $publicKey, $hashAlgorithm);
-        if (!$result) {
-            throw new AuthTokenSignatureValidationException();
+        if ($result !== 1) {
+            throw new AuthTokenSignatureValidationException($result === -1 ? openssl_error_string() : "Signature is invalid");
         }
     }
 
