@@ -40,8 +40,18 @@ final class AsnUtil
 
         // ASN.1 format: 0x30 b1 0x02 b2 r 0x02 b3 s.
         // Note: unpack() returns an array indexed from 1, not 0.
+        if(!isset($sigByteArray[1]) ||
+            !isset($sigByteArray[2]) ||
+            !isset($sigByteArray[3]) ||
+            !isset($sigByteArray[4])) {
+            return false;
+        }
         $b1 = $sigByteArray[2];
         $b2 = $sigByteArray[4];
+        if(!isset($sigByteArray[5 + $b2]) ||
+            !isset($sigByteArray[6 + $b2])) {
+            return false;
+        }
         $b3 = $sigByteArray[6 + $b2];
 
         return $sigByteArray[1] == 0x30 // Sequence tag

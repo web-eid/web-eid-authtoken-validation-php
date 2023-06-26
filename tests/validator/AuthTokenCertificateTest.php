@@ -247,6 +247,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
 
     public function testWhenCertificateIsRevokedThenOcspCheckWithDesignatedOcspServiceFails(): void
     {
+        $this->markTestSkipped("A new designated test OCSP responder certificate was issued whose validity period no longer overlaps with the revoked certificate");
         $this->mockDate("2020-01-01");
 
         $validatorWithOcspCheck = AuthTokenValidators::getAuthTokenValidatorWithDesignatedOcspCheck();
