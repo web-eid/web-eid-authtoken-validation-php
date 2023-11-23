@@ -61,7 +61,7 @@ final class OcspRequestBuilder
         $ocspRequest->addCertificateId($this->certificateId);
 
         if ($this->ocspNonceEnabled) {
-            $nonceBytes = call_user_func($this->secureRandom, 8);
+            $nonceBytes = call_user_func($this->secureRandom, 32);
             $ocspRequest->addNonceExtension($nonceBytes);
         }
 
