@@ -63,7 +63,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
     {
         parent::setUp();
         // Ensure that the certificates do not expire.
-        $this->mockDate("2021-03-01");
+        $this->mockDate("2021-08-01");
     }
 
     protected function tearDown(): void
@@ -159,6 +159,8 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
 
     public function testWhenUsingOldMobileIdCertificateThenValidationFails(): void
     {
+        $this->mockDate("2021-03-01");
+
         $token = $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", self::OLD_MOBILE_ID_CERT);
 
         $this->expectException(UserCertificateDisallowedPolicyException::class);
@@ -217,7 +219,7 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
 
     public function testWhenUserCertificateIsNoLongerValidThenValidationFails()
     {
-        $this->mockDate("2024-10-19");
+        $this->mockDate("2026-10-19");
 
         $this->expectException(CertificateExpiredException::class);
         $this->expectExceptionMessage("User certificate has expired");
