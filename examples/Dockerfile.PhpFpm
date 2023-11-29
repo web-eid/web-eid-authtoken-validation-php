@@ -1,6 +1,8 @@
 FROM php:fpm
 
-COPY . /var/www/html
+WORKDIR /var/www/html/web-eid-php-proxy
+
+COPY . .
 
 RUN apt-get update
 RUN apt-get install unzip
