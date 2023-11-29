@@ -11,10 +11,11 @@
     ],
     "require": {
         "php": ">=7.4",
-        "web-eid/web-eid-authtoken-validation-php": "1.0.0",
+        "web-eid/web-eid-authtoken-validation-php": "dev-update-dependencies as 1.0.0",
         "altorouter/altorouter": "1.1.0",
         "guzzlehttp/psr7": "2.4.5",
-        "psr/log": "^3.0"
+        "psr/log": "^3.0",
+        "web-eid/ocsp-php": "dev-update-dependencies as 1.0.0"
     },
     "autoload": {
         "classmap": ["src"]

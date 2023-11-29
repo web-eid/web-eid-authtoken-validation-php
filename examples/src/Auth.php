@@ -97,8 +97,10 @@ class Auth
      */
     public function validate()
     {
-        $headers = getallheaders();
-        if (!isset($headers["X-CSRF-TOKEN"]) || ($headers["X-CSRF-TOKEN"] != $_SESSION["csrf-token"])) {
+        // Header names must be treated as case-insensitive (according to RFC2616) so we convert them to lowercase
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+        
+        if (!isset($headers["x-csrf-token"]) || ($headers["x-csrf-token"] != $_SESSION["csrf-token"])) {
             header("HTTP/1.0 405 Method Not Allowed");
             echo "CSRF token missing, unable to process your request";
             return;
