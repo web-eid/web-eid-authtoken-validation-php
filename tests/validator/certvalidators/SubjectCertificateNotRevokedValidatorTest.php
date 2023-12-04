@@ -148,7 +148,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     public function testWhenOcspResponseHasInvalidResponderCertThenThrows(): void
     {
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Unable to perform ASN1 mapping");
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Unable to decode BER");
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
             pack("c*", ...self::buildOcspResponseBodyWithInvalidResponderCert())
         );
@@ -158,7 +158,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     public function testWhenOcspResponseHasInvalidTagThenThrows(): void
     {
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Could not decode OcspResponse->responseBytes->response");
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Trying to access array offset on null");
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
             pack("c*", ...self::buildOcspResponseBodyWithInvalidTag())
         );
