@@ -136,7 +136,12 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
             throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
         }
         $subjectCertificate = new X509();
-        if (!$subjectCertificate->loadX509($token->getUnverifiedCertificate())) {
+        $loaded = false;
+        try {
+            $loaded = $subjectCertificate->loadX509($token->getUnverifiedCertificate());
+        } catch (Throwable $e) {
+        }
+        if (!$loaded) {
             throw new CertificateDecodingException("'unverifiedCertificate' decode failed");
         }
 
