@@ -40,8 +40,7 @@ class Auth
     public function trustedIntermediateCACertificates(): array
     {
         return CertificateLoader::loadCertificatesFromResources(
-            __DIR__ . "/../certificates/esteid2018.der.crt",
-            __DIR__ . "/../certificates/ESTEID-SK_2015.der.crt"
+            __DIR__ . "/../certificates/esteid2018.der.crt"
         );
     }
 

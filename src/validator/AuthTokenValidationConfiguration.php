@@ -30,7 +30,6 @@ use web_eid\web_eid_authtoken_validation_php\certificate\SubjectCertificatePolic
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
-use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspUrl;
 
 use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
@@ -57,7 +56,7 @@ final class AuthTokenValidationConfiguration
             SubjectCertificatePolicies::$ESTEID_SK_2015_MOBILE_ID_POLICY_V3,
             SubjectCertificatePolicies::$ESTEID_SK_2015_MOBILE_ID_POLICY
         ];
-        $this->nonceDisabledOcspUrls = new UriCollection(new Uri(OcspUrl::AIA_ESTEID_2015_URL));
+        $this->nonceDisabledOcspUrls = new UriCollection();
     }
 
     public function setSiteOrigin(Uri $siteOrigin): void

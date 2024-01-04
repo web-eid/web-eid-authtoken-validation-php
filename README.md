@@ -67,7 +67,7 @@ PHP Session is been used for storing the challenge nonce.
 
 You must explicitly specify which **intermediate** certificate authorities (CAs) are trusted to issue the eID authentication and OCSP responder certificates. CA certificates can be loaded from resources.
 
-First, copy the trusted certificates, for example `ESTEID-SK_2015.der.cer` and `ESTEID2018.der.cer`, to `certificates/` folder, then load the certificates as follows:
+First, copy the trusted certificates, for example `ESTEID2018.der.cer`, to `certificates/` folder, then load the certificates as follows:
 
 ```php
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
@@ -76,7 +76,7 @@ use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
 public function trustedIntermediateCACertificates(): array
 {
     return CertificateLoader::loadCertificatesFromResources(
-        __DIR__ . "/../certificates/ESTEID2018.cer", __DIR__ . "/../certificates/ESTEID-SK_2015.cer"
+        __DIR__ . "/../certificates/ESTEID2018.cer"
     );
 }
 ...
@@ -296,7 +296,7 @@ The following additional configuration options are available in `AuthTokenValida
 
 - `withDisallowedCertificatePolicies(string ...$policies)` – adds the given policies to the list of disallowed user certificate policies. In order for the user certificate to be considered valid, it must not contain any policies present in this list. Contains the Estonian Mobile-ID policies by default as it must not be possible to authenticate with a Mobile-ID certificate when an eID smart card is expected.
 
-- `withNonceDisabledOcspUrls(URI ...$urls)` – adds the given URLs to the list of OCSP responder access location URLs for which the nonce protocol extension will be disabled. Some OCSP responders don't support the nonce extension. Contains the ESTEID-2015 OCSP responder URL by default.
+- `withNonceDisabledOcspUrls(URI ...$urls)` – adds the given URLs to the list of OCSP responder access location URLs for which the nonce protocol extension will be disabled. Some OCSP responders don't support the nonce extension.
 
 Extended configuration example:  
 
