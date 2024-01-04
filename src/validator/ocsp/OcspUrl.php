@@ -31,8 +31,6 @@ use Exception;
 
 final class OcspUrl
 {
-    public const AIA_ESTEID_2015_URL = "http://aia.sk.ee/esteid2015";
-
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
