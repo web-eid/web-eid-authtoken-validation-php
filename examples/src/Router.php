@@ -34,7 +34,6 @@ class Router
 
     public function init()
     {
-        
         $router = new AltoRouter();
         $router->setBasePath("");
 
@@ -60,7 +59,6 @@ class Router
             header("Location: /");
             return;
         }
-
 
         $controller = new $match["target"]["controller"]($this->config);
         $method = $match["target"]["method"];
