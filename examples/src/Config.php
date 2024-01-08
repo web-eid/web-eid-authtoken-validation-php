@@ -22,16 +22,32 @@
  * SOFTWARE.
  */
 
-header('Content-type: text/html; charset=UTF-8');
+class Config
+{
+    private $configArr;
 
-session_start();
+    public static function fromArray($configArr)
+    {
+        $instance = new self();
+        $instance->configArr = $configArr;
+        return $instance;
+    }
 
-// Uncomment following line to define the custom log location (by default the server log is used)
-//define("LOGFILE", dirname(__FILE__) . "/../log/web-eid-authtoken-validation-php.log");
+    public function overrideFromEnv()
+    {
+        foreach ($this->configArr as $key => $value) {
+            $envKey = 'WEB_EID_'.strtoupper($key);
+            $envValue = getenv($envKey);
+            if ($envValue !== false) {
+                $this->configArr[$key] = $envValue;
+            }
+        }
+        
+        return $this;
+    }
 
-require __DIR__ . '/../vendor/autoload.php';
-
-$configArr = require_once __DIR__ . '/../src/app.conf.php';
-$config = Config::fromArray($configArr)->overrideFromEnv();
-$router = new Router($config);
-$router->init();
+    public function get($name)
+    {
+        return isset ($this->configArr[$name]) ? $this->configArr[$name] : null;
+    }
+}

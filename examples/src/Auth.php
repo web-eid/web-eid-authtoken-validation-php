@@ -36,6 +36,11 @@ use phpseclib3\File\X509;
 
 class Auth
 {
+    private $config;
+
+    public function __construct($config) {
+        $this->config = $config;
+    }
 
     public function trustedIntermediateCACertificates(): array
     {
@@ -57,8 +62,7 @@ class Auth
         $logger = new Logger();
 
         return (new AuthTokenValidatorBuilder($logger))
-            // Change the URL when you run the example in your own machine.
-            ->withSiteOrigin(new Uri("https://localhost:8443"))
+            ->withSiteOrigin(new Uri($this->config->get('origin_url')))
             ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
             ->build();
     }
