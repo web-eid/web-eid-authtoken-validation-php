@@ -367,16 +367,30 @@ $generator = (new ChallengeNonceGeneratorBuilder())
 
 # Example implementation
 
-Take the files from the `examples` folder and change the tokenValidator site origin.
+Example implementation uses AltoRouter (https://dannyvankooten.github.io/AltoRouter/) and works out of the box in Apache with mod_rewrite module. Use `examples/public/.htaccess` and https://dannyvankooten.github.io/AltoRouter/usage/rewrite-requests.html for reference if you want to use a different web server.
 
-Execute the following composer commands:
+Take the files from the `examples` folder. You can rename this folder but in this documentation we still refer it as `examples` folder.
+
+Create new folder `certificates` in `examples` folder.
+
+Download ESTEID-SK 2015 and ESTEID2018 certificates in DER format from https://www.skidsolutions.eu/en/repository/certs 
+and put them in `certificates` folder.
+
+Execute the following composer commands to install dependencies:
 
 ```
 composer install
 composer dump-autoload
 ```
 
-Please note, that there are no certificate files included in this example. You can find certificates from [here](https://www.skidsolutions.eu/en/repository/certs)
+Change origin url (used by token validator) to match the url you are running the example on (set to https://localhost by default) by changing the array key  `origin_url` in `examples/src/app.conf.php`. You can also override settings with environmental variable that is constructed by appending uppercased setting name to prefix 'WEB_EID_SAMPLE_'. This is useful for example in containerized environments like docker. 
+
+For example to override origin_url set environmental variable:
+
+```
+WEB_EID_SAMPLE_ORIGIN_URL
+```
+Point your Apache web server Document Root to `/examples/public` folder.
 
 # Code formatting
 
