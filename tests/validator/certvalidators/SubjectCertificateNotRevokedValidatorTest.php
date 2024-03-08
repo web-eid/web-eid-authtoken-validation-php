@@ -158,7 +158,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     public function testWhenOcspResponseHasInvalidTagThenThrows(): void
     {
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Trying to access array offset on null");
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Could not decode OCSP response");
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
             pack("c*", ...self::buildOcspResponseBodyWithInvalidTag())
         );
