@@ -52,7 +52,7 @@ class OcspServiceMaker
     {
         return new AiaOcspServiceConfiguration(
             new UriCollection(new Uri(self::TEST_ESTEID_2015)),
-            CertificateValidator::buildTrustFromCertificates([Certificates::getTestEsteid2018CA(), Certificates::getTestEsteid2018CAGov(), Certificates::getTestEsteid2015CA()])
+            CertificateValidator::buildTrustFromCertificates([Certificates::getTestEsteid2018CA(), Certificates::getTestEsteid2018CAGov()])
         );
     }
 

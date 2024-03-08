@@ -10,7 +10,7 @@
         }
     ],
     "require-dev": {
-		"phpunit/phpunit": "^9.6.14"
+		"phpunit/phpunit": "^11.0.4"
 	},    
     "autoload": {
         "psr-4": {
@@ -32,13 +32,13 @@
         }
     ],
     "require": {
-        "phpseclib/phpseclib": "3.0.34",
-        "guzzlehttp/psr7": "2.4.5",
-        "web-eid/ocsp-php": "1.0.1",
+        "phpseclib/phpseclib": "3.0.*",
+        "guzzlehttp/psr7": "2.6.2",
+        "web-eid/ocsp-php": "dev-main",
         "psr/log": "^3.0"
     },
     "scripts": {
         "fix-php": ["prettier src/**/* --write", "prettier examples/src/* --write"],
-        "test": "phpunit"
+        "test": "phpunit --no-coverage"
     }
 }
