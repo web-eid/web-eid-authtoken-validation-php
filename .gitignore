@@ -1,7 +1,9 @@
 vendor
-composer.lock
+.vscode
 .DS_Store
 .phpunit.result.cache
+.phpunit.cache
 web-eid-authtoken-validation-php.log
 build
 phpunit.xml
+*.swp
