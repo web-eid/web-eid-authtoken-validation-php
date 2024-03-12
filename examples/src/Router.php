@@ -26,9 +26,14 @@
 
 class Router
 {
+    private $config;
+
+    public function __construct($config) {
+        $this->config = $config;
+    }
+
     public function init()
     {
-
         $router = new AltoRouter();
         $router->setBasePath("");
 
@@ -55,8 +60,7 @@ class Router
             return;
         }
 
-
-        $controller = new $match["target"]["controller"];
+        $controller = new $match["target"]["controller"]($this->config);
         $method = $match["target"]["method"];
 
         call_user_func([$controller, $method], $match["params"], []);
