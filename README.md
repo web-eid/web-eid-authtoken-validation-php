@@ -378,6 +378,28 @@ composer dump-autoload
 
 Please note, that there are no certificate files included in this example. You can find certificates from [here](https://www.skidsolutions.eu/en/repository/certs)
 
+
+# Dependency versioning policy
+
+Starting from version 1.2.0 we adopt a flexible versioning policy for
+`phpseclib` and `guzzlehttp`, and specify the dependency version as `x.y.*`.
+This approach allows our library integrators to quickly incorporate security
+patches and minor updates from dependencies.
+
+## Why we include `composer.lock`
+
+While it is common practice for applications to include a `composer.lock` file
+to lock down the specific versions of dependencies used, this is less common
+for libraries. However, we have chosen to include `composer.lock` in our
+repository to clearly indicate the exact versions of dependencies we have
+tested against.
+
+Although our library is designed to work with any minor version of dependencies
+within the specified range, the `composer.lock` file ensures that integrators
+are aware of the specific version we consider stable and secure. The provided
+`composer.lock` is intended to be used as a reference, not as a strict
+requirement.
+
 # Code formatting
 
 We are using `Prettier` for code formatting. To install Prettier, use following command:
