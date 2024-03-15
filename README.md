@@ -41,7 +41,7 @@ return (new AuthTokenValidatorBuilder($log))
       ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
       ->build();
 ```
-Read more about [LoggerInterface](https://www.php-fig.org/psr/psr-3/) and take a look from examples directory.
+Read more about [LoggerInterface](https://www.php-fig.org/psr/psr-3/) and take a look at the usage examples in the `example` directory.
 
 ## 2. Configure the challenge nonce store
 
@@ -211,7 +211,7 @@ try {
 }
 ...
 ```
-See the complete example from the ***examples*** directory.
+See the complete example in the `example` directory.
 
 
 # Table of contents
@@ -367,7 +367,7 @@ $generator = (new ChallengeNonceGeneratorBuilder())
 
 # Example implementation
 
-Take the files from the `examples` folder and change the tokenValidator site origin.
+An example implementation is provided in the `example` directory. Please update the site origin in the `tokenValidator()` function before running it.
 
 Execute the following composer commands:
 
@@ -376,8 +376,7 @@ composer install
 composer dump-autoload
 ```
 
-Please note, that there are no certificate files included in this example. You can find certificates from [here](https://www.skidsolutions.eu/en/repository/certs)
-
+Please note that there are no certificate files included in this example. You can find EstEID certificates from [here](https://www.skidsolutions.eu/en/repository/certs).
 
 # Dependency versioning policy
 

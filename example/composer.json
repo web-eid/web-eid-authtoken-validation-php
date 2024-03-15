@@ -2,7 +2,6 @@
     "name": "demo/webeid-php",
     "description": "Web eID PHP demo",
     "license": "MIT",
-    "type": "library",
     "authors": [
         {
             "name": "Guido Gröön",
@@ -10,13 +9,12 @@
         }
     ],
     "require": {
-        "php": ">=7.4",
-        "web-eid/web-eid-authtoken-validation-php": "1.1.0",
-        "altorouter/altorouter": "1.1.0",
-        "guzzlehttp/psr7": "2.4.5",
+        "php": ">=8.1",
+        "web-eid/web-eid-authtoken-validation-php": "1.2.*",
+        "altorouter/altorouter": "^1.1",
         "psr/log": "^3.0"
     },
     "autoload": {
         "classmap": ["src"]
-    }        
+    }
 }
