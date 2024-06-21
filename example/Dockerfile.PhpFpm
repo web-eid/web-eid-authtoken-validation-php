@@ -1,0 +1,11 @@
+FROM php:fpm
+
+WORKDIR /var/www/html/web-eid-php-proxy
+
+COPY . .
+
+RUN apt-get update
+RUN apt-get install unzip
+
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+RUN composer install
