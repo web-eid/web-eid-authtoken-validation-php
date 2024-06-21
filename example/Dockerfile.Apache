@@ -1,0 +1,22 @@
+FROM php:apache
+
+COPY . /var/www/html
+
+RUN apt-get update
+RUN apt-get install ssl-cert unzip
+
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+RUN composer install
+
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# In case you need to control error reporting
+#RUN echo "error_reporting=E_ALL & ~E_DEPRECATED" >> /usr/local/etc/php/conf.d/error_reporting.ini
+
+RUN a2enmod rewrite
+RUN a2enmod ssl
+RUN a2ensite default-ssl
+
