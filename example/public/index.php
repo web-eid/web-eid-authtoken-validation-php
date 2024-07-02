@@ -31,5 +31,7 @@ session_start();
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$router = new Router();
+$configArr = require_once __DIR__ . '/../src/app.conf.php';
+$config = Config::fromArray($configArr)->overrideFromEnv();
+$router = new Router($config);
 $router->init();
