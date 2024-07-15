@@ -24,18 +24,20 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
+use DateTime;
+use ReflectionProperty;
 use phpseclib3\File\X509;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use web_eid\ocsp_php\OcspResponse;
 use web_eid\ocsp_php\util\AsnUtil;
-use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
-use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
+use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
 use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
-use web_eid\web_eid_authtoken_validation_php\testutil\OcspServiceMaker;
+use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
+use web_eid\web_eid_authtoken_validation_php\testutil\OcspServiceMaker;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClientImpl;
+use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 
 class SubjectCertificateNotRevokedValidatorTest extends TestCase
 {
@@ -54,6 +56,11 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->trustedValidator = new SubjectCertificateTrustedValidator(new TrustedCertificates([]), new Logger());
         self::setSubjectCertificateIssuerCertificate($this->trustedValidator);
         $this->estEid2018Cert = Certificates::getJaakKristjanEsteid2018Cert();
+    }
+
+    protected function tearDown(): void
+    {
+        Dates::resetMockedCertificateValidatorDate();
     }
 
     public function testWhenValidAiaOcspResponderConfigurationThenSucceeds(): void
@@ -99,7 +106,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: The requested URL returned error: 404");
 
-        $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(true, "https://web-eid-test.free.beeceptor.com");
+        $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(true, "http://demo.sk.ee/ocsps");
         $validator = new SubjectCertificateNotRevokedValidator($this->trustedValidator, self::$ocspClient, $ocspServiceProvider);
         $validator->validate($this->estEid2018Cert);
     }
@@ -214,6 +221,8 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     public function testWhenOcspResponseCaNotTrustedThenThrows(): void
     {
+        Dates::setMockedCertificateValidatorDate(new DateTime("2021-03-01"));
+
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Certificate C=EE, O=AS Sertifitseerimiskeskus, OU=OCSP, CN=TEST of SK OCSP RESPONDER 2020/emailAddress=pki@sk.ee is not trusted");
 

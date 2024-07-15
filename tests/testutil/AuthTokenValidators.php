@@ -65,6 +65,17 @@ final class AuthTokenValidators
             ->withTrustedCertificateAuthorities(...$certificates);
     }
 
+    public static function getAuthTokenValidatorWithJuly2024ExpiredUnrelatedTrustedCA(): AuthTokenValidator
+    {
+        return self::getAuthTokenValidator(
+            self::TOKEN_ORIGIN_URL,
+            ...CertificateLoader::loadCertificatesFromResources(
+                __DIR__ . "/../_resources/TEST_of_ESTEID2018.cer",
+                __DIR__ . "/../_resources/TEST_of_SK_OCSP_RESPONDER_2020.cer"
+            )
+        );
+    }
+
     public static function getAuthTokenValidatorWithDisallowedESTEIDPolicy(): AuthTokenValidator
     {
         return (self::getAuthTokenValidatorBuilder(self::TOKEN_ORIGIN_URL, self::getCACertificates()))
