@@ -27,74 +27,128 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use DateTime;
+use DateInterval;
 use PHPUnit\Framework\TestCase;
 use web_eid\ocsp_php\OcspBasicResponse;
+use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidationConfiguration;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
+use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 
 class OcspResponseValidatorTest extends TestCase
 {
 
-    public function testWhenThisUpdateDayBeforeProducedAtThenThrows(): void
+    private static int $timeSkew;
+    private static int $maxThisUpdateAge;
+
+    protected function setUp(): void
     {
-        $response = [];
-        $response['tbsResponseData']['responses'] = [];
-        $response['tbsResponseData']['responses'][] = ['thisUpdate' => '2021-09-01T00:00:00.000Z'];
-        $mockBasicResponse = new OcspBasicResponse($response);
-
-        $producedAt = new DateTime("2021-09-02T00:00:00.000Z");
-
-        $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: " .
-            "Certificate status update time check failed: " .
-            "notAllowedBefore: 2021-09-01 23:59:45 UTC" .
-            ", notAllowedAfter: 2021-09-02 00:00:15 UTC" .
-            ", thisUpdate: 2021-09-01 00:00:00 UTC" .
-            ", nextUpdate: null");
-
-        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
+        $configuration = new AuthTokenValidationConfiguration();
+        self::$timeSkew = $configuration->getAllowedOcspResponseTimeSkew();
+        self::$maxThisUpdateAge = $configuration->getMaxOcspResponseThisUpdateAge();
     }
 
-    public function testWhenThisUpdateDayAfterProducedAtThenThrows(): void
+    public function testWhenThisAndNextUpdateWithinSkewThenValidationSucceeds(): void
     {
+        $this->expectNotToPerformAssertions();
 
-        $response = [];
-        $response['tbsResponseData']['responses'] = [];
-        $response['tbsResponseData']['responses'][] = ['thisUpdate' => '2021-09-02T00:00:00.000Z'];
-        $mockBasicResponse = new OcspBasicResponse($response);
-
-        $producedAt = new DateTime("2021-09-01T00:00:00.000Z");
-
-        $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: " .
-            "Certificate status update time check failed: " .
-            "notAllowedBefore: 2021-08-31 23:59:45 UTC" .
-            ", notAllowedAfter: 2021-09-01 00:00:15 UTC" .
-            ", thisUpdate: 2021-09-02 00:00:00 UTC" .
-            ", nextUpdate: null");
-
-
-        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
-    }
-
-    public function testWhenNextUpdateDayBeforeProducedAtThenThrows(): void
-    {
-
+        $now = new DateTime();
+        $thisUpdateWithinAgeLimit = self::getThisUpdateWithinAgeLimit($now);
+        $nextUpdateWithinAgeLimit = (clone $now)->add(new DateInterval('PT' . 2 . 'S'))->sub(new DateInterval('PT' . self::$maxThisUpdateAge . 'M'));
         $response = [];
         $response['tbsResponseData']['responses'] = [];
         $response['tbsResponseData']['responses'][] = [
-            'thisUpdate' => '2021-09-02T00:00:00.000Z',
-            'nextUpdate' => '2021-09-01T00:00:00.000Z'
+            'thisUpdate' => $thisUpdateWithinAgeLimit->format('Y-m-d\TH:i:s.v\Z'),
+            'nextUpdate' => $nextUpdateWithinAgeLimit->format('Y-m-d\TH:i:s.v\Z')
         ];
         $mockBasicResponse = new OcspBasicResponse($response);
-        $producedAt = new DateTime("2021-09-02T00:00:00.000Z");
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
+    }
+
+    public function testWhenNextUpdateBeforeThisUpdateThenThrows(): void
+    {
+        $now = new DateTime();
+        $thisUpdateWithinAgeLimit = self::getThisUpdateWithinAgeLimit($now);
+        $beforeThisUpdate = (clone $thisUpdateWithinAgeLimit)->sub(new DateInterval('PT1S'));
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = [
+            'thisUpdate' => $thisUpdateWithinAgeLimit->format('Y-m-d\TH:i:s.v\Z'),
+            'nextUpdate' => $beforeThisUpdate->format('Y-m-d\TH:i:s.v\Z')
+        ];
+
+        $mockBasicResponse = new OcspBasicResponse($response);
 
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: " .
             "Certificate status update time check failed: " .
-            "notAllowedBefore: 2021-09-01 23:59:45 UTC" .
-            ", notAllowedAfter: 2021-09-02 00:00:15 UTC" .
-            ", thisUpdate: 2021-09-02 00:00:00 UTC" .
-            ", nextUpdate: 2021-09-01 00:00:00 UTC");
-        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, $producedAt);
+            "nextUpdate '" . DateAndTime::toUtcString($beforeThisUpdate) . "' is before thisUpdate '" . DateAndTime::toUtcString($thisUpdateWithinAgeLimit) . "'");
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
+    }
+
+    public function testWhenThisUpdateHalfHourBeforeNowThenThrows(): void {
+        $now = new DateTime();
+        $halfHourBeforeNow = (clone $now)->sub(new DateInterval('PT30M'));
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = [
+            'thisUpdate' => $halfHourBeforeNow->format('Y-m-d\TH:i:s.v\Z')
+        ];
+
+        $mockBasicResponse = new OcspBasicResponse($response);
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: " .
+            "Certificate status update time check failed: " .
+            "thisUpdate '" . DateAndTime::toUtcString($halfHourBeforeNow) . "' is too old, minimum time allowed: ");
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
+    }
+
+    public function testWhenThisUpdateHalfHourAfterNowThenThrows(): void {
+        $now = new DateTime();
+        $halfHourAfterNow = (clone $now)->add(new DateInterval('PT30M'));
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = [
+            'thisUpdate' => $halfHourAfterNow->format('Y-m-d\TH:i:s.v\Z')
+        ];
+
+        $mockBasicResponse = new OcspBasicResponse($response);
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: " .
+            "Certificate status update time check failed: " .
+            "thisUpdate '" . DateAndTime::toUtcString($halfHourAfterNow) . "' is too far in the future, latest allowed: ");
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
+    }
+
+    public function testWhenNextUpdateHalfHourBeforeNowThenThrows(): void
+    {
+        $now = new DateTime();
+        $thisUpdateWithinAgeLimit = self::getThisUpdateWithinAgeLimit($now);
+        $halfHourBeforeNow = (clone $now)->sub(new DateInterval('PT30M'));
+        $response = [];
+        $response['tbsResponseData']['responses'] = [];
+        $response['tbsResponseData']['responses'][] = [
+            'thisUpdate' => $thisUpdateWithinAgeLimit->format('Y-m-d\TH:i:s.v\Z'),
+            'nextUpdate' => $halfHourBeforeNow->format('Y-m-d\TH:i:s.v\Z')
+        ];
+
+        $mockBasicResponse = new OcspBasicResponse($response);
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: " .
+            "Certificate status update time check failed: " .
+            "nextUpdate '" . DateAndTime::toUtcString($halfHourBeforeNow) . "' is in the past");
+
+        OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
+    }
+
+    private static function getThisUpdateWithinAgeLimit(DateTime $now): DateTime
+    {
+        return (clone $now)->add(new DateInterval('PT' . 1 . 'S'))->sub(new DateInterval('PT' . self::$maxThisUpdateAge . 'M'));        
     }
 }

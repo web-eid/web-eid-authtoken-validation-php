@@ -34,6 +34,7 @@ use web_eid\ocsp_php\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateRevokedException;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
+use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class OcspResponseValidator
 {
@@ -44,9 +45,7 @@ final class OcspResponseValidator
      * https://oidref.com/1.3.6.1.5.5.7.3.9.
      */
     private const OCSP_SIGNING = "id-kp-OCSPSigning";
-
-    private const ALLOWED_TIME_SKEW = 15;
-
+    private const ERROR_PREFIX = "Certificate status update time check failed: ";
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
@@ -72,7 +71,7 @@ final class OcspResponseValidator
         }
     }
 
-    public static function validateCertificateStatusUpdateTime(OcspBasicResponse $basicResponse, DateTime $producedAt): void
+    public static function validateCertificateStatusUpdateTime(OcspBasicResponse $basicResponse, int $allowedOcspResponseTimeSkew, int $maxOcspResponseThisUpdateAge): void
     {
         // From RFC 2560, https://www.ietf.org/rfc/rfc2560.txt:
         // 4.2.2.  Notes on OCSP Responses
@@ -83,20 +82,37 @@ final class OcspResponseValidator
         //   SHOULD be considered unreliable.
         //   If nextUpdate is not set, the responder is indicating that newer
         //   revocation information is available all the time.
-
-        $notAllowedBefore = (clone $producedAt)->sub(new DateInterval('PT' . self::ALLOWED_TIME_SKEW . 'S'));
-        $notAllowedAfter = (clone $producedAt)->add(new DateInterval('PT' . self::ALLOWED_TIME_SKEW . 'S'));
+        $now = DefaultClock::getInstance()->now();
+        $earliestAcceptableTimeSkew = (clone $now)->sub(new DateInterval('PT' . $allowedOcspResponseTimeSkew . 'M'));
+        $latestAcceptableTimeSkew = (clone $now)->add(new DateInterval('PT' . $allowedOcspResponseTimeSkew . 'M'));
+        $minimumValidThisUpdateTime = (clone $now)->sub(new DateInterval('PT' . $maxOcspResponseThisUpdateAge . 'M'));
 
         $thisUpdate = $basicResponse->getThisUpdate();
+        if ($thisUpdate > $latestAcceptableTimeSkew) {
+            throw new UserCertificateOCSPCheckFailedException(self::ERROR_PREFIX .
+                "thisUpdate '" . DateAndTime::toUtcString($thisUpdate) . "' is too far in the future, " .
+                "latest allowed: '" . DateAndTime::toUtcString($latestAcceptableTimeSkew) . "'");
+        }
+
+        if ($thisUpdate < $minimumValidThisUpdateTime) {
+            throw new UserCertificateOCSPCheckFailedException(self::ERROR_PREFIX .
+                "thisUpdate '" . DateAndTime::toUtcString($thisUpdate) . "' is too old, " .
+                "minimum time allowed: '" . DateAndTime::toUtcString($minimumValidThisUpdateTime) . "'");
+        }
+
         $nextUpdate = $basicResponse->getNextUpdate();
+        if (is_null($nextUpdate)) {
+            return;
+        }
 
-        if ($notAllowedAfter < $thisUpdate || $notAllowedBefore > (!is_null($nextUpdate) ? $nextUpdate : $thisUpdate)) {
+        if ($nextUpdate < $earliestAcceptableTimeSkew) {
+            throw new UserCertificateOCSPCheckFailedException(self::ERROR_PREFIX .
+                "nextUpdate '" . DateAndTime::toUtcString($nextUpdate) . "' is in the past");
+        }
 
-            throw new UserCertificateOCSPCheckFailedException("Certificate status update time check failed: " .
-                "notAllowedBefore: " . DateAndTime::toUtcString($notAllowedBefore) .
-                ", notAllowedAfter: " . DateAndTime::toUtcString($notAllowedAfter) .
-                ", thisUpdate: " . DateAndTime::toUtcString($thisUpdate) .
-                ", nextUpdate: " . DateAndTime::toUtcString($nextUpdate));
+        if ($nextUpdate < $thisUpdate) {
+            throw new UserCertificateOCSPCheckFailedException(self::ERROR_PREFIX .
+                "nextUpdate '" . DateAndTime::toUtcString($nextUpdate) . "' is before thisUpdate '" . DateAndTime::toUtcString($thisUpdate) . "'");
         }
     }
 
