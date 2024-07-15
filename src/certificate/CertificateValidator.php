@@ -33,6 +33,7 @@ use DateTime;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateExpiredException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotTrustedException;
+use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class CertificateValidator
 {
@@ -59,18 +60,17 @@ final class CertificateValidator
         }
     }
 
-    public static function trustedCACertificatesAreValidOnDate(TrustedCertificates $trustedCertificates, DateTime $date): void
-    {
-        foreach ($trustedCertificates->getCertificates() as $cert) {
-            self::certificateIsValidOnDate($cert, $date, "Trusted CA");
-        }
-    }
-
     /**
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      */
-    public static function validateIsSignedByTrustedCA(X509 $certificate, TrustedCertificates $trustedCertificates): X509
+    public static function validateIsValidAndSignedByTrustedCA(
+        X509 $certificate,
+        TrustedCertificates $trustedCertificates,
+    ): X509
     {
+        $now = DefaultClock::getInstance()->now();
+        self::certificateIsValidOnDate($certificate, $now, "User");
+
         foreach ($trustedCertificates->getCertificates() as $trustedCertificate) {
             $certificate->loadCA(
                 $trustedCertificate->saveX509($trustedCertificate->getCurrentCert(), X509::FORMAT_PEM)
@@ -79,7 +79,11 @@ final class CertificateValidator
 
         if ($certificate->validateSignature()) {
             $chain = $certificate->getChain();
-            return end($chain);
+            $trustedCACert = end($chain);
+
+            // Verify that the trusted CA cert is presently valid before returning the result.
+            self::certificateIsValidOnDate($trustedCACert, $now, "Trusted CA");
+            return $trustedCACert;
         }
 
         throw new CertificateNotTrustedException($certificate);

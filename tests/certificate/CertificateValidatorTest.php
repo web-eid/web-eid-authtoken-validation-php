@@ -42,7 +42,7 @@ class CertificateValidatorTest extends TestCase
     public function testWhenCertificateNotValidYet(): void
     {
         $this->expectException(CertificateNotYetValidException::class);
-        $this->expectExceptionMessage("User certificate is not valid yet");
+        $this->expectExceptionMessage("User certificate is not yet valid");
 
         $cert = Certificates::getJaakKristjanEsteid2018Cert();
         $this->assertNull(CertificateValidator::certificateIsValidOnDate($cert, new DateTime("20.01.2000 16:00:00"), "User"));

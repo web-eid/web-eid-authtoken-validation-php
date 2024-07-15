@@ -206,14 +206,18 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
         $this->mockDate("2018-10-17");
 
         $this->expectException(CertificateNotYetValidException::class);
+        $this->expectExceptionMessage("User certificate is not yet valid");
+
         $this->validator->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
     }
 
-    public function testWhenTrustedCaCertificateIsNotYetValidThenValidationFails()
+    public function testWhenTrustedCaCertificateIsNotYetValidThenUserCertValidationFails()
     {
         $this->mockDate("2018-08-17");
 
         $this->expectException(CertificateNotYetValidException::class);
+        $this->expectExceptionMessage("User certificate is not yet valid");
+
         $this->validator->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
     }
 
@@ -226,17 +230,29 @@ class AuthTokenCertificateTest extends AbstractTestWithValidator
         $this->validator->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
     }
 
-    public function testWhenTrustedCaCertificateIsNoLongerValidThenValidationFails()
+    // In this case both CA and user certificate have expired, we expect the user certificate to be checked first.
+    public function testWhenTrustedCaCertificateIsNoLongerValidThenUserCertValidationFails()
     {
         $this->mockDate("2033-10-19");
 
         $this->expectException(CertificateExpiredException::class);
-        $this->expectExceptionMessage("Trusted CA certificate has expired");
+        $this->expectExceptionMessage("User certificate has expired");
         $this->validator->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    public function testWhenUnrelatedCACertificateIsExpiredThenValidationSucceeds(): void
+    {
+        $this->mockDate("2024-07-01");
+
+        $this->expectNotToPerformAssertions();
+        $validatorWithExpiredUnrelatedTrustedCA = AuthTokenValidators::getAuthTokenValidatorWithJuly2024ExpiredUnrelatedTrustedCA();
+
+        $validatorWithExpiredUnrelatedTrustedCA->validate($this->validAuthToken, self::VALID_CHALLENGE_NONCE);
     }
 
     public function testWhenCertificateIsRevokedThenOcspCheckFails(): void
     {
+        $this->markTestSkipped("A new designated test OCSP responder certificate was issued whose validity period no longer overlaps with the revoked certificate");
         $this->mockDate("2020-01-01");
         $validatorWithOcspCheck = AuthTokenValidators::getAuthTokenValidatorWithOcspCheck();
         $token = $this->replaceTokenField(self::AUTH_TOKEN, "unverifiedCertificate", self::REVOKED_CERT);
