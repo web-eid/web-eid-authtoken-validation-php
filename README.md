@@ -298,6 +298,11 @@ The following additional configuration options are available in `AuthTokenValida
 
 - `withNonceDisabledOcspUrls(URI ...$urls)` – adds the given URLs to the list of OCSP responder access location URLs for which the nonce protocol extension will be disabled. Some OCSP responders don't support the nonce extension.
 
+- `withAllowedOcspResponseTimeSkew(int $allowedTimeSkew)` – sets the allowed time skew for OCSP response's `thisUpdate` and `nextUpdate` times to allow discrepancies between the system clock and the OCSP responder's clock or revocation updates that are not published in real time. The default allowed time skew is 15 minutes. The relatively long default is specifically chosen to account for one particular OCSP responder that used CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
+
+- `withMaxOcspResponseThisUpdateAge(int $maxThisUpdateAge)` – sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.
+
+
 Extended configuration example:  
 
 ```php

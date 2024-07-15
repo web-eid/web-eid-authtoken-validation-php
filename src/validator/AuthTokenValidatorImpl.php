@@ -173,7 +173,12 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         if ($this->configuration->isUserCertificateRevocationCheckWithOcspEnabled()) {
             $validatorBatch->addOptional(
                 $this->configuration->isUserCertificateRevocationCheckWithOcspEnabled(),
-                new SubjectCertificateNotRevokedValidator($certTrustedValidator, $this->ocspClient, $this->ocspServiceProvider, $this->logger)
+                new SubjectCertificateNotRevokedValidator($certTrustedValidator, 
+                    $this->ocspClient, 
+                    $this->ocspServiceProvider,
+                    $this->configuration->getAllowedOcspResponseTimeSkew(),
+                    $this->configuration->getMaxOcspResponseThisUpdateAge(), 
+                    $this->logger)
             );
         }
 
