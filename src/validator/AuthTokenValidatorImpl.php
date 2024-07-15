@@ -73,7 +73,6 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
         $this->trustedCACertificates = CertificateValidator::buildTrustFromCertificates($configuration->getTrustedCACertificates());
 
         $this->simpleSubjectCertificateValidators = new SubjectCertificateValidatorBatch(
-            new SubjectCertificateExpiryValidator($this->trustedCACertificates, $logger),
             new SubjectCertificatePurposeValidator($logger),
             new SubjectCertificatePolicyValidator($this->configuration->getDisallowedSubjectCertificatePolicies(), $logger)
         );
