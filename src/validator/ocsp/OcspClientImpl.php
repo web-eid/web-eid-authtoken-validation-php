@@ -75,8 +75,6 @@ class OcspClientImpl implements OcspClient
         $responseJson = json_encode($response->getResponse(), JSON_INVALID_UTF8_IGNORE);
         $this->logger?->debug("OCSP response: " . $responseJson);
 
-        echo $uri;
-
         if ($info["content_type"] !== self::OCSP_RESPONSE_TYPE) {
             throw new UserCertificateOCSPCheckFailedException("OCSP response content type is not " . self::OCSP_RESPONSE_TYPE);
         }

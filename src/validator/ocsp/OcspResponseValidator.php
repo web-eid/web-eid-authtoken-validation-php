@@ -26,7 +26,6 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use BadFunctionCallException;
 use DateInterval;
-use DateTime;
 use web_eid\web_eid_authtoken_validation_php\exceptions\OCSPCertificateException;
 use phpseclib3\File\X509;
 use web_eid\ocsp_php\OcspBasicResponse;

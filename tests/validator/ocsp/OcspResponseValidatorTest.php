@@ -30,9 +30,10 @@ use DateTime;
 use DateInterval;
 use PHPUnit\Framework\TestCase;
 use web_eid\ocsp_php\OcspBasicResponse;
+use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
+use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidationConfiguration;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
-use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 
 class OcspResponseValidatorTest extends TestCase
 {
@@ -51,7 +52,7 @@ class OcspResponseValidatorTest extends TestCase
     {
         $this->expectNotToPerformAssertions();
 
-        $now = new DateTime();
+        $now = DefaultClock::getInstance()->now();
         $thisUpdateWithinAgeLimit = self::getThisUpdateWithinAgeLimit($now);
         $nextUpdateWithinAgeLimit = (clone $now)->add(new DateInterval('PT' . 2 . 'S'))->sub(new DateInterval('PT' . self::$maxThisUpdateAge . 'M'));
         $response = [];
@@ -67,7 +68,7 @@ class OcspResponseValidatorTest extends TestCase
 
     public function testWhenNextUpdateBeforeThisUpdateThenThrows(): void
     {
-        $now = new DateTime();
+        $now = DefaultClock::getInstance()->now();
         $thisUpdateWithinAgeLimit = self::getThisUpdateWithinAgeLimit($now);
         $beforeThisUpdate = (clone $thisUpdateWithinAgeLimit)->sub(new DateInterval('PT1S'));
         $response = [];
@@ -87,8 +88,9 @@ class OcspResponseValidatorTest extends TestCase
         OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
     }
 
-    public function testWhenThisUpdateHalfHourBeforeNowThenThrows(): void {
-        $now = new DateTime();
+    public function testWhenThisUpdateHalfHourBeforeNowThenThrows(): void
+    {
+        $now = DefaultClock::getInstance()->now();
         $halfHourBeforeNow = (clone $now)->sub(new DateInterval('PT30M'));
         $response = [];
         $response['tbsResponseData']['responses'] = [];
@@ -106,8 +108,9 @@ class OcspResponseValidatorTest extends TestCase
         OcspResponseValidator::validateCertificateStatusUpdateTime($mockBasicResponse, self::$timeSkew, self::$maxThisUpdateAge);
     }
 
-    public function testWhenThisUpdateHalfHourAfterNowThenThrows(): void {
-        $now = new DateTime();
+    public function testWhenThisUpdateHalfHourAfterNowThenThrows(): void
+    {
+        $now = DefaultClock::getInstance()->now();
         $halfHourAfterNow = (clone $now)->add(new DateInterval('PT30M'));
         $response = [];
         $response['tbsResponseData']['responses'] = [];
@@ -127,7 +130,7 @@ class OcspResponseValidatorTest extends TestCase
 
     public function testWhenNextUpdateHalfHourBeforeNowThenThrows(): void
     {
-        $now = new DateTime();
+        $now = DefaultClock::getInstance()->now();
         $thisUpdateWithinAgeLimit = self::getThisUpdateWithinAgeLimit($now);
         $halfHourBeforeNow = (clone $now)->sub(new DateInterval('PT30M'));
         $response = [];
@@ -149,6 +152,6 @@ class OcspResponseValidatorTest extends TestCase
 
     private static function getThisUpdateWithinAgeLimit(DateTime $now): DateTime
     {
-        return (clone $now)->add(new DateInterval('PT' . 1 . 'S'))->sub(new DateInterval('PT' . self::$maxThisUpdateAge . 'M'));        
+        return (clone $now)->add(new DateInterval('PT' . 1 . 'S'))->sub(new DateInterval('PT' . self::$maxThisUpdateAge . 'M'));
     }
 }
