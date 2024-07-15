@@ -25,9 +25,9 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 
 use DateTime;
-use ReflectionProperty;
 use phpseclib3\File\X509;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use web_eid\ocsp_php\OcspResponse;
 use web_eid\ocsp_php\util\AsnUtil;
 use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
@@ -35,15 +35,18 @@ use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
 use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use web_eid\web_eid_authtoken_validation_php\testutil\OcspServiceMaker;
+use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidationConfiguration;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClientImpl;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
 
 class SubjectCertificateNotRevokedValidatorTest extends TestCase
 {
     private static OcspClient $ocspClient;
     private SubjectCertificateTrustedValidator $trustedValidator;
     private X509 $estEid2018Cert;
+    private AuthTokenValidationConfiguration $configuration;
 
     public static function setUpBeforeClass(): void
     {
@@ -56,6 +59,8 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->trustedValidator = new SubjectCertificateTrustedValidator(new TrustedCertificates([]), new Logger());
         self::setSubjectCertificateIssuerCertificate($this->trustedValidator);
         $this->estEid2018Cert = Certificates::getJaakKristjanEsteid2018Cert();
+        $this->configuration = new AuthTokenValidationConfiguration();
+        Dates::setMockedCertificateValidatorDate(new DateTime());
     }
 
     protected function tearDown(): void
@@ -77,7 +82,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider();
-        $validator = new SubjectCertificateNotRevokedValidator($this->trustedValidator, self::$ocspClient, $ocspServiceProvider);
+        $validator = $this->getSubjectCertificateNotRevokedValidator($ocspServiceProvider);
         $validator->validate($this->estEid2018Cert);
     }
 
@@ -87,7 +92,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(false);
-        $validator = new SubjectCertificateNotRevokedValidator($this->trustedValidator, self::$ocspClient, $ocspServiceProvider);
+        $validator = $this->getSubjectCertificateNotRevokedValidator($ocspServiceProvider);
         $validator->validate($this->estEid2018Cert);
     }
 
@@ -97,7 +102,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->expectExceptionMessage("User certificate revocation check has failed: Could not resolve host: invalid.invalid");
 
         $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(true, "http://invalid.invalid");
-        $validator = new SubjectCertificateNotRevokedValidator($this->trustedValidator, self::$ocspClient, $ocspServiceProvider);
+        $validator = $this->getSubjectCertificateNotRevokedValidator($ocspServiceProvider);
         $validator->validate($this->estEid2018Cert);
     }
 
@@ -184,6 +189,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     public function testWhenOcspResponseRevokedThenThrows(): void
     {
+        Dates::setMockedCertificateValidatorDate(new DateTime('2021-09-18 00:13:43.000'));
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: Exception: User certificate has been revoked");
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
@@ -194,6 +200,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     public function testWhenOcspResponseUnknownThenThrows(): void
     {
+        Dates::setMockedCertificateValidatorDate(new DateTime('2021-09-18 00:16:25.000'));
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: Exception: User certificate has been revoked: Unknown status");
 
@@ -215,7 +222,13 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
             }
         };
 
-        $validator = new SubjectCertificateNotRevokedValidator($this->trustedValidator, $client, $ocspServiceProvider);
+        $validator = new SubjectCertificateNotRevokedValidator(
+            $this->trustedValidator, 
+            $client, 
+            $ocspServiceProvider,
+            $this->configuration->getAllowedOcspResponseTimeSkew(), 
+            $this->configuration->getMaxOcspResponseThisUpdateAge()
+        );
         $validator->validate($this->estEid2018Cert);
     }
 
@@ -234,6 +247,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     public function testWhenNonceDiffersThenThrows(): void
     {
+        Dates::setMockedCertificateValidatorDate(new DateTime('2021-09-17 18:25:24.000'));
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: Exception: User certificate revocation check has failed: OCSP request and response nonces differ, possible replay attack");
 
@@ -317,7 +331,24 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
 
     private function getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingClient(OcspClient $client): SubjectCertificateNotRevokedValidator
     {
-        return new SubjectCertificateNotRevokedValidator($this->trustedValidator, $client, OcspServiceMaker::getAiaOcspServiceProvider());
+        return new SubjectCertificateNotRevokedValidator(
+            $this->trustedValidator, 
+            $client, 
+            OcspServiceMaker::getAiaOcspServiceProvider(), 
+            $this->configuration->getAllowedOcspResponseTimeSkew(), 
+            $this->configuration->getMaxOcspResponseThisUpdateAge()
+        );
+    }
+
+    private function getSubjectCertificateNotRevokedValidator(OcspServiceProvider $ocspServiceProvider): SubjectCertificateNotRevokedValidator
+    {
+        return new SubjectCertificateNotRevokedValidator(
+            $this->trustedValidator,
+            self::$ocspClient,
+            $ocspServiceProvider,
+            $this->configuration->getAllowedOcspResponseTimeSkew(), 
+            $this->configuration->getMaxOcspResponseThisUpdateAge()
+        );
     }
 
     private static function setSubjectCertificateIssuerCertificate(SubjectCertificateTrustedValidator $trustedValidator): void

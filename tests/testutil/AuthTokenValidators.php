@@ -58,6 +58,11 @@ final class AuthTokenValidators
         return (self::getAuthTokenValidatorBuilder(self::TOKEN_ORIGIN_URL, self::getCACertificates()))->withDesignatedOcspServiceConfiguration(OcspServiceMaker::getDesignatedOcspServiceConfiguration())->build();
     }
 
+    public static function getDefaultAuthTokenValidatorBuilder(): AuthTokenValidatorBuilder
+    {
+        return self::getAuthTokenValidatorBuilder(self::TOKEN_ORIGIN_URL, self::getCACertificates());
+    }
+
     private static function getAuthTokenValidatorBuilder(string $uri, array $certificates): AuthTokenValidatorBuilder
     {
         return (new AuthTokenValidatorBuilder(new Logger()))

@@ -39,7 +39,9 @@ final class AuthTokenValidationConfiguration
     private ?Uri $siteOrigin = null;
     private array $trustedCACertificates = [];
     private bool $isUserCertificateRevocationCheckWithOcspEnabled = true;
-    private int $ocspRequestTimeout = 5;
+    private int $ocspRequestTimeout = 5; // In seconds
+    private int $allowedOcspResponseTimeSkew = 15; // In minutes
+    private int $maxOcspResponseThisUpdateAge = 2; // In minutes
     private array $disallowedSubjectCertificatePolicies;
     private UriCollection $nonceDisabledOcspUrls;
     private ?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration = null;
@@ -94,6 +96,26 @@ final class AuthTokenValidationConfiguration
         $this->ocspRequestTimeout = $ocspRequestTimeout;
     }
 
+    public function getAllowedOcspResponseTimeSkew(): int
+    {
+        return $this->allowedOcspResponseTimeSkew;
+    }
+
+    public function setAllowedOcspResponseTimeSkew(int $allowedOcspResponseTimeSkew): void
+    {
+        $this->allowedOcspResponseTimeSkew = $allowedOcspResponseTimeSkew;
+    }
+
+    public function getMaxOcspResponseThisUpdateAge(): int
+    {
+        return $this->maxOcspResponseThisUpdateAge;
+    }
+
+    public function setMaxOcspResponseThisUpdateAge(int $maxOcspResponseThisUpdateAge): void
+    {
+        $this->maxOcspResponseThisUpdateAge = $maxOcspResponseThisUpdateAge;
+    }
+
     public function getDesignatedOcspServiceConfiguration(): ?DesignatedOcspServiceConfiguration
     {
         return $this->designatedOcspServiceConfiguration;
@@ -132,6 +154,8 @@ final class AuthTokenValidationConfiguration
         }
 
         DateAndTime::requirePositiveDuration($this->ocspRequestTimeout, "OCSP request timeout");
+        DateAndTime::requirePositiveDuration($this->allowedOcspResponseTimeSkew, "Allowed OCSP response time-skew");
+        DateAndTime::requirePositiveDuration($this->maxOcspResponseThisUpdateAge, "Max OCSP response thisUpdate age");
     }
 
     /**
