@@ -63,9 +63,9 @@ class AiaOcspService implements OcspService
         return $this->url;
     }
 
-    public function validateResponderCertificate(X509 $cert, DateTime $producedAt): void
+    public function validateResponderCertificate(X509 $cert, DateTime $now): void
     {
-        CertificateValidator::certificateIsValidOnDate($cert, $producedAt, "AIA OCSP responder");
+        CertificateValidator::certificateIsValidOnDate($cert, $now, "AIA OCSP responder");
         // Trusted certificates' validity has been already verified in validateCertificateExpiry().
         OcspResponseValidator::validateHasSigningExtension($cert);
         CertificateValidator::validateIsValidAndSignedByTrustedCA($cert, $this->trustedCACertificates);
