@@ -37,6 +37,7 @@ use web_eid\ocsp_php\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\OcspService;
 use Psr\Log\LoggerInterface;
+use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class SubjectCertificateNotRevokedValidator implements SubjectCertificateValidator
 {
@@ -137,8 +138,9 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         //   4. The signer is currently authorized to provide a response for the
         //      certificate in question.
 
-        $producedAt = $basicResponse->getProducedAt();
-        $ocspService->validateResponderCertificate($responderCert, $producedAt);
+        // Use the DefaultClock instance so that the date can be mocked in tests.
+        $now = DefaultClock::getInstance()->now();
+        $ocspService->validateResponderCertificate($responderCert, $now);
         //   5. The time at which the status being indicated is known to be
         //      correct (thisUpdate) is sufficiently recent.
         //

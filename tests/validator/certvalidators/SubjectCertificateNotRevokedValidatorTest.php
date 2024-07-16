@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use web_eid\ocsp_php\OcspResponse;
 use web_eid\ocsp_php\util\AsnUtil;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateExpiredException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
 use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
@@ -232,10 +233,25 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $validator->validate($this->estEid2018Cert);
     }
 
-    public function testWhenOcspResponseCaNotTrustedThenThrows(): void
+    public function testWhenOcspResponseCACertNotTrustedThenThrows(): void
     {
+        Dates::setMockedCertificateValidatorDate(new DateTime('2021-09-18 00:16:25'));
+
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: Exception: Certificate C=EE, O=AS Sertifitseerimiskeskus, OU=OCSP, CN=TEST of SK OCSP RESPONDER 2020/emailAddress=pki@sk.ee is not trusted");
+
+        $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
+            pack("c*", ...self::getOcspResponseBytesFromResources("ocsp_response_unknown.der"))
+        );
+        $validator->validate($this->estEid2018Cert);
+    }
+
+    public function testWhenOcspResponseCACertExpiredThenThrows(): void
+    {
+        Dates::setMockedCertificateValidatorDate(new DateTime('2024-09-18 00:16:25'));
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: AIA OCSP responder certificate has expired");
 
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
             pack("c*", ...self::getOcspResponseBytesFromResources("ocsp_response_unknown.der"))
