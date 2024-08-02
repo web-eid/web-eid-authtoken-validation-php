@@ -37,6 +37,7 @@ use web_eid\ocsp_php\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\OcspService;
 use Psr\Log\LoggerInterface;
+use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class SubjectCertificateNotRevokedValidator implements SubjectCertificateValidator
 {
@@ -45,13 +46,22 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
     private SubjectCertificateTrustedValidator $trustValidator;
     private OcspClient $ocspClient;
     private OcspServiceProvider $ocspServiceProvider;
+    private int $allowedOcspResponseTimeSkew;
+    private int $maxOcspResponseThisUpdateAge;
 
-    public function __construct(SubjectCertificateTrustedValidator $trustValidator, OcspClient $ocspClient, OcspServiceProvider $ocspServiceProvider, LoggerInterface $logger = null)
+    public function __construct(SubjectCertificateTrustedValidator $trustValidator, 
+        OcspClient $ocspClient, 
+        OcspServiceProvider $ocspServiceProvider, 
+        int $allowedOcspResponseTimeSkew,
+        int $maxOcspResponseThisUpdateAge,
+        LoggerInterface $logger = null)
     {
         $this->logger = $logger;
         $this->trustValidator = $trustValidator;
         $this->ocspClient = $ocspClient;
         $this->ocspServiceProvider = $ocspServiceProvider;
+        $this->allowedOcspResponseTimeSkew = $allowedOcspResponseTimeSkew;
+        $this->maxOcspResponseThisUpdateAge = $maxOcspResponseThisUpdateAge;
     }
 
     public function validate(X509 $subjectCertificate): void
@@ -128,9 +138,9 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         //   4. The signer is currently authorized to provide a response for the
         //      certificate in question.
 
-        $producedAt = $basicResponse->getProducedAt();
-        $ocspService->validateResponderCertificate($responderCert, $producedAt);
-
+        // Use the DefaultClock instance so that the date can be mocked in tests.
+        $now = DefaultClock::getInstance()->now();
+        $ocspService->validateResponderCertificate($responderCert, $now);
         //   5. The time at which the status being indicated is known to be
         //      correct (thisUpdate) is sufficiently recent.
         //
@@ -138,7 +148,7 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         //      be available about the status of the certificate (nextUpdate) is
         //      greater than the current time.
 
-        OcspResponseValidator::validateCertificateStatusUpdateTime($basicResponse, $producedAt);
+        OcspResponseValidator::validateCertificateStatusUpdateTime($basicResponse, $this->allowedOcspResponseTimeSkew, $this->maxOcspResponseThisUpdateAge);
 
         // Now we can accept the signed response as valid and validate the certificate status.
         OcspResponseValidator::validateSubjectCertificateStatus($response);

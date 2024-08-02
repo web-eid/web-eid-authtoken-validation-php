@@ -24,12 +24,12 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
-use GuzzleHttp\Psr7\Exception\MalformedUriException;
-use PHPUnit\Framework\TestCase;
-use InvalidArgumentException;
 use GuzzleHttp\Psr7\Uri;
-use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
+use InvalidArgumentException;
+use PHPUnit\Framework\TestCase;
+use GuzzleHttp\Psr7\Exception\MalformedUriException;
 use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
+use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
 
 class AuthTokenValidatorBuilderTest extends TestCase
 {
@@ -89,5 +89,29 @@ class AuthTokenValidatorBuilderTest extends TestCase
         $this->expectException(MalformedUriException::class);
         $this->expectExceptionMessage("Unable to parse URI: https:///ria.ee");
         AuthTokenValidators::getAuthTokenValidator("https:///ria.ee");
+    }
+
+    public function testInvalidOcspResponseTimeSkew() : void
+    {
+        $builderWithInvalidResponseTimeSkew = AuthTokenValidators::getDefaultAuthTokenValidatorBuilder()->withAllowedOcspResponseTimeSkew(-1);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Allowed OCSP response time-skew must be greater than zero");
+        $builderWithInvalidResponseTimeSkew->build();
+    }
+
+    public function testInvalidMaxOcspResponseThisUpdateAge() : void
+    {
+        $builderWithInvalidMaxOcspResponseThisUpdateAge = AuthTokenValidators::getDefaultAuthTokenValidatorBuilder()->withMaxOcspResponseThisUpdateAge(0);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Max OCSP response thisUpdate age must be greater than zero");
+        $builderWithInvalidMaxOcspResponseThisUpdateAge->build();
+    }
+
+    public function testInvalidOcspRequestTimeout() : void
+    {
+        $builderWithInvalidOcspRequestTimeout = AuthTokenValidators::getDefaultAuthTokenValidatorBuilder()->withOcspRequestTimeout(-1);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("OCSP request timeout must be greater than zero");
+        $builderWithInvalidOcspRequestTimeout->build();
     }
 }
