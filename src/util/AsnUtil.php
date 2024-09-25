@@ -25,9 +25,12 @@
 namespace web_eid\web_eid_authtoken_validation_php\util;
 
 use BadFunctionCallException;
+use phpseclib3\File\ASN1;
+use phpseclib3\File\ASN1\Maps\SubjectPublicKeyInfo;
 
 final class AsnUtil
 {
+    public const ID_PKIX_OCSP_NONCE = "1.3.6.1.5.5.7.48.1.2";
 
     public function __construct()
     {
@@ -98,5 +101,60 @@ final class AsnUtil
 
         // 0x30 b1, then contents.
         return "\x30" . pack('C', $len) . $asn1;
+    }
+
+    public static function loadOIDs(): void
+    {
+        ASN1::loadOIDs([
+            "id-pkix-ocsp-nonce" => self::ID_PKIX_OCSP_NONCE,
+            "id-sha1" => "1.3.14.3.2.26",
+            "sha256WithRSAEncryption" => "1.2.840.113549.1.1.11",
+            "qcStatements(3)" => "1.3.6.1.5.5.7.1.3",
+            "street" => "2.5.4.9",
+            "id-pkix-ocsp-basic" => "1.3.6.1.5.5.7.48.1.1",
+            "id-pkix-ocsp" => "1.3.6.1.5.5.7.48.1",
+            "secp384r1" => "1.3.132.0.34",
+            "id-pkix-ocsp-archive-cutoff" => "1.3.6.1.5.5.7.48.1.6",
+            "id-pkix-ocsp-nocheck" => "1.3.6.1.5.5.7.48.1.5",
+        ]);
+    }
+
+    public static function extractKeyData(string $publicKey): string
+    {
+        $extractedBER = ASN1::extractBER($publicKey);
+        $decodedBER = ASN1::decodeBER($extractedBER);
+        $subjectPublicKey = ASN1::asn1map(
+            $decodedBER[0],
+            SubjectPublicKeyInfo::MAP
+        )["subjectPublicKey"];
+        // Remove first byte
+        return pack("c*", ...array_slice(unpack("c*", $subjectPublicKey), 1));
+    }
+
+    public static function decodeNonceExtension(array $ocspExtensions): ?string
+    {
+        $nonceExtension = current(
+            array_filter(
+                $ocspExtensions,
+                function ($extension) {
+                    return self::ID_PKIX_OCSP_NONCE == ASN1::getOID($extension["extnId"]);
+                }
+            )
+        );
+        if (!$nonceExtension || !isset($nonceExtension["extnValue"])) {
+            return null;
+        }
+
+        $nonceValue = $nonceExtension["extnValue"];
+
+        $decoded = ASN1::decodeBER($nonceValue);
+        if (is_array($decoded)) {
+            // The value was DER-encoded, it is required to be an octet string.
+            $nonceString = ASN1::asn1map($decoded[0], ['type' => ASN1::TYPE_OCTET_STRING]);
+            return is_string($nonceString) ? $nonceString : null;
+        }
+
+        // The value was not DER-encoded, return it as-is.
+        return $nonceValue;
     }
 }
