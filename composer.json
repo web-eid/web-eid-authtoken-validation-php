@@ -25,17 +25,10 @@
             "web_eid\\web_eid_authtoken_validation_php\\": ["tests"]
         }
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/web-eid/ocsp-php.git"
-        }
-    ],
     "require": {
         "php": ">=8.1",
         "phpseclib/phpseclib": "3.0.*",
         "guzzlehttp/psr7": "2.6.*",
-        "web-eid/ocsp-php": "1.1.*",
         "psr/log": "^3.0"
     },
     "scripts": {

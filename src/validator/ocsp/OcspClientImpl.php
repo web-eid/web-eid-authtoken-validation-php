@@ -26,7 +26,7 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use GuzzleHttp\Psr7\Uri;
-use web_eid\ocsp_php\OcspResponse;
+use web_eid\web_eid_authtoken_validation_php\ocsp\OcspResponse;
 use Psr\Log\LoggerInterface;
 
 class OcspClientImpl implements OcspClient

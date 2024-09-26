@@ -28,7 +28,7 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use DateTime;
 use PHPUnit\Framework\TestCase;
-use web_eid\ocsp_php\OcspBasicResponse;
+use web_eid\web_eid_authtoken_validation_php\ocsp\OcspBasicResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 
 class OcspResponseValidatorTest extends TestCase

@@ -22,12 +22,22 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
+declare(strict_types=1);
 
-use GuzzleHttp\Psr7\Uri;
-use web_eid\web_eid_authtoken_validation_php\ocsp\OcspResponse;
+namespace web_eid\web_eid_authtoken_validation_php\ocsp\exceptions;
 
-interface OcspClient
+use Exception;
+
+/**
+ * Base class for all OCSP exceptions.
+ */
+abstract class OcspException extends Exception
 {
-    public function request(Uri $url, string $requestBody): OcspResponse;
+    /**
+     * @param string $message — [optional] The Exception message to throw
+     */
+    public function __construct($message)
+    {
+        parent::__construct($message);
+    }
 }

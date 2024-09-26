@@ -24,47 +24,15 @@
 
 declare(strict_types=1);
 
-namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
+namespace web_eid\web_eid_authtoken_validation_php\ocsp\exceptions;
 
-use web_eid\web_eid_authtoken_validation_php\ocsp\OcspRequest;
-use web_eid\web_eid_authtoken_validation_php\util\SecureRandom;
-
-final class OcspRequestBuilder
+/**
+ * Thrown when OCSP response decoding fails
+ */
+class OcspResponseDecodeException extends OcspException
 {
-
-    private $secureRandom;
-    private bool $ocspNonceEnabled = true;
-    private array $certificateId;
-
     public function __construct()
     {
-        $this->secureRandom = function ($nonce_length): string {
-            return SecureRandom::generate($nonce_length);
-        };
-    }
-
-    public function withCertificateId(array $certificateId): OcspRequestBuilder
-    {
-        $this->certificateId = $certificateId;
-        return $this;
-    }
-
-    public function enableOcspNonce(bool $ocspNonceEnabled): OcspRequestBuilder
-    {
-        $this->ocspNonceEnabled = $ocspNonceEnabled;
-        return $this;
-    }
-
-    public function build(): OcspRequest
-    {
-        $ocspRequest = new OcspRequest();
-        $ocspRequest->addCertificateId($this->certificateId);
-
-        if ($this->ocspNonceEnabled) {
-            $nonceBytes = call_user_func($this->secureRandom, 32);
-            $ocspRequest->addNonceExtension($nonceBytes);
-        }
-
-        return $ocspRequest;
+        parent::__construct("Could not decode OCSP response");
     }
 }

@@ -27,8 +27,8 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 use phpseclib3\File\X509;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
-use web_eid\ocsp_php\OcspResponse;
-use web_eid\ocsp_php\util\AsnUtil;
+use web_eid\web_eid_authtoken_validation_php\ocsp\OcspResponse;
+use web_eid\web_eid_authtoken_validation_php\util\AsnUtil;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\testutil\Certificates;
 use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
@@ -99,7 +99,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
         $this->expectExceptionMessage("User certificate revocation check has failed: The requested URL returned error: 404");
 
-        $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(true, "https://web-eid-test.free.beeceptor.com");
+        $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider(true, "http://demo.sk.ee/ocsps");
         $validator = new SubjectCertificateNotRevokedValidator($this->trustedValidator, self::$ocspClient, $ocspServiceProvider);
         $validator->validate($this->estEid2018Cert);
     }
