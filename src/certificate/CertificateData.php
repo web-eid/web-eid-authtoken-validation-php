@@ -27,7 +27,6 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
 use phpseclib3\File\X509;
-use UnexpectedValueException;
 use BadFunctionCallException;
 
 final class CertificateData
@@ -40,50 +39,40 @@ final class CertificateData
 
     /**
      * Get commonName from x509 certificate
-     *
-     * @throws UnexpectedValueException
      */
-    public static function getSubjectCN(X509 $certificate): string
+    public static function getSubjectCN(X509 $certificate): ?string
     {
         return self::getField($certificate, 'id-at-commonName');
     }
 
     /**
      * Get surname from x509 certificate
-     *
-     * @throws UnexpectedValueException
      */
-    public static function getSubjectSurname(X509 $certificate): string
+    public static function getSubjectSurname(X509 $certificate): ?string
     {
         return self::getField($certificate, 'id-at-surname');
     }
 
     /**
      * Get given name from x509 certificate
-     *
-     * @throws UnexpectedValueException
      */
-    public static function getSubjectGivenName(X509 $certificate): string
+    public static function getSubjectGivenName(X509 $certificate): ?string
     {
         return self::getField($certificate, 'id-at-givenName');
     }
 
     /**
      * Get serialNumber (ID-code) from x509 certificate
-     *
-     * @throws UnexpectedValueException
      */
-    public static function getSubjectIdCode(X509 $certificate): string
+    public static function getSubjectIdCode(X509 $certificate): ?string
     {
         return self::getField($certificate, 'id-at-serialNumber');
     }
 
     /**
      * Get country code from x509 certificate
-     *
-     * @throws UnexpectedValueException
      */
-    public static function getSubjectCountryCode(X509 $certificate): string
+    public static function getSubjectCountryCode(X509 $certificate): ?string
     {
         return self::getField($certificate, 'id-at-countryName');
     }
@@ -91,15 +80,16 @@ final class CertificateData
     /**
      * Get specified subject field from x509 certificate
      *
-     * @throws UnexpectedValueException field identifier not found
      * @return string
      */
-    private static function getField(X509 $certificate, string $fieldId): string
+    private static function getField(X509 $certificate, string $fieldId): ?string
     {
         $result = $certificate->getSubjectDNProp($fieldId);
         if ($result) {
-            return $result[0];
+            return join(" ", $result);
         }
-        throw new UnexpectedValueException("fieldId " . $fieldId . " not found in certificate subject");
+        else {
+            return null;
+        }
     }
 }
