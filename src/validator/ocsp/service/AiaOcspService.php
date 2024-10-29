@@ -35,6 +35,7 @@ use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use DateTime;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspResponseValidator;
 use Exception;
+use InvalidArgumentException;
 
 /**
  * An OCSP service that uses the responders from the Certificates' Authority Information Access (AIA) extension.
@@ -48,6 +49,9 @@ class AiaOcspService implements OcspService
 
     public function __construct(AiaOcspServiceConfiguration $configuration, X509 $certificate)
     {
+        if (is_null($configuration)) {
+            throw new InvalidArgumentException("Configuration cannot be null");
+        }
         $this->url = self::getOcspAiaUrlFromCertificate($certificate);
         $this->trustedCACertificates = $configuration->getTrustedCACertificates();
         $this->supportsNonce = !in_array($this->url->jsonSerialize(), $configuration->getNonceDisabledOcspUrls()->getUrlsArray());

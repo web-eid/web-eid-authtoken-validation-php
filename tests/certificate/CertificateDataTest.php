@@ -49,28 +49,24 @@ class CertificateDataTest extends TestCase
         $this->assertEquals("EE", CertificateData::getSubjectCountryCode($cert));
     }
 
-    public function testWhenOrganizationCertificateThenSubjectGivenNameExtractionFails(): void
+    public function testWhenOrganizationCertificateThenSubjectGivenNameAndSurnameAreEmpty(): void
     {
         $cert = Certificates::getOrganizationCert();
-        $this->expectException(UnexpectedValueException::class);
-        $this->expectExceptionMessage("fieldId id-at-givenName not found in certificate subject");
-        CertificateData::getSubjectGivenName($cert);
-    }
-
-    public function testWhenOrganizationCertificateThenSubjectSurnameExtractionFails(): void
-    {
-        $cert = Certificates::getOrganizationCert();
-        $this->expectException(UnexpectedValueException::class);
-        $this->expectExceptionMessage("fieldId id-at-surname not found in certificate subject");
-        CertificateData::getSubjectSurname($cert);
+        $givenName = CertificateData::getSubjectGivenName($cert);
+        $surname = CertificateData::getSubjectSurname($cert);
+        $this->assertEmpty($givenName);
+        $this->assertEmpty($surname);
     }
 
     public function testWhenOrganizationCertificateThenSucceeds(): void
     {
         $cert = Certificates::getOrganizationCert();
-        try {
-            $principalName = CertificateData::getSubjectSurname($cert) . " " . CertificateData::getSubjectSurname($cert);
-        } catch (UnexpectedValueException $e) {
+
+        $givenName = CertificateData::getSubjectGivenName($cert);
+        $surname = CertificateData::getSubjectSurname($cert);
+        if ($givenName && $surname) {
+            $principalName = $givenName . " " . $surname;
+        } else {
             $principalName = CertificateData::getSubjectCN($cert);
         }
         $this->assertEquals("Testijad.ee isikutuvastus", $principalName);

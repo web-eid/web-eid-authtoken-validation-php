@@ -87,9 +87,11 @@ class Auth
 
     private function getPrincipalNameFromCertificate(X509 $userCertificate): string
     {
-        try {
-            return CertificateData::getSubjectGivenName($userCertificate) . " " . CertificateData::getSubjectSurname($userCertificate);
-        } catch (Exception $e) {
+        $givenName = CertificateData::getSubjectGivenName($userCertificate);
+        $surname = CertificateData::getSubjectSurname($userCertificate);
+        if ($givenName && $surname) {
+            return $givenName . " " . $surname;
+        } else {
             return CertificateData::getSubjectCN($userCertificate);
         }
     }
