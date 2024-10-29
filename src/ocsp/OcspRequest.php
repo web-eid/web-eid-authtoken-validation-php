@@ -32,7 +32,7 @@ use web_eid\web_eid_authtoken_validation_php\util\AsnUtil;
 
 class OcspRequest
 {
-    private array $ocspRequest = [];
+    private array $ocspRequest;
 
     public function __construct()
     {
@@ -41,8 +41,6 @@ class OcspRequest
         $this->ocspRequest = [
             "tbsRequest" => [
                 "version" => "v1",
-                "requestList" => [],
-                "requestExtensions" => [],
             ],
         ];
     }
@@ -62,18 +60,16 @@ class OcspRequest
             "critical" => false,
             "extnValue" => ASN1::encodeDER($nonce, ['type' => ASN1::TYPE_OCTET_STRING]),
         ];
-        $this->ocspRequest["tbsRequest"][
-            "requestExtensions"
-        ][] = $nonceExtension;
+        $this->ocspRequest["tbsRequest"]["requestExtensions"][] = $nonceExtension;
     }
 
     /**
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      */
-    public function getNonceExtension(): string
+    public function getNonceExtension(): ?string
     {
         // TODO: the ?? '' is here only for v1.0 API compatibility. Remove this in version 1.2 and change the return type to ?string.
-        return AsnUtil::decodeNonceExtension($this->ocspRequest["tbsRequest"]["requestExtensions"]) ?? '';
+        return AsnUtil::decodeNonceExtension($this->ocspRequest["tbsRequest"]["requestExtensions"] ?? []);
     }
 
     public function getEncodeDer(): string
