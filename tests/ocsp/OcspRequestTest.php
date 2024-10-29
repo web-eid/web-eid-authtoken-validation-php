@@ -39,8 +39,6 @@ class OcspRequestTest extends TestCase
         return [
             'tbsRequest' => [
                 'version' => 'v1',
-                'requestList' => [],
-                'requestExtensions' => [],
             ],
         ];
     }
