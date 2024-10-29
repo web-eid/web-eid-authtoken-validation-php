@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
+use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\ocsp\OcspRequest;
 use web_eid\web_eid_authtoken_validation_php\util\SecureRandom;
 
@@ -58,6 +59,9 @@ final class OcspRequestBuilder
     public function build(): OcspRequest
     {
         $ocspRequest = new OcspRequest();
+        if (is_null($this->certificateId)) {
+            throw new InvalidArgumentException("Certificate Id must not be null");
+        }
         $ocspRequest->addCertificateId($this->certificateId);
 
         if ($this->ocspNonceEnabled) {

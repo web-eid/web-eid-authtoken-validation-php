@@ -80,15 +80,14 @@ final class CertificateData
     /**
      * Get specified subject field from x509 certificate
      *
-     * @return string
+     * @return ?string
      */
     private static function getField(X509 $certificate, string $fieldId): ?string
     {
         $result = $certificate->getSubjectDNProp($fieldId);
         if ($result) {
-            return join(" ", $result);
-        }
-        else {
+            return join(", ", $result);
+        } else {
             return null;
         }
     }
