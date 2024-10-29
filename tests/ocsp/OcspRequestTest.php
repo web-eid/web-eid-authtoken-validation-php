@@ -101,4 +101,29 @@ class OcspRequestTest extends TestCase
 
         $this->assertEquals("nonce", $request->getNonceExtension());
     }
+
+    public function testBinaryNonce(): void
+    {
+        // Create a nonce with a mixture of potentially problematic bytes,
+        // null bytes, control characters and high-byte values (above 0x7F),
+        // which are common sources of string decoding problems.
+        $nonce = "\0\1\2\3\4\5\6\7\x08\x09\x10\0"
+                       . "\x0A\x0D\x1B"
+                       . "\xE2\x82\xAC"
+                       . "\xFF";
+        $request = new OcspRequest();
+        $request->addNonceExtension($nonce);
+
+        $this->assertEquals($nonce, $request->getNonceExtension());
+    }
+
+    public function testOidNonce(): void
+    {
+        // Create a nonce that contains DER-encoded OID for SHA-256: 2.16.840.1.101.3.4.2.1.
+        $nonce = "\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01";
+        $request = new OcspRequest();
+        $request->addNonceExtension($nonce);
+
+        $this->assertEquals($nonce, $request->getNonceExtension());
+    }
 }
