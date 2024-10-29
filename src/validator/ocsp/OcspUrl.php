@@ -28,6 +28,7 @@ use BadFunctionCallException;
 use phpseclib3\File\X509;
 use GuzzleHttp\Psr7\Uri;
 use Exception;
+use InvalidArgumentException;
 
 final class OcspUrl
 {
@@ -43,6 +44,9 @@ final class OcspUrl
      */
     public static function getOcspUri(X509 $certificate): ?Uri
     {
+        if (is_null($certificate)) {
+            throw new InvalidArgumentException("Certificate must not be null");
+        }
         $authorityInformationAccess = $certificate->getExtension("id-pe-authorityInfoAccess");
         if ($authorityInformationAccess) {
             foreach ($authorityInformationAccess as $accessDescription) {

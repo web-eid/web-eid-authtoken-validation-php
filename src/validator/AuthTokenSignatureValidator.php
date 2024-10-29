@@ -54,19 +54,19 @@ class AuthTokenSignatureValidator
 
     public function validate(string $algorithm, string $signature, $publicKey, string $currentChallengeNonce): void
     {
-        $this->requireNotEmpty($algorithm, "algorithm");
-        $this->requireNotEmpty($signature, "signature");
+        if (empty($currentChallengeNonce)) {
+            throw new ChallengeNullOrEmptyException();
+        }
 
         if (is_null($publicKey)) {
             throw new InvalidArgumentException("Public key is null");
         }
 
-        if (empty($currentChallengeNonce)) {
-            throw new ChallengeNullOrEmptyException();
-        }
+        $this->requireNotEmpty($algorithm, "algorithm");
+        $this->requireNotEmpty($signature, "signature");
 
         if (!in_array($algorithm, self::ALLOWED_SIGNATURE_ALGORITHMS)) {
-            throw new AuthTokenParseException("Invalid signature algorithm");
+            throw new AuthTokenParseException("Unsupported signature algorithm");
         }
 
         $decodedSignature = base64_decode($signature);

@@ -35,7 +35,7 @@ class AuthTokenAlgorithmTest extends AbstractTestWithValidator
         $authToken = $this->replaceTokenField(self::VALID_AUTH_TOKEN, "algorithm", "NONE");
 
         $this->expectException(AuthTokenParseException::class);
-        $this->expectExceptionMessage("Invalid signature algorithm");
+        $this->expectExceptionMessage("Unsupported signature algorithm");
         $this->validator->validate($authToken, self::VALID_AUTH_TOKEN);
     }
 
@@ -53,7 +53,7 @@ class AuthTokenAlgorithmTest extends AbstractTestWithValidator
         $authToken = $this->replaceTokenField(self::VALID_AUTH_TOKEN, "algorithm", "\\u0000\\t\\ninvalid");
 
         $this->expectException(AuthTokenParseException::class);
-        $this->expectExceptionMessage("Invalid signature algorithm");
+        $this->expectExceptionMessage("Unsupported signature algorithm");
         $this->validator->validate($authToken, self::VALID_AUTH_TOKEN);
     }
 }

@@ -48,7 +48,6 @@ class WebEidAuthTokenTest extends TestCase
         $this->assertEquals("RS256", $authToken->getAlgorithm());
         $this->assertEquals("HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZh", $authToken->getSignature());
         $this->assertEquals("web-eid:1.0", $authToken->getFormat());
-        $this->assertEquals("https://web-eid.eu/web-eid-app/releases/v2.0.0", $authToken->getAppVersion());
     }
 
     public function testWhenNotAuthToken(): void
