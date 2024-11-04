@@ -48,10 +48,6 @@ class WebEidAuthToken
      * @var string Format
      */
     private ?string $format = null;
-    /**
-     * @var string App version
-     */
-    private ?string $appVersion = null;
 
     public function __construct(string $authenticationTokenJSON)
     {
@@ -76,10 +72,6 @@ class WebEidAuthToken
         if (isset($jsonDecoded['format'])) {
             $this->format = $this->filterString('format', $jsonDecoded['format']);
         }
-        // appVersion
-        if (isset($jsonDecoded['appVersion'])) {
-            $this->appVersion = $this->filterString('appVersion', $jsonDecoded['appVersion']);
-        }
     }
 
     public function getUnverifiedCertificate(): ?string
@@ -100,11 +92,6 @@ class WebEidAuthToken
     public function getFormat(): ?string
     {
         return $this->format;
-    }
-
-    public function getAppVersion(): ?string
-    {
-        return $this->appVersion;
     }
 
     private function filterString(string $key, $data): string

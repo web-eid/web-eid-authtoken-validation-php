@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
+use InvalidArgumentException;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspService;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServiceConfiguration;
@@ -41,7 +42,8 @@ class OcspServiceProvider
     public function __construct(?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration, AiaOcspServiceConfiguration $aiaOcspServiceConfiguration)
     {
         $this->designatedOcspService = !is_null($designatedOcspServiceConfiguration) ? new DesignatedOcspService($designatedOcspServiceConfiguration) : null;
-        $this->aiaOcspServiceConfiguration = $aiaOcspServiceConfiguration;
+        $this->aiaOcspServiceConfiguration = $aiaOcspServiceConfiguration ?? throw new InvalidArgumentException("AIA Ocsp Service Configuration must not be null");
+
     }
 
     /**
