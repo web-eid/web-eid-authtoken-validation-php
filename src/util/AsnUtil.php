@@ -43,16 +43,20 @@ final class AsnUtil
 
         // ASN.1 format: 0x30 b1 0x02 b2 r 0x02 b3 s.
         // Note: unpack() returns an array indexed from 1, not 0.
-        if(!isset($sigByteArray[1]) ||
+        if (
+            !isset($sigByteArray[1]) ||
             !isset($sigByteArray[2]) ||
             !isset($sigByteArray[3]) ||
-            !isset($sigByteArray[4])) {
+            !isset($sigByteArray[4])
+        ) {
             return false;
         }
         $b1 = $sigByteArray[2];
         $b2 = $sigByteArray[4];
-        if(!isset($sigByteArray[5 + $b2]) ||
-            !isset($sigByteArray[6 + $b2])) {
+        if (
+            !isset($sigByteArray[5 + $b2]) ||
+            !isset($sigByteArray[6 + $b2])
+        ) {
             return false;
         }
         $b3 = $sigByteArray[6 + $b2];
@@ -108,6 +112,13 @@ final class AsnUtil
         ASN1::loadOIDs([
             "id-pkix-ocsp-nonce" => self::ID_PKIX_OCSP_NONCE,
             "id-sha1" => "1.3.14.3.2.26",
+            'id-sha256' => '2.16.840.1.101.3.4.2.1',
+            'id-sha384' => '2.16.840.1.101.3.4.2.2',
+            'id-sha512' => '2.16.840.1.101.3.4.2.3',
+            'id-sha224' => '2.16.840.1.101.3.4.2.4',
+            'id-sha512/224' => '2.16.840.1.101.3.4.2.5',
+            'id-sha512/256' => '2.16.840.1.101.3.4.2.6',
+            'id-mgf1' => '1.2.840.113549.1.1.8',
             "sha256WithRSAEncryption" => "1.2.840.113549.1.1.11",
             "qcStatements(3)" => "1.3.6.1.5.5.7.1.3",
             "street" => "2.5.4.9",
