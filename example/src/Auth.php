@@ -38,15 +38,16 @@ class Auth
 {
     private $config;
 
-    public function __construct($config) {
+    public function __construct($config)
+    {
         $this->config = $config;
     }
 
     public function trustedIntermediateCACertificates(): array
     {
-        return CertificateLoader::loadCertificatesFromResources(
-            __DIR__ . "/../certificates/esteid2018.der.crt"
-        );
+        $directory = __DIR__ . "/../certificates/";
+        $certificates = glob($directory . "*.der.crt");
+        return CertificateLoader::loadCertificatesFromResources(...$certificates);
     }
 
     public function generator(): ChallengeNonceGenerator
@@ -87,11 +88,14 @@ class Auth
 
     private function getPrincipalNameFromCertificate(X509 $userCertificate): string
     {
-        try {
-            return CertificateData::getSubjectGivenName($userCertificate) . " " . CertificateData::getSubjectSurname($userCertificate);
-        } catch (Exception $e) {
-            return CertificateData::getSubjectCN($userCertificate);
+        $surname = CertificateData::getSubjectSurname($userCertificate);
+        $givenname = CertificateData::getSubjectGivenName($userCertificate);
+        if ($surname && $givenname) {
+            $principalName = $givenname . " " . $surname;
+        } else {
+            $principalName = CertificateData::getSubjectCN($userCertificate);
         }
+        return $principalName;
     }
 
     /**
@@ -103,7 +107,7 @@ class Auth
     {
         // Header names must be treated as case-insensitive (according to RFC2616) so we convert them to lowercase
         $headers = array_change_key_case(getallheaders(), CASE_LOWER);
-        
+
         if (!isset($headers["x-csrf-token"]) || ($headers["x-csrf-token"] != $_SESSION["csrf-token"])) {
             header("HTTP/1.0 405 Method Not Allowed");
             echo "CSRF token missing, unable to process your request";
