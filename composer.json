@@ -28,7 +28,7 @@
     "require": {
         "php": ">=8.1",
         "phpseclib/phpseclib": "3.0.*",
-        "guzzlehttp/psr7": "^2.6 || ^2.7",
+        "guzzlehttp/psr7": "2.6.* || ^2.7",
         "psr/log": "^3.0"
     },
     "scripts": {
