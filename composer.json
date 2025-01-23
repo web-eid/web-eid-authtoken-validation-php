@@ -1,5 +1,5 @@
 {
-    "name": "andreygrin/web-eid-authtoken-validation-php",
+    "name": "eideasy/web-eid-authtoken-validation-php",
     "description": "Web eID authentication token validation library for PHP",
     "license": "MIT",
     "type": "library",
