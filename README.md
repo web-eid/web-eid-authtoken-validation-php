@@ -401,8 +401,9 @@ Point your Apache web server Document Root to `/example/public` folder.
 
 # Dependency versioning policy
 
-Starting from version 1.2.0 we adopt a flexible versioning policy for
-`phpseclib` and `guzzlehttp`, and specify the dependency version as `x.y.*`.
+Starting from version 1.3.0 we adopt a flexible versioning policy for
+`phpseclib` and `guzzlehttp`, and specify the dependency version as `^x.y.z`.
+This is the [recommended operator for maximum interoperability](https://getcomposer.org/doc/articles/versions.md#caret-version-range-) when writing library code.
 This approach allows our library integrators to quickly incorporate security
 patches and minor updates from dependencies.
 
