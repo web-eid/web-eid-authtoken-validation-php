@@ -68,7 +68,6 @@ class OcspRequest
      */
     public function getNonceExtension(): ?string
     {
-        // TODO: the ?? '' is here only for v1.0 API compatibility. Remove this in version 1.2 and change the return type to ?string.
         return AsnUtil::decodeNonceExtension($this->ocspRequest["tbsRequest"]["requestExtensions"] ?? []);
     }
 
