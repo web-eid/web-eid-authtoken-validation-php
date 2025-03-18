@@ -26,10 +26,12 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
+use DateTime;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateData;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenSignatureValidationException;
 use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
+use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
 
 class AuthTokenSignatureTest extends AbstractTestWithValidator
 {
@@ -39,6 +41,11 @@ class AuthTokenSignatureTest extends AbstractTestWithValidator
         '"appVersion":"https://web-eid.eu/web-eid-app/releases/2.0.0+0",' .
         '"signature":"arx164xRiwhIQDINe0J+ZxJWZFOQTx0PBtOaWaxAe7gofEIHRIbV1w0sOCYBJnvmvMem9hU4nc2+iJx2x8poYck4Z6eI3GwtiksIec3XQ9ZIk1n/XchXnmPn3GYV+HzJ",' .
         '"format":"web-eid:1.0"}';
+
+    protected function tearDown(): void
+    {
+        Dates::resetMockedCertificateValidatorDate();
+    }
 
     public function testWhenValidTokenAndNonceThenValidationSucceeds(): void
     {
@@ -68,6 +75,7 @@ class AuthTokenSignatureTest extends AbstractTestWithValidator
 
     public function testWhenTokenWithWrongCertThenValidationFails(): void
     {
+        Dates::setMockedCertificateValidatorDate(new DateTime('2024-08-01 10:13:43.000'));
         $authTokenValidator = AuthTokenValidators::getAuthTokenValidator();
         $authTokenWithWrongCert = $authTokenValidator->parse(self::AUTH_TOKEN_WRONG_CERT);
 
