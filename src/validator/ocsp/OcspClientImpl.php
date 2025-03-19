@@ -37,13 +37,13 @@ class OcspClientImpl implements OcspClient
     private int $requestTimeout;
     private $logger;
 
-    public function __construct(int $ocspRequestTimeout, LoggerInterface $logger = null)
+    public function __construct(int $ocspRequestTimeout, ?LoggerInterface $logger = null)
     {
         $this->requestTimeout = $ocspRequestTimeout;
         $this->logger = $logger;
     }
 
-    public static function build(int $ocspRequestTimeout, LoggerInterface $logger = null): OcspClient
+    public static function build(int $ocspRequestTimeout, ?LoggerInterface $logger = null): OcspClient
     {
         return new OcspClientImpl($ocspRequestTimeout, $logger);
     }
