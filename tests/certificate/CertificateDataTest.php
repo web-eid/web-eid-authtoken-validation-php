@@ -49,27 +49,14 @@ class CertificateDataTest extends TestCase
         $this->assertEquals("EE", CertificateData::getSubjectCountryCode($cert));
     }
 
-    public function testWhenOrganizationCertificateThenSubjectGivenNameAndSurnameAreEmpty(): void
+    public function testWhenOrganizationCertificateThenSubjectGivenNameAndSurnameAreEmptyAndSubjectCNSucceeds(): void
     {
         $cert = Certificates::getOrganizationCert();
         $givenName = CertificateData::getSubjectGivenName($cert);
         $surname = CertificateData::getSubjectSurname($cert);
         $this->assertEmpty($givenName);
         $this->assertEmpty($surname);
-    }
-
-    public function testWhenOrganizationCertificateThenSucceeds(): void
-    {
-        $cert = Certificates::getOrganizationCert();
-        $givenName = CertificateData::getSubjectGivenName($cert);
-        $surname = CertificateData::getSubjectSurname($cert);
-        if ($givenName && $surname) {
-            $principalName = $givenName . " " . $surname;
-        } else {
-            $principalName = CertificateData::getSubjectCN($cert);
-        }
-        
+        $principalName = CertificateData::getSubjectCN($cert);
         $this->assertEquals("Testijad.ee isikutuvastus", $principalName);
-
     }
 }
