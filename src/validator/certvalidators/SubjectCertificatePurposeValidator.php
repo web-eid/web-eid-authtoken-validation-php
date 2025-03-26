@@ -32,6 +32,9 @@ use Psr\Log\LoggerInterface;
 final class SubjectCertificatePurposeValidator implements SubjectCertificateValidator
 {
 
+    private const KEY_USAGE = 'id-ce-keyUsage';
+    private const KEY_USAGE_DIGITAL_SIGNATURE = 0;
+    private const EXTENDED_KEY_USAGE = 'id-ce-extKeyUsage';
     // oid 1.3.6.1.5.5.7.3.2
     private const EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION = "id-kp-clientAuth";
     private $logger;
@@ -51,9 +54,18 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
      */
     public function validate(X509 $subjectCertificate): void
     {
-        $usages = $subjectCertificate->getExtension('id-ce-extKeyUsage');
-        if (!$usages || empty($usages)) {
+        $keyUsage = $subjectCertificate->getExtension(self::KEY_USAGE);
+        if (!$keyUsage || empty($keyUsage)) {
             throw new UserCertificateMissingPurposeException();
+        }
+        if (!$keyUsage[self::KEY_USAGE_DIGITAL_SIGNATURE]) {
+            throw new UserCertificateWrongPurposeException();
+        }
+        $usages = $subjectCertificate->getExtension(self::EXTENDED_KEY_USAGE);
+        if (!$usages || empty($usages)) {
+            // Digital Signature extension present, but Extended Key Usage extension not present,
+            // assume it is an authentication certificate (e.g. Luxembourg eID).
+            return;
         }
         // Extended usages must contain TLS Web Client Authentication
         if (!in_array(self::EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION, $usages)) {
@@ -62,4 +74,5 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
 
         $this->logger?->debug("User certificate can be used for client authentication.");
     }
+
 }
