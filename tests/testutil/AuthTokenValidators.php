@@ -89,6 +89,27 @@ final class AuthTokenValidators
             ->build();
     }
 
+    public static function getAuthTokenValidatorForBelgianIdCard(): AuthTokenValidator
+    {
+        return self::getAuthTokenValidator(
+            "https://47f0-46-131-86-189.ngrok-free.app",
+            ...CertificateLoader::loadCertificatesFromResources(
+            __DIR__ . "/../_resources/eID TEST EC Citizen CA.cer"
+        )
+        );
+    }
+
+    public static function getAuthTokenValidatorForFinnishIdCard(): AuthTokenValidator
+    {
+        return self::getAuthTokenValidator(
+            "https://47f0-46-131-86-189.ngrok-free.app",
+            ...CertificateLoader::loadCertificatesFromResources(
+            __DIR__ . "/../_resources/DVV TEST Certificates - G5E.crt",
+            __DIR__ . "/../_resources/VRK TEST CA for Test Purposes - G4.crt"
+        )
+        );
+    }
+
     public static function getAuthTokenValidatorWithWrongTrustedCertificate(): AuthTokenValidator
     {
         return self::getAuthTokenValidator(
