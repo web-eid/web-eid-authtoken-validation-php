@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use GuzzleHttp\Psr7\Uri;
+use phpseclib3\Crypt\RSA;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNullOrEmptyException;
 use InvalidArgumentException;
@@ -35,6 +36,10 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenSignatureValida
 
 class AuthTokenSignatureValidator
 {
+
+    private const ECDSA_ALGORITHMS = ['ES256', 'ES384', 'ES512'];
+
+    private const RSASSA_PSS_ALGORITHMS = ['PS256', 'PS384', 'PS512'];
 
     /** Supported subset of JSON Web Signature algorithms as defined in RFC 7518, sections 3.3, 3.4, 3.5.
      * See https://github.com/web-eid/libelectronic-id/blob/main/include/electronic-id/enums.hpp#L176.
@@ -72,8 +77,15 @@ class AuthTokenSignatureValidator
         $decodedSignature = base64_decode($signature);
 
         // Note that in case of ECDSA, some eID cards output raw R||S, so we need to trascode it to DER
-        if (in_array($algorithm, ["ES256", "ES384", "ES512"]) && !AsnUtil::isSignatureInAsn1Format($decodedSignature)) {
+        if (in_array($algorithm, self::ECDSA_ALGORITHMS) && !AsnUtil::isSignatureInAsn1Format($decodedSignature)) {
             $decodedSignature = AsnUtil::transcodeSignatureToDER($decodedSignature);
+        }
+
+        if (in_array($algorithm, self::RSASSA_PSS_ALGORITHMS)) {
+            $publicKey = openssl_get_publickey($publicKey->withPadding(RSA::SIGNATURE_PSS)->toString('PSS'));
+            if (!$publicKey) {
+                throw new AuthTokenParseException();
+            }
         }
 
         $hashAlgorithm = $this->hashAlgorithmForName($algorithm);
