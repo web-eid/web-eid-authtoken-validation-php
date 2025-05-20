@@ -84,7 +84,7 @@ class AuthTokenSignatureValidator
         if (in_array($algorithm, self::RSASSA_PSS_ALGORITHMS)) {
             $publicKey = openssl_get_publickey($publicKey->withPadding(RSA::SIGNATURE_PSS)->toString('PSS'));
             if (!$publicKey) {
-                throw new AuthTokenParseException();
+                throw new AuthTokenParseException('Could not use PSS padding for RSASSA-PSS algorithm');
             }
         }
 
