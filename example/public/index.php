@@ -24,7 +24,6 @@
 
 header('Content-type: text/html; charset=UTF-8');
 
-session_start();
 
 // Uncomment following line to define the custom log location (by default the server log is used)
 //define("LOGFILE", dirname(__FILE__) . "/../log/web-eid-authtoken-validation-php.log");
@@ -32,6 +31,12 @@ session_start();
 require __DIR__ . '/../vendor/autoload.php';
 
 $configArr = require_once __DIR__ . '/../src/app.conf.php';
-$config = Config::fromArray($configArr)->overrideFromEnv();
+$config = Config::fromArray($configArr)->overrideFromEnv()->allowHttpOnLocalhost();
+
+// Set session cookie name with prefix
+session_start([
+    'name' => $config->get('session_name')
+]);
+
 $router = new Router($config);
 $router->init();
