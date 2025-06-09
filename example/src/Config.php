@@ -25,11 +25,13 @@
 class Config
 {
     private $configArr;
+    private Logger $logger;
 
     public static function fromArray($configArr)
     {
         $instance = new self();
         $instance->configArr = $configArr;
+        $instance->logger = new Logger();
         return $instance;
     }
 
@@ -49,5 +51,46 @@ class Config
     public function get($name)
     {
         return isset ($this->configArr[$name]) ? $this->configArr[$name] : null;
+    }
+
+    public function allowHttpOnLocalhost()
+    {
+        $localOrigin = $this->get('origin_url');
+        if (str_ends_with($localOrigin, '/')) {
+            throw new InvalidArgumentException("Configuration parameter origin_url cannot end with '/': " . $localOrigin);
+        }
+
+        if (str_starts_with($localOrigin, 'http:')) {
+
+            $parsedUrl = parse_url($localOrigin);
+            if (!$parsedUrl || !isset($parsedUrl['host'])) {
+                throw new InvalidArgumentException("Configuration parameter origin_url does not contain an URL: " . $localOrigin);
+            }
+
+            if ($this->isLoopbackAddress($parsedUrl['host'])) {
+                $this->configArr['origin_url'] = preg_replace('/^http:/', 'https:', $localOrigin);
+                $this->configArr['session_name'] = preg_replace('/^__Host-/', '', $this->get('session_name'));
+                $this->logger->warning("Configuration origin_url contains http protocol $localOrigin, which is not supported. Replacing it with secure " . $this->get('origin_url'));
+            }
+
+        }
+
+        return $this;
+    }
+
+    public function isLoopbackAddress($hostname): bool
+    {
+        if (strtolower($hostname) === 'localhost') {
+            return true;
+        }
+
+        $hostname = trim($hostname, '[]');
+
+        // Validate if it's a valid IP address
+        if (filter_var($hostname, FILTER_VALIDATE_IP)) {
+            return filter_var($hostname, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        }
+
+        return false;
     }
 }
