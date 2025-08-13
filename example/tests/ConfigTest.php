@@ -11,7 +11,7 @@ class ConfigTest extends TestCase
     public function testGivenLocalOriginHttpLoopbackAddressWhenParsingLocalOriginThenItIsReplacedWithHttps($origin) : void
     {
         $config = Config::fromArray(['origin_url' => $origin])->allowHttpOnLocalhost();
-        $this->assertEquals($config->get('origin_url'), preg_replace('/^http:/', 'https:', $origin));
+        $this->assertEquals(preg_replace('/^http:/', 'https:', $origin), $config->get('origin_url'));
     }
 
     /**
@@ -20,7 +20,7 @@ class ConfigTest extends TestCase
     public function testGivenLocalOriginHttpsLoopbackAddressWhenParsingLocalOriginThenOriginalIsKept($origin) : void
     {
         $config = Config::fromArray(['origin_url' => $origin])->allowHttpOnLocalhost();
-        $this->assertEquals($config->get('origin_url'), $origin);
+        $this->assertEquals($origin, $config->get('origin_url'));
     }
 
     /**
@@ -29,7 +29,7 @@ class ConfigTest extends TestCase
     public function testGivenLocalOriginHttpNonLoopbackAddressWhenParsingLocalOriginThenOriginalIsKept($origin) : void
     {
         $config = Config::fromArray(['origin_url' => $origin])->allowHttpOnLocalhost();
-        $this->assertEquals($config->get('origin_url'), $origin);
+        $this->assertEquals($origin, $config->get('origin_url'));
     }
 
     /**
@@ -49,7 +49,9 @@ class ConfigTest extends TestCase
             ["http://127.0.0.1"],
             ["http://127.0.0.1:8080"],
             ["http://[::1]"],
-            ["http://[::1]:8080"]
+            ["http://[::1]:8080"],
+            ["http://[0000:0000:0000:0000:0000:0000:0000:0001]"],
+            ["http://[0000:0000:0000:0000:0000:0000:0000:0001]:8080"]
         ];
     }
 
@@ -61,7 +63,9 @@ class ConfigTest extends TestCase
             ["https://127.0.0.1"],
             ["https://127.0.0.1:8080"],
             ["https://[::1]"],
-            ["https://[::1]:8080"]
+            ["https://[::1]:8080"],
+            ["https://[0000:0000:0000:0000:0000:0000:0000:0001]"],
+            ["https://[0000:0000:0000:0000:0000:0000:0000:0001]:8080"]
         ];
     }
 
