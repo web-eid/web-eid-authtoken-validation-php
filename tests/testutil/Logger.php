@@ -71,6 +71,6 @@ class Logger implements LoggerInterface
 
     public function log($level, string|\Stringable $message, array $context = []): void
     {
-        // No implemetation on tests 
+        // No implemetation on tests
     }
 }

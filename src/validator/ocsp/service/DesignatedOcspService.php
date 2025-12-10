@@ -63,8 +63,14 @@ class DesignatedOcspService implements OcspService
     {
         // Certificate pinning is implemented simply by comparing the certificates or their public keys,
         // see https://owasp.org/www-community/controls/Certificate_and_Public_Key_Pinning.
-        if ($this->configuration->getResponderCertificate()->getCurrentCert() != $cert->getCurrentCert()) {
-            throw new OCSPCertificateException("Responder certificate from the OCSP response is not equal to the configured designated OCSP responder certificate");
+        if (
+            $this->configuration->getResponderCertificate()->getCurrentCert()
+            != $cert->getCurrentCert()
+        ) {
+            throw new OCSPCertificateException(
+                "Responder certificate from the OCSP response is not equal " .
+                "to the configured designated OCSP responder certificate"
+            );
         }
         CertificateValidator::certificateIsValidOnDate($cert, $now, "Designated OCSP responder");
     }

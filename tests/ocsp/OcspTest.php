@@ -34,10 +34,9 @@ use web_eid\web_eid_authtoken_validation_php\util\HashAlgorithm;
 
 class OcspTest extends TestCase
 {
-
     public function testWhenGenerateCertificateIdIsSuccess(): void
     {
-        $result = (new Ocsp)->generateCertificateId((new CertificateLoader)->fromFile(__DIR__ . '/../_resources/revoked.crt')->getCert(), (new CertificateLoader)->fromFile(__DIR__ . '/../_resources/revoked.issuer.crt')->getCert());
+        $result = (new Ocsp())->generateCertificateId((new CertificateLoader())->fromFile(__DIR__ . '/../_resources/revoked.crt')->getCert(), (new CertificateLoader())->fromFile(__DIR__ . '/../_resources/revoked.issuer.crt')->getCert());
 
         $this->assertEquals("1.3.14.3.2.26", $result['hashAlgorithm']['algorithm']);
         $this->assertEquals([126, 230, 106, 231, 114, 154, 179, 252, 248, 162, 32, 100, 108, 22, 161, 45, 96, 113, 8, 93], array_values(unpack('C*', $result['issuerNameHash'])));
@@ -46,9 +45,9 @@ class OcspTest extends TestCase
 
     public function testWhenGenerateCertificateIdWithSha256IsSuccess(): void
     {
-        $result = (new Ocsp)->generateCertificateId(
-            (new CertificateLoader)->fromFile(__DIR__ . '/../_resources/revoked.crt')->getCert(), 
-            (new CertificateLoader)->fromFile(__DIR__ . '/../_resources/revoked.issuer.crt')->getCert(),
+        $result = (new Ocsp())->generateCertificateId(
+            (new CertificateLoader())->fromFile(__DIR__ . '/../_resources/revoked.crt')->getCert(),
+            (new CertificateLoader())->fromFile(__DIR__ . '/../_resources/revoked.issuer.crt')->getCert(),
             HashAlgorithm::SHA256
         );
 
@@ -69,6 +68,6 @@ class OcspTest extends TestCase
         $issuer = new X509();
         $issuer->setDN($subject->getDN());
 
-        (new Ocsp)->generateCertificateId($subject, $issuer);
+        (new Ocsp())->generateCertificateId($subject, $issuer);
     }
 }

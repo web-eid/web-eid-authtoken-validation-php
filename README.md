@@ -1,6 +1,6 @@
 # web-eid-authtoken-validation-php
 
-![European Regional Development Fund](https://github.com/open-eid/DigiDoc4-Client/blob/master/client/images/EL_Regionaalarengu_Fond.png)
+<img src="example/public/img/eu-fund-flags.jpg" width="300" alt="European Regional Development Fund">
 
 web-eid-authtoken-validation-php is a PHP library for issuing challenge nonces and validating Web eID authentication tokens during secure authentication with electronic ID (eID) smart cards in web applications.
 
@@ -431,14 +431,16 @@ requirement.
 
 # Code formatting
 
-We are using `Prettier` for code formatting. To install Prettier, use following command:
+We use the standard [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style for PHP code formatting with [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer).
 
-```
-npm install --global prettier @prettier/plugin-php
-```
-Run command for code formatting:
+To automatically format the code, run:
 ```
 composer fix-php
+```
+
+To check the code style, run:
+```
+./vendor/bin/phpcs
 ```
 
 # Testing

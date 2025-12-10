@@ -37,7 +37,6 @@ use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class CertificateValidator
 {
-
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
@@ -49,12 +48,16 @@ final class CertificateValidator
     public static function certificateIsValidOnDate(X509 $subjectCertificate, DateTime $date, string $subject): void
     {
         if (!$subjectCertificate->validateDate($date)) {
+            $validity = $subjectCertificate->getCurrentCert()['tbsCertificate']['validity'];
 
-            if ($date < new DateTime($subjectCertificate->getCurrentCert()['tbsCertificate']['validity']['notBefore']['utcTime'])) {
+            $notBefore = new DateTime($validity['notBefore']['utcTime']);
+            $notAfter = new DateTime($validity['notAfter']['utcTime']);
+
+            if ($date < $notBefore) {
                 throw new CertificateNotYetValidException($subject);
             }
 
-            if ($date > new DateTime($subjectCertificate->getCurrentCert()['tbsCertificate']['validity']['notAfter']['utcTime'])) {
+            if ($date > $notAfter) {
                 throw new CertificateExpiredException($subject);
             }
         }
@@ -66,10 +69,13 @@ final class CertificateValidator
     public static function validateIsValidAndSignedByTrustedCA(
         X509 $certificate,
         TrustedCertificates $trustedCertificates,
-    ): X509
-    {
+    ): X509 {
         $now = DefaultClock::getInstance()->now();
         self::certificateIsValidOnDate($certificate, $now, "User");
+
+        // Prevent SSRF via CA Issuers URI from user-provided certificate AIA.
+        // All trusted/intermediate CA certificates must be provided by configuration.
+        X509::disableURLFetch();
 
         foreach ($trustedCertificates->getCertificates() as $trustedCertificate) {
             $certificate->loadCA(

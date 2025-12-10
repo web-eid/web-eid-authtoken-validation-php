@@ -26,7 +26,6 @@
 
 class Template
 {
-
     public function getHtml($template, $data = [])
     {
         if (is_file($template)) {

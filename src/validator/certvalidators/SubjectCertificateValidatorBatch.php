@@ -48,8 +48,10 @@ class SubjectCertificateValidatorBatch
         }
     }
 
-    public function addOptional(bool $condition, SubjectCertificateValidator $optionalValidator): SubjectCertificateValidatorBatch
-    {
+    public function addOptional(
+        bool $condition,
+        SubjectCertificateValidator $optionalValidator
+    ): SubjectCertificateValidatorBatch {
         if ($condition) {
             $this->validatorList->pushItem($optionalValidator);
         }

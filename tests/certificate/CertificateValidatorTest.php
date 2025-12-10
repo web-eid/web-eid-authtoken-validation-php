@@ -36,7 +36,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidEx
 
 class CertificateValidatorTest extends TestCase
 {
-
     protected function tearDown(): void
     {
         Dates::resetMockedCertificateValidatorDate();
