@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Signing you in…</title>
+        <link rel="stylesheet" href="/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="/css/main.css" />
+    </head>
+    <body>
+        <div id="error-message" class="alert alert-danger" style="display: none" role="alert">
+            <div class="message"></div>
+            <pre class="details"></pre>
+        </div>
+
+        <script type="module">
+            import { showErrorMessage, checkHttpError } from "/js/errors.js";
+            import { parsePayload } from "/js/payload.js";
+
+            // Using an async IIFE for mobile WebView compatibility:
+            // top-level await is not supported in some mobile browsers/WebViews.
+            (async function () {
+                const payload = parsePayload("Authentication");
+                const authToken = payload["auth_token"];
+                const csrfToken = document.querySelector('meta[name="csrftoken"]').content;
+
+                const response = await fetch("/auth/mobile/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrfToken
+                    },
+                  body: JSON.stringify({ auth_token: authToken }),
+                  credentials: "include"
+                });
+                await checkHttpError(response);
+
+                window.location.replace("/welcome");
+            })().catch((error) => {
+                console.error(error);
+                showErrorMessage(error);
+            });
+        </script>
+    </body>
+</html>

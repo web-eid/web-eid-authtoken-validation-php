@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ class AuthTokenStructureTest extends AbstractTestWithValidator
     {
         $token = $this->replaceTokenField(self::VALID_AUTH_TOKEN, "format", "invalid");
         $this->expectException(AuthTokenParseException::class);
-        $this->expectExceptionMessage("Only token format version 'web-eid:1' is currently supported");
+        $this->expectExceptionMessage("Token format version 'invalid' is currently not supported");
         $this->validator->validate($token, "");
     }
 }

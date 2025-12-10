@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,9 @@ class Router
         // Web eID routes
         $router->map("GET", "/nonce", ["controller" => "Auth", "method" => "getNonce"]);
         $router->map("POST", "/validate", ["controller" => "Auth", "method" => "validate"]);
+        $router->map("POST", "/auth/mobile/init", ["controller" => "Auth", "method" => "mobileInit"]);
+        $router->map("GET", "/auth/mobile/login", ["controller" => "Pages", "method" => "mobileLoginView"]);
+        $router->map("POST", "/auth/mobile/login", ["controller" => "Auth", "method" => "mobileLogin"]);
 
         // Allow route only for authenticated users
         if (isset($_SESSION["auth-user"])) {

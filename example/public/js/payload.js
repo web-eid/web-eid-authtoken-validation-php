@@ -20,39 +20,26 @@
  * SOFTWARE.
  */
 
-"use strict";
+export function parsePayload(context) {
+    const fragment = window.location.hash.slice(1);
 
-const alertUi = {
-    alert: document.querySelector("#error-message"),
-    alertMessage: document.querySelector("#error-message .message"),
-    alertDetails: document.querySelector("#error-message .details")
-};
+    if (!fragment) {
+        throw new Error(`Missing ${context} response payload`);
+    }
 
-export function hideErrorMessage() {
-    alertUi.alert.style.display = "none";
-}
+    let payload;
+    try {
+        payload = JSON.parse(atob(fragment));
+    } catch (e) {
+        console.error(e);
+        throw new Error(`Failed to parse the ${context} response`);
+    }
 
-export function showErrorMessage(error, message = "Authentication failed") {
-    const details =
-        `[Code]\n${error.code ?? "UNKNOWN_ERROR"}` +
-        `\n\n[Message]\n${error.message}` +
-        (error.response ? `\n\n[response]\n${JSON.stringify(error.response, null, " ")}` : "");
-
-    alertUi.alertMessage.innerText = message;
-    alertUi.alertDetails.innerText = details;
-    alertUi.alert.style.display = "block";
-}
-
-export async function checkHttpError(response) {
-    if (!response.ok) {
-        let body;
-        try {
-            body = await response.text();
-        } catch (error) {
-            body = "<<unable to retrieve response body>>";
-        }
-        const error = new Error("Server error: " + body);
-        error.code = response.status;
+    if (payload.error) {
+        const error = new Error(payload.message ?? `${context} failed`);
+        error.code = payload.code;
         throw error;
     }
+
+    return payload;
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,13 @@ class WebEidAuthToken
      * @var string Format
      */
     private ?string $format = null;
+    /**
+     * @var string Unverified signing certificate
+     */
+    private ?string $unverifiedSigningCertificate = null;
+
+    /** @var SupportedSignatureAlgorithm[] */
+    private array $supportedSignatureAlgorithms = [];
 
     public function __construct(string $authenticationTokenJSON)
     {
@@ -72,6 +79,17 @@ class WebEidAuthToken
         if (isset($jsonDecoded['format'])) {
             $this->format = $this->filterString('format', $jsonDecoded['format']);
         }
+        // unverifiedSigningCertificate
+        if (isset($jsonDecoded['unverifiedSigningCertificate'])) {
+            $this->unverifiedSigningCertificate =
+                $this->filterString('unverifiedSigningCertificate', $jsonDecoded['unverifiedSigningCertificate']);
+        }
+        // supportedSignatureAlgorithms
+        if (isset($jsonDecoded['supportedSignatureAlgorithms'])) {
+            $this->supportedSignatureAlgorithms = $this->parseSupportedSignatureAlgorithms(
+                $jsonDecoded['supportedSignatureAlgorithms']
+            );
+        }
     }
 
     public function getUnverifiedCertificate(): ?string
@@ -94,6 +112,16 @@ class WebEidAuthToken
         return $this->format;
     }
 
+    public function getUnverifiedSigningCertificate(): ?string
+    {
+        return $this->unverifiedSigningCertificate;
+    }
+
+    public function getSupportedSignatureAlgorithms(): array
+    {
+        return $this->supportedSignatureAlgorithms;
+    }
+
     private function filterString(string $key, $data): string
     {
         $type = gettype($data);
@@ -101,5 +129,22 @@ class WebEidAuthToken
             throw new UnexpectedValueException("Error parsing Web eID authentication token: '{$key}' is {$type}, string expected");
         }
         return $data;
+    }
+
+    private function parseSupportedSignatureAlgorithms(array $list): array
+    {
+        $result = [];
+
+        foreach ($list as $item) {
+            if (!is_array($item)) {
+                throw new UnexpectedValueException(
+                    "Error parsing supportedSignatureAlgorithms: each item must be an object"
+                );
+            }
+
+            $result[] = SupportedSignatureAlgorithm::fromArray($item);
+        }
+
+        return $result;
     }
 }

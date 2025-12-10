@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,14 @@ class Pages
     public function login()
     {
         $this->data = [
-            "content" => $this->template->getHtml(__DIR__ . '/../tpl/login.phtml')
+            "content" => $this->template->getHtml(__DIR__ . '/../tpl/index.phtml')
+        ];
+    }
+
+    public function mobileLoginView()
+    {
+        $this->data = [
+            "content" => $this->template->getHtml(__DIR__ . '/../tpl/webeid-login.phtml'),
         ];
     }
 

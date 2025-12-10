@@ -268,7 +268,7 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     {
         Dates::setMockedCertificateValidatorDate(new DateTime('2021-09-17 18:25:24.000'));
         $this->expectException(UserCertificateOCSPCheckFailedException::class);
-        $this->expectExceptionMessage("User certificate revocation check has failed: Exception: User certificate revocation check has failed: OCSP request and response nonces differ, possible replay attack");
+        $this->expectExceptionMessage("User certificate revocation check has failed: OCSP request and response nonces differ, possible replay attack");
 
         $validator = self::getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
             pack("c*", ...self::getOcspResponseBytesFromResources())
