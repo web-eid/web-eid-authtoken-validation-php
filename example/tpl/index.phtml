@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta id="csrftoken" name="csrftoken" content="<?= htmlspecialchars($csrfToken ?? '') ?>">
+  <meta id="csrfheadername" name="csrfheadername" content="X-CSRF-TOKEN">
+
+  <title>Web eID: electronic ID smart cards on the Web</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/android-chrome-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/img/android-chrome-512x512.png" />
+</head>
+<body class="m-4">
+<div class="container">
+  <div class="row justify-content-md-center">
+    <div class="col-xs-12 col-md-8">
+      <h2>Web eID: electronic ID smart cards on the Web</h2>
+      <p>
+        The Web eID project enables usage of European Union electronic identity (eID) smart cards for
+        secure authentication and digital signing of documents on the web using public-key cryptography.
+      </p>
+      <p>
+        Estonian, Finnish, Latvian, Lithuanian, Belgian and Croatian eID cards are supported in the
+        first phase, but only Estonian eID card support is currently enabled in the test application
+        below.
+      </p>
+      <p>
+        Please get in touch by email at help@ria.ee in case you need support with adding Web eID to your
+        project or want to add support for a new eID card to Web eID.
+      </p>
+      <p>
+        The privacy policy of the test service is available
+        <a href="/files/Web eID privacy policy.pdf">here</a>.
+      </p>
+
+      <hr />
+      <h5>Web eID plugin status</h5>
+      <div>
+        <span id="plugin-status-icon" class="fw-bold me-2">⏳</span>
+        <span>Web eID plugin installed</span>
+      </div>
+      <div class="mb-1">
+        <span id="mobile-status-icon" class="fw-bold me-2">⏳</span>
+        <span>Accessed with a mobile device</span>
+      </div>
+
+      <hr />
+      <h4>Table of contents</h4>
+      <ul>
+        <li>
+          <a href="#usage-with-plugin">Usage with Web eID plugin</a>
+          <ul>
+            <li><a href="#uninstallation">Uninstallation</a></li>
+            <li><a href="#debugging-and-logs">Debugging and logs</a></li>
+            <li><a href="#documentation">Documentation</a></li>
+            <li><a href="#for-developers">For developers</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#usage-without-plugin">Usage without Web eID plugin</a>
+          <ul>
+            <li><a href="#documentation-mobile">Documentation</a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <hr />
+      <h3><a id="usage-with-plugin"></a>Usage with Web eID plugin</h3>
+      <p>
+        The recommended way of installing Web eID is by installing
+        <a href="https://www.id.ee/en/article/install-id-software/"
+        >the latest Open-EID ID-software package</a
+        >. In case you do not need or want to install the Open-EID package, install the latest Web eID
+        packages in Firefox, Chrome, Edge or Safari according to the following instructions:
+      </p>
+      <ol>
+        <li>
+          Download and run the Web eID native app and browser extension installer:
+          <ul>
+            <li>
+              on <b>Ubuntu Linux</b>, for Firefox and Chrome, download and execute the<br />
+              <a href="/scripts/install-web-eid.sh"><code>install-web-eid.sh</code></a>
+              script from the console with<br />
+              <code
+              >wget -O - https://<span th:text="${serverName}" />/scripts/install-web-eid.sh |
+                bash</code
+              ><br />
+              Note: as of the 2.5 version, Web eID supports Firefox installed via Snap.
+            </li>
+            <li>
+              on <b>macOS</b> 13 or later, for Firefox and Chrome from
+              <a href="https://installer.id.ee/media/web-eid/web-eid_2.7.0.660.dmg">here</a>,
+            </li>
+            <li>
+              on <b>macOS</b> 13 or later, for Safari, install the extension from
+              <a href="https://apps.apple.com/ee/app/web-eid/id1576665083">App Store</a>,
+            </li>
+            <li>
+              on <b>Windows</b> 10, Windows 11, Windows Server 2019, Windows Server 2022, Windows
+              Server 2025 for Firefox, Chrome and Edge from
+              <a href="https://installer.id.ee/media/web-eid/web-eid_2.7.0.906.x64.exe">here</a>.
+            </li>
+          </ul>
+        </li>
+        <li>
+          The installer will install the browser extension for all supported browsers automatically.
+          The extension must be manually enabled from either the extension installation pop-up that
+          appears in the browser or from the browser extensions management page and may need browser
+          restart under certain circumstances.
+        </li>
+      </ol>
+      <p>Testing:</p>
+      <ol>
+        <li>Attach a smart card reader to the computer and insert the eID card into the reader.</li>
+        <li>Click <i>Authenticate</i> below.</li>
+      </ol>
+
+      <div id="error-message" class="alert alert-danger" style="display: none" role="alert">
+        <div class="message"></div>
+        <pre class="details"></pre>
+      </div>
+      <p class="text-center p-4">
+        <button id="webeid-auth-button" class="btn btn-primary">Authenticate</button>
+      </p>
+
+      <hr />
+      <div class="accordion accordion-flush" id="accordionInfo">
+        <div class="accordion-item border-0">
+          <h4 class="accordion-header" id="headingUninstall">
+            <a id="uninstallation"></a>
+            <button
+              class="accordion-button collapsed ps-0"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseUninstall"
+              aria-expanded="false"
+              aria-controls="collapseUninstall"
+            >
+              Uninstallation
+            </button>
+          </h4>
+          <div
+            id="collapseUninstall"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingUninstall"
+            data-bs-parent="#accordionInfo"
+          >
+            <div class="accordion-body ps-0">
+              <p>
+                The uninstaller will remove the browser extension from all supported browsers
+                automatically.
+              </p>
+
+              <h5>Ubuntu Linux</h5>
+              <p>
+                Uninstall the Web eID software either using the Ubuntu Software Center or from
+                the console with<br />
+                <code>sudo apt purge web-eid</code>
+              </p>
+
+              <h5>macOS</h5>
+              <p>To uninstall the Web eID software, do the following:</p>
+              <ol>
+                <li>
+                  download the Web eID native app and browser extension installer as
+                  instructed above,
+                </li>
+                <li>open the downloaded file,</li>
+                <li>open <i>Terminal</i>,</li>
+                <li>
+                  drag and drop <code>uninstall.sh</code> from the downloaded file to the
+                  <i>Terminal</i> window,
+                </li>
+                <li>press <i>Enter</i> and <i>Y</i>,</li>
+                <li>enter your password.</li>
+              </ol>
+
+              <h5>Windows</h5>
+              <p>Uninstall the Web eID software using <i>Add or remove programs</i>.</p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item border-0">
+          <h4 class="accordion-header" id="headingDebugging">
+            <a id="debugging-and-logs"></a>
+            <button
+              class="accordion-button collapsed ps-0"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseDebugging"
+              aria-expanded="false"
+              aria-controls="collapseDebugging"
+            >
+              Debugging and logs
+            </button>
+          </h4>
+          <div
+            id="collapseDebugging"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingDebugging"
+            data-bs-parent="#accordionInfo"
+          >
+            <div class="accordion-body ps-0">
+              <ul>
+                <li>
+                  To debug the extension, open the extension page and select
+                  <i>Inspect</i> to open browser developer tools in extension mode. You can
+                  examine extension logs in the <i>Console</i> tab, put breakpoints in
+                  extension code in the <i>Debugger</i> tab and inspect extension network
+                  communication in the <i>Network</i> tab.
+                </li>
+                <li>
+                  To enable logging in the extension companion native app,
+                  <ul>
+                    <li>
+                      in Linux, run the following command in the console:<br />
+                      <code>echo 'logging=true' > ~/.config/RIA/web-eid.conf</code>
+                    </li>
+                    <li>
+                      in macOS, run the following command in the console:<br />
+                      <code>defaults write \</code><br />
+                      <code
+                      >&nbsp;&nbsp;"$HOME/Library/Containers/eu.web-eid.web-eid/Data/Library/Preferences/eu.web-eid.web-eid.plist"
+                        \</code
+                      ><br />
+                      <code>&nbsp;&nbsp;logging true</code><br />
+                      <code
+                      >defaults write
+                        "$HOME/Library/Containers/eu.web-eid.web-eid-safari/Data/Library/Preferences/eu.web-eid.web-eid-safari.plist"
+                        \</code
+                      ><br />
+                      <code>&nbsp;&nbsp;logging true</code><br />
+                    </li>
+                    <li>
+                      in Windows, add the following registry key:<br />
+                      <code>[HKEY_CURRENT_USER\SOFTWARE\RIA\web-eid]</code><br />
+                      <code>"logging"="true"</code>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  The native app logs are stored in
+                  <ul>
+                    <li><code>~/.local/share/RIA/web-eid/web-eid.log</code> in Linux</li>
+                    <li>
+                      <code
+                      >~/Library/Containers/eu.web-eid.web-eid/Data/Library/Application\
+                        Support/RIA/web-eid/web-eid.log</code
+                      >
+                      in macOS
+                    </li>
+                    <li>
+                      <code
+                      >~/Library/Containers/eu.web-eid.web-eid-safari/Data/Library/Application\
+                        Support/RIA/web-eid-safari/web-eid-safari.log</code
+                      >
+                      of Safari in macOS
+                    </li>
+                    <li>
+                      <code
+                      >C:/Users/&lt;USER&gt;/AppData/Local/RIA/web-eid/web-eid.log</code
+                      >
+                      in Windows.
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  You can verify if debugging works by executing the native application
+                  <code>web-eid</code>
+                  manually, there will be an informative message in the logs.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item border-0">
+          <h4 class="accordion-header" id="headingDocumentation">
+            <button
+              class="accordion-button collapsed ps-0"
+              id="documentation"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseDocumentation"
+              aria-expanded="false"
+              aria-controls="collapseDocumentation"
+            >
+              Documentation
+            </button>
+          </h4>
+          <div
+            id="collapseDocumentation"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingDocumentation"
+            data-bs-parent="#accordionInfo"
+          >
+            <div class="accordion-body ps-0">
+              <p>
+                Technical overview of the solution is available in the project
+                <a href="https://github.com/web-eid/web-eid-system-architecture-doc"
+                >system architecture document</a
+                >. Overview of authentication token validation implementation in the back end is
+                available in the <i>web-eid-authtoken-validation-java</i> Java library
+                <a
+                  href="https://github.com/web-eid/web-eid-authtoken-validation-java#authentication-token-validation"
+                >README</a
+                >.
+              </p>
+              <p>
+                Security analysis of the solution is available
+                <a
+                  href="https://web-eid.github.io/web-eid-cybernetica-analysis/webextensions-main.pdf"
+                >in this document</a
+                >.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item border-0">
+          <h4 class="accordion-header" id="headingDevelopers">
+            <button
+              class="accordion-button collapsed ps-0"
+              id="for-developers"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseDevelopers"
+              aria-expanded="false"
+              aria-controls="collapseDevelopers"
+            >
+              For developers
+            </button>
+          </h4>
+          <div
+            id="collapseDevelopers"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingDevelopers"
+            data-bs-parent="#accordionInfo"
+          >
+            <div class="accordion-body ps-0">
+              <p>
+                Currently the Web eID back-end libraries are available for Java, .NET and PHP
+                web applications.
+              </p>
+              <p>
+                To implement authentication and digital signing with Web eID in a Java, .NET or
+                PHP web application, you need to
+              </p>
+              <ul>
+                <li>
+                  use the <i>web-eid.js</i> JavaScript library in the front end of the web
+                  application according to the instructions
+                  <a href="https://github.com/web-eid/web-eid.js#quickstart">here</a>,
+                </li>
+                <li>
+                  for authentication
+                  <ul>
+                    <li>
+                      in Java use the <i>web-eid-authtoken-validation-java</i> library in
+                      the back end of the web application according to the instructions
+                      <a
+                        href="https://github.com/web-eid/web-eid-authtoken-validation-java#quickstart"
+                      >here</a
+                      >,
+                    </li>
+                    <li>
+                      in .NET/C# use the
+                      <i>web-eid-authtoken-validation-dotnet</i> library according to the
+                      instructions
+                      <a
+                        href="https://github.com/web-eid/web-eid-authtoken-validation-dotnet#quickstart"
+                      >here</a
+                      >
+                    </li>
+                    <li>
+                      in PHP use the <i>web-eid-authtoken-validation-php</i> library
+                      according to the instructions
+                      <a
+                        href="https://github.com/web-eid/web-eid-authtoken-validation-php#quickstart"
+                      >here</a
+                      >
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  for digital signing
+                  <ul>
+                    <li>
+                      in Java use the <i>digidoc4j</i> library in the back end of the web
+                      application according to the instructions
+                      <a
+                        href="https://github.com/web-eid/web-eid-authtoken-validation-java/tree/main/example#integration-with-digidoc4j-components"
+                      >here</a
+                      >,
+                    </li>
+                    <li>
+                      in .NET/C# use the <i>libdigidocpp</i> library in the back end of
+                      the web application according to the instructions
+                      <a
+                        href="https://github.com/web-eid/web-eid-asp-dotnet-example#3-setup-the-libdigidocpp-library-for-signing"
+                      >here</a
+                      >.
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+              <p>
+                The full source code of an example Spring Boot web application that uses Web eID
+                for authentication and digital signing is available
+                <a
+                  href="https://github.com/web-eid/web-eid-authtoken-validation-java/tree/main/example"
+                >here</a
+                >. The .NET/C# version of the example is available
+                <a href="https://github.com/web-eid/web-eid-asp-dotnet-example">here</a>. The
+                PHP version of the example is available
+                <a
+                  href="https://github.com/web-eid/web-eid-authtoken-validation-php/tree/main/example"
+                >here</a
+                >.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+      <h3><a id="usage-without-plugin"></a>Usage without Web eID plugin</h3>
+      <p>
+        The Web eID solution can also be used without installing the Web eID native app and browser
+        extension. This includes devices like mobile phones, tablets, and some Chromebooks, where the
+        Web eID plugin cannot currently be installed.
+      </p>
+      <p class="text-center p-4">
+        <button id="webeid-mobile-auth-button" class="btn btn-primary">Authenticate</button>
+      </p>
+
+      <hr />
+      <div class="accordion accordion-flush" id="accordionMobileInfo">
+        <div class="accordion-item border-0">
+          <h4 class="accordion-header" id="headingDocumentationMobile">
+            <button
+              class="accordion-button collapsed ps-0"
+              id="documentation-mobile"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#collapseDocumentationMobile"
+              aria-expanded="false"
+              aria-controls="collapseDocumentationMobile"
+            >
+              Documentation
+            </button>
+          </h4>
+          <div
+            id="collapseDocumentationMobile"
+            class="accordion-collapse collapse"
+            aria-labelledby="headingDocumentationMobile"
+            data-bs-parent="#accordionMobileInfo"
+          >
+            <div class="accordion-body ps-0">
+              <p>
+                Technical overview of the solution is available in the project
+                <a href="https://github.com/web-eid/web-eid-for-mobile-architecture-doc"
+                >system architecture document</a
+                >. Overview of authentication token validation implementation in the back end is
+                available in the <i>web-eid-authtoken-validation-java</i> Java library
+                <a
+                  href="https://github.com/web-eid/web-eid-authtoken-validation-java#authentication-token-validation"
+                >README</a
+                >.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="eu-logo-fixed" onmouseout="this.style.display = 'none'">
+  <img src="/img/eu-fund-flags.svg" alt="EU fund flags" />
+</div>
+
+<script src="/js/bootstrap.bundle.min.js"></script>
+
+<script type="module">
+  "use strict";
+  import * as webeid from "/js/web-eid.js";
+  import { hideErrorMessage, showErrorMessage, checkHttpError } from "/js/errors.js";
+
+  hideErrorMessage();
+
+  const authButton = document.querySelector("#webeid-auth-button");
+  const authMobileButton = document.querySelector("#webeid-mobile-auth-button");
+
+  const csrfToken = document.querySelector("#csrftoken").content;
+  const csrfHeaderName = document.querySelector("#csrfheadername").content;
+
+  const lang = new URLSearchParams(window.location.search).get("lang") || "en";
+
+  authMobileButton.addEventListener("click", async () => {
+    hideErrorMessage();
+
+    if (!isMobileDevice()) {
+      showErrorMessage({
+        code: "MOBILE_ONLY",
+        message: "Mobile authentication is only available on mobile devices."
+      });
+      return;
+    }
+
+    authMobileButton.disabled = true;
+
+    try {
+      const resp = await fetch("/auth/mobile/init", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          [csrfHeaderName]: csrfToken
+        },
+        credentials: "include"
+      });
+
+      await checkHttpError(resp);
+      const { auth_uri } = await resp.json();
+      window.location.href = auth_uri;
+    } catch (error) {
+      showErrorMessage(error);
+      throw error;
+    } finally {
+      authMobileButton.disabled = false;
+    }
+  });
+
+  authButton.addEventListener("click", async () => {
+    hideErrorMessage();
+    authButton.disabled = true;
+
+    try {
+      const challengeResponse = await fetch("/nonce", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          [csrfHeaderName]: csrfToken
+        },
+        credentials: "include"
+      });
+
+      await checkHttpError(challengeResponse);
+      const { nonce } = await challengeResponse.json();
+
+      const authToken = await webeid.authenticate(nonce, { lang });
+
+      const authTokenResponse = await fetch("/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          [csrfHeaderName]: csrfToken
+        },
+        body: JSON.stringify(authToken)
+      });
+
+      await checkHttpError(authTokenResponse);
+      const authTokenResult = await authTokenResponse.json();
+
+      console.log("Authentication successful! Result:", authTokenResult);
+
+      window.location.href = "/welcome";
+    } catch (error) {
+      showErrorMessage(error);
+      throw error;
+    } finally {
+      authButton.disabled = false;
+    }
+  });
+
+  function isMobileDevice() {
+    const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth <= 768;
+    const userAgentRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    return (hasTouch && isSmallScreen) || userAgentRegex.test(navigator.userAgent);
+  }
+
+  async function isWebEidPluginInstalled() {
+    try {
+      await webeid.status();
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async function updateStatusIndicators() {
+    const pluginStatusIcon = document.getElementById("plugin-status-icon");
+    const mobileStatusIcon = document.getElementById("mobile-status-icon");
+
+    if (await isWebEidPluginInstalled()) {
+      pluginStatusIcon.textContent = "✓";
+      pluginStatusIcon.className = "fw-bold me-2 text-success";
+    } else {
+      pluginStatusIcon.textContent = "✗";
+      pluginStatusIcon.className = "fw-bold me-2 text-danger";
+    }
+
+    if (isMobileDevice()) {
+      mobileStatusIcon.textContent = "✓";
+      mobileStatusIcon.className = "fw-bold me-2 text-success";
+    } else {
+      mobileStatusIcon.textContent = "✗";
+      mobileStatusIcon.className = "fw-bold me-2 text-danger";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    updateStatusIndicators();
+    setTimeout(function() {
+      document.querySelector(".eu-logo-fixed").style.display = "none";
+    }, 7000);
+  });
+  //# sourceURL=index.js
+</script>
+</body>
+</html>

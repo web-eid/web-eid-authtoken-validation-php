@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2025 Estonian Information System Authority
+ * Copyright (c) 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,34 +24,33 @@
 
 declare(strict_types=1);
 
-namespace web_eid\web_eid_authtoken_validation_php\validator;
+namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 
-use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
+use phpseclib3\File\X509;
 
-/**
- * Parses and validates the provided Web eID authentication token.
- */
-interface AuthTokenValidator
+interface AuthTokenVersionValidator
 {
     /**
-     * Parses the Web eID authentication token signed by the subject.
+     * Returns whether this validator supports validation of the given token format.
      *
-     * @param String $authToken the Web eID authentication token string, in Web eID JSON format
-     * @return the Web eID authentication token
+     * @param string $format the format string from the Web eID authentication token (e.g. "web-eid:1.0", "web-eid:1.1")
+     * @return true if this validator can handle the given format, false otherwise
      */
-    public function parse(string $authToken): WebEidAuthToken;
+    public function supports(string $format): bool;
 
     /**
      * Validates the Web eID authentication token signed by the subject and returns
      * the subject certificate that can be used for retrieving information about the subject.
      * <p>
-     * See {@link CertificateData} and {@link TitleCase} for convenience methods for retrieving user
+     * See {@link CertificateData} and {@link Strings} for convenience methods for retrieving user
      * information from the certificate.
      *
-     * @param WebEidAuthToken authToken the Web eID authentication token
-     * @param String currentChallengeNonce the challenge nonce that is associated with the authentication token
-     * @return validated subject certificate
+     * @param WebEidAuthToken $authToken the Web eID authentication token
+     * @param string $currentChallengeNonce the challenge nonce that is associated with the authentication token
+     * @return X509 subject certificate
+     * @throws AuthTokenException when validation fails
      */
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509;
 }

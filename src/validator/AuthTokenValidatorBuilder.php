@@ -29,12 +29,14 @@ namespace web_eid\web_eid_authtoken_validation_php\validator;
 use GuzzleHttp\Psr7\Uri;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\util\X509Collection;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
 use Psr\Log\LoggerInterface;
 
 class AuthTokenValidatorBuilder
 {
     private AuthTokenValidationConfiguration $configuration;
+    private ?OcspClient $ocspClient = null;
     private $logger;
 
     public function __construct(?LoggerInterface $logger = null)
@@ -68,7 +70,7 @@ class AuthTokenValidatorBuilder
      * At least one trusted intermediate Certificate Authority must be provided as a mandatory configuration parameter.
      *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
-     * 
+     *
      * @param X509 $certificates trusted intermediate Certificate Authority certificates
      * @return the builder instance for method chaining
      */
@@ -83,7 +85,7 @@ class AuthTokenValidatorBuilder
      * Adds the given policies to the list of disallowed user certificate policies.
      * In order for the user certificate to be considered valid, it must not contain any policies
      * present in this list.
-     * 
+     *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      *
      * @param string $policies disallowed user certificate policies as string array
@@ -135,7 +137,7 @@ class AuthTokenValidatorBuilder
      * This is an optional configuration parameter, the default is 15 minutes.
      * The relatively long default is specifically chosen to account for one particular OCSP responder that used
      * CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
-     * 
+     *
      * @param integer $allowedTimeSkew the allowed time skew
      * @return AuthTokenValidatorBuilder the builder instance for method chaining.
      */
@@ -150,7 +152,7 @@ class AuthTokenValidatorBuilder
      * Sets the maximum age of the OCSP response's thisUpdate time before it is considered too old.
      * <p>
      * This is an optional configuration parameter, the default is 2 minutes.
-     * 
+     *
      * @param integer $maxThisUpdateAge the maximum age of the OCSP response's thisUpdate time
      * @return AuthTokenValidatorBuilder the builder instance for method chaining.
      */
@@ -166,7 +168,7 @@ class AuthTokenValidatorBuilder
      * The OCSP URL is extracted from the user certificate and some OCSP services don't support the nonce extension.
      *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
-     * 
+     *
      * @param URI $urls OCSP URLs for which the nonce protocol extension will be disabled
      * @return the builder instance for method chaining
      */
@@ -187,9 +189,16 @@ class AuthTokenValidatorBuilder
         return $this;
     }
 
+    public function withOcspClient(OcspClient $ocspClient): AuthTokenValidatorBuilder
+    {
+        $this->ocspClient = $ocspClient;
+        $this->logger?->debug("Custom OCSP client configured");
+        return $this;
+    }
+
     public function build(): AuthTokenValidator
     {
         $this->configuration->validate();
-        return new AuthTokenValidatorImpl($this->configuration, $this->logger);
+        return new AuthTokenValidatorImpl($this->configuration, $this->logger, $this->ocspClient);
     }
 }

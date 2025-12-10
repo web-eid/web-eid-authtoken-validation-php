@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2025-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,50 +22,20 @@
  * SOFTWARE.
  */
 
-use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
-use web_eid\web_eid_authtoken_validation_php\certificate\CertificateData;
-use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
-use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceGenerator;
-use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceGeneratorBuilder;
 use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
-use GuzzleHttp\Psr7\Uri;
-use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidator;
-use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder;
-use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceNotFoundException;
 
-class Auth
+final class Auth
 {
-    private $config;
+    private AuthContext $ctx;
+    private MobileAuth $mobile;
 
     public function __construct($config)
     {
-        $this->config = $config;
-    }
-
-    public function trustedIntermediateCACertificates(): array
-    {
-        $directory = __DIR__ . "/../certificates/";
-        $certificates = glob($directory . "*.der.crt");
-        return CertificateLoader::loadCertificatesFromResources(...$certificates);
-    }
-
-    public function generator(): ChallengeNonceGenerator
-    {
-        return (new ChallengeNonceGeneratorBuilder())
-            ->withNonceTtl(300)
-            ->build();
-    }
-
-    public function tokenValidator(): AuthTokenValidator
-    {
-        $logger = new Logger();
-
-        return (new AuthTokenValidatorBuilder($logger))
-            // Change the URL when you run the example in your own machine.
-            ->withSiteOrigin(new Uri($this->config->get('origin_url')))
-            ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
-            ->build();
+        $this->ctx = new AuthContext($config);
+        $this->mobile = new MobileAuth($this->ctx);
     }
 
     /**
@@ -77,23 +47,12 @@ class Auth
     {
         try {
             header("Content-Type: application/json; charset=utf-8");
-            $challengeNonce = $this->generator()->generateAndStoreNonce();
+            $challengeNonce = $this->ctx->nonceGenerator()->generateAndStoreNonce();
             $responseArr = ["nonce" => $challengeNonce->getBase64EncodedNonce()];
             echo json_encode($responseArr);
         } catch (Exception $e) {
-            header("HTTP/1.0 500 Internal Server Error");
+            http_response_code(500);
             echo "Nonce generation failed";
-        }
-    }
-
-    private function getPrincipalNameFromCertificate(X509 $userCertificate): string
-    {
-        $givenName = CertificateData::getSubjectGivenName($userCertificate);
-        $surname = CertificateData::getSubjectSurname($userCertificate);
-        if ($givenName && $surname) {
-            return $givenName . " " . $surname;
-        } else {
-            return CertificateData::getSubjectCN($userCertificate);
         }
     }
 
@@ -104,15 +63,8 @@ class Auth
      */
     public function validate()
     {
-        // Header names must be treated as case-insensitive (according to RFC2616) so we convert them to lowercase
-        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
-
-        if (!isset($headers["x-csrf-token"]) || ($headers["x-csrf-token"] != $_SESSION["csrf-token"])) {
-            header("HTTP/1.0 405 Method Not Allowed");
-            echo "CSRF token missing, unable to process your request";
-            return;
-        }
-
+        $this->ctx->assertCsrf();
+        $this->ctx->assertJsonContentType();
         $authToken = file_get_contents("php://input");
 
         try {
@@ -120,29 +72,45 @@ class Auth
             /* Get and remove nonce from store */
             $challengeNonce = (new ChallengeNonceStore())->getAndRemove();
 
-            try {
+            $subjectName = $this->ctx->authenticate(
+                $authToken,
+                $challengeNonce->getBase64EncodedNonce()
+            );
 
-                // Validate token
-                $cert = $this->tokenValidator()->validate(new WebEidAuthToken($authToken), $challengeNonce->getBase64EncodedNonce());
+            session_regenerate_id();
 
-                session_regenerate_id();
-
-                $subjectName = $this->getPrincipalNameFromCertificate($cert);
-                $result = [
-                    "sub" => $subjectName
-                ];
-
-                $_SESSION["auth-user"] = $subjectName;
-
-                echo json_encode($result);
-            } catch (Exception $e) {
-                header("HTTP/1.0 400 Bad Request");
-                echo "Validation failed";
-            }
-        } catch (ChallengeNonceExpiredException $e) {
-            header("HTTP/1.0 400 Bad Request");
+            echo json_encode([
+                "sub" => $subjectName
+            ]);
+        } catch (ChallengeNonceExpiredException) {
+            unset($_SESSION["auth-user"]);
+            http_response_code(401);
             echo "Challenge nonce not found or expired";
+        } catch (ChallengeNonceNotFoundException) {
+            unset($_SESSION["auth-user"]);
+            http_response_code(401);
+            echo "Challenge nonce not found";
+        } catch (AuthTokenParseException) {
+            unset($_SESSION["auth-user"]);
+            http_response_code(401);
+            echo "Invalid authentication token";
         }
+    }
+
+    /**
+     * Mobile init (delegated)
+     */
+    public function mobileInit()
+    {
+        $this->mobile->init();
+    }
+
+    /**
+     * Mobile login (delegated)
+     */
+    public function mobileLogin()
+    {
+        $this->mobile->login();
     }
 
     /**

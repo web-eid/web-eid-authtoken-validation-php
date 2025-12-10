@@ -49,9 +49,9 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
     private int $allowedOcspResponseTimeSkew;
     private int $maxOcspResponseThisUpdateAge;
 
-    public function __construct(SubjectCertificateTrustedValidator $trustValidator, 
-        OcspClient $ocspClient, 
-        OcspServiceProvider $ocspServiceProvider, 
+    public function __construct(SubjectCertificateTrustedValidator $trustValidator,
+        OcspClient $ocspClient,
+        OcspServiceProvider $ocspServiceProvider,
         int $allowedOcspResponseTimeSkew,
         int $maxOcspResponseThisUpdateAge,
         ?LoggerInterface $logger = null)
@@ -90,6 +90,8 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
             if ($ocspService->doesSupportNonce()) {
                 $this->checkNonce($request, $response->getBasicResponse());
             }
+        } catch (UserCertificateOCSPCheckFailedException $e) {
+                throw $e;
         } catch (Throwable $e) {
             throw new UserCertificateOCSPCheckFailedException("Exception: " . $e->getMessage(), $e);
         }
@@ -157,12 +159,20 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
     }
 
     private static function checkNonce(OcspRequest $request, OcspBasicResponse $basicResponse): void
-    {
-        $requestNonce = $request->getNonceExtension();
-        $responseNonce = $basicResponse->getNonceExtension();
+        {
+            $requestNonce = $request->getNonceExtension();
+            $responseNonce = $basicResponse->getNonceExtension();
 
-        if ($requestNonce != $responseNonce) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP request and response nonces differ, possible replay attack");
+            if (empty($requestNonce)) {
+                throw new UserCertificateOCSPCheckFailedException("OCSP request nonce missing");
+            }
+
+            if (empty($responseNonce)) {
+                throw new UserCertificateOCSPCheckFailedException("OCSP response nonce missing, possible replay attack");
+            }
+
+            if ($requestNonce !== $responseNonce) {
+                throw new UserCertificateOCSPCheckFailedException("OCSP request and response nonces differ, possible replay attack");
+            }
         }
-    }
 }
