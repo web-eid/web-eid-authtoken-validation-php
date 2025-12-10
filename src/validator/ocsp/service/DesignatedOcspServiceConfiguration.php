@@ -47,8 +47,12 @@ class DesignatedOcspServiceConfiguration
      * @param bool $doesSupportNonce - true if the service supports the OCSP protocol nonce extension
      * @throws OCSPCertificateException when an error occurs while extracting issuer names from certificates
      */
-    public function __construct(Uri $ocspServiceAccessLocation, X509 $responderCertificate, X509Collection $supportedCertificateIssuers, bool $doesSupportNonce)
-    {
+    public function __construct(
+        Uri $ocspServiceAccessLocation,
+        X509 $responderCertificate,
+        X509Collection $supportedCertificateIssuers,
+        bool $doesSupportNonce
+    ) {
 
         $this->ocspServiceAccessLocation = $ocspServiceAccessLocation;
         $this->responderCertificate = $responderCertificate;

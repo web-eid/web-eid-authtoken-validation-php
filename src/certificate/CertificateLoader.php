@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,13 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use phpseclib3\File\X509;
 use BadFunctionCallException;
+use Exception;
 
 final class CertificateLoader
 {
-
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
@@ -41,12 +42,13 @@ final class CertificateLoader
     /**
      * Loads certificate files from paths into array of OpenSSLCertificate
      * @param string ...$resourceNames array of certificate paths
-     * 
+     *
      * @return array
      * @throws CertificateDecodingException
      */
-    public static function loadCertificatesFromResources(string ...$resourceNames): array
-    {
+    public static function loadCertificatesFromResources(
+        string ...$resourceNames,
+    ): array {
         $caCertificates = [];
         foreach ($resourceNames as $resourceName) {
             $cert = new X509();
@@ -58,5 +60,32 @@ final class CertificateLoader
             }
         }
         return $caCertificates;
+    }
+
+    public static function decodeCertificateFromBase64(
+        ?string $base64,
+        string $fieldName = "certificate",
+    ): X509 {
+        if ($base64 === null || $base64 === "") {
+            throw new AuthTokenParseException(
+                "'{$fieldName}' field is missing, null or empty",
+            );
+        }
+        $cert = new X509();
+        try {
+            if (!$cert->loadX509($base64)) {
+                throw new CertificateDecodingException(
+                    "'{$fieldName}' decode failed",
+                );
+            }
+        } catch (Exception $e) {
+            throw new CertificateDecodingException(
+                "'{$fieldName}' decode failed",
+                0,
+                $e,
+            );
+        }
+
+        return $cert;
     }
 }

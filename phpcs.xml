@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ruleset name="Web eID PHP PSR-12">
+    <description>PSR-12 coding standard for Web eID PHP project.</description>
+
+    <file>src</file>
+    <file>tests</file>
+    <file>example/src</file>
+    <file>example/public/index.php</file>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="p"/>
+
+    <rule ref="PSR12"/>
+
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+        <exclude-pattern>src/util/CollectionsUtil.php</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR1.Classes.ClassDeclaration.MissingNamespace">
+        <exclude-pattern>example/src/*</exclude-pattern>
+    </rule>
+
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.Files.LineLength.TooLong">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+</ruleset>

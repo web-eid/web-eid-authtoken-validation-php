@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class WebEidAuthToken
 {
-
     /**
      * @var string Unverified certificate
      */
@@ -48,6 +47,10 @@ class WebEidAuthToken
      * @var string Format
      */
     private ?string $format = null;
+    /**
+     * @var UnverifiedSigningCertificate[]
+     */
+    private array $unverifiedSigningCertificates = [];
 
     public function __construct(string $authenticationTokenJSON)
     {
@@ -58,7 +61,10 @@ class WebEidAuthToken
 
         // unverifiedCertificate
         if (isset($jsonDecoded['unverifiedCertificate'])) {
-            $this->unverifiedCertificate = $this->filterString('unverifiedCertificate', $jsonDecoded['unverifiedCertificate']);
+            $this->unverifiedCertificate = $this->filterString(
+                'unverifiedCertificate',
+                $jsonDecoded['unverifiedCertificate']
+            );
         }
         // algorithm
         if (isset($jsonDecoded['algorithm'])) {
@@ -71,6 +77,21 @@ class WebEidAuthToken
         // format
         if (isset($jsonDecoded['format'])) {
             $this->format = $this->filterString('format', $jsonDecoded['format']);
+        }
+
+        // unverifiedSigningCertificates
+        if (isset($jsonDecoded['unverifiedSigningCertificates'])) {
+            if (!is_array($jsonDecoded['unverifiedSigningCertificates'])) {
+                $type = gettype($jsonDecoded['unverifiedSigningCertificates']);
+                throw new UnexpectedValueException(
+                    "Error parsing Web eID authentication token: " .
+                    "'unverifiedSigningCertificates' is {$type}, array expected"
+                );
+            }
+
+            $this->unverifiedSigningCertificates = $this->parseUnverifiedSigningCertificates(
+                $jsonDecoded['unverifiedSigningCertificates']
+            );
         }
     }
 
@@ -94,12 +115,37 @@ class WebEidAuthToken
         return $this->format;
     }
 
+    public function getUnverifiedSigningCertificates(): array
+    {
+        return $this->unverifiedSigningCertificates;
+    }
+
     private function filterString(string $key, $data): string
     {
         $type = gettype($data);
         if ($type != "string") {
-            throw new UnexpectedValueException("Error parsing Web eID authentication token: '{$key}' is {$type}, string expected");
+            throw new UnexpectedValueException(
+                "Error parsing Web eID authentication token: " .
+                "'{$key}' is {$type}, string expected"
+            );
         }
         return $data;
+    }
+
+    private function parseUnverifiedSigningCertificates(array $list): array
+    {
+        $result = [];
+
+        foreach ($list as $item) {
+            if (!is_array($item)) {
+                throw new UnexpectedValueException(
+                    "Error parsing unverifiedSigningCertificates: each item must be an object"
+                );
+            }
+
+            $result[] = UnverifiedSigningCertificate::fromArray($item);
+        }
+
+        return $result;
     }
 }
