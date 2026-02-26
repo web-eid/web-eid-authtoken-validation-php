@@ -67,17 +67,12 @@ final class AuthContext
             $base64ChallengeNonce
         );
 
-        session_regenerate_id();
-
-        $subjectName = $this->getPrincipalNameFromCertificate($cert);
-        $_SESSION["auth-user"] = $subjectName;
-
-        return $subjectName;
+        return $this->getPrincipalNameFromCertificate($cert);;
     }
 
     public function assertCsrf(bool $jsonError = true): void
     {
-        $headers = array_change_key_case(getallheaders());
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
 
         if (
             !isset($headers["x-csrf-token"], $_SESSION["csrf-token"]) ||
