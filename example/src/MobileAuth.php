@@ -47,11 +47,8 @@ final class MobileAuth
         $baseUrl = $this->ctx->mobileBaseUrl();
         $encodedPayload = base64_encode(json_encode($payload));
 
-        if (str_starts_with($baseUrl, 'http')) {
-            $authUri = rtrim($baseUrl, '/') . '/auth#' . $encodedPayload;
-        } else {
-            $authUri = rtrim($baseUrl, '/') . '//auth#' . $encodedPayload;
-        }
+        $fragment = (str_starts_with($baseUrl, 'http') ? '/' : '//') . 'auth#';
+        $authUri = rtrim($baseUrl, '/') . $fragment . $encodedPayload;
 
         echo json_encode(["auth_uri" => $authUri]);
     }
@@ -71,12 +68,13 @@ final class MobileAuth
         try {
             $nonce = (new ChallengeNonceStore())->getAndRemove();
 
-            $this->ctx->authenticate(
+            $subjectName = $this->ctx->authenticate(
                 json_encode($json["auth_token"]),
                 $nonce->getBase64EncodedNonce()
             );
 
             session_regenerate_id();
+            $_SESSION["auth-user"] = $subjectName;
 
             echo json_encode(["redirect" => "/welcome"]);
         } catch (Throwable $e) {

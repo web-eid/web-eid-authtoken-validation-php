@@ -78,6 +78,7 @@ final class Auth
             );
 
             session_regenerate_id();
+            $_SESSION["auth-user"] = $subjectName;
 
             echo json_encode([
                 "sub" => $subjectName
