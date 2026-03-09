@@ -79,7 +79,7 @@ final class CertificateValidator
 
         if ($certificate->validateSignature()) {
             $chain = $certificate->getChain();
-            $trustedCACert = end($chain);
+            $trustedCACert = next($chain);
 
             // Verify that the trusted CA cert is presently valid before returning the result.
             self::certificateIsValidOnDate($trustedCACert, $now, "Trusted CA");
