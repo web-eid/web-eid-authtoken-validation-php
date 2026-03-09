@@ -525,8 +525,8 @@
       });
 
       await checkHttpError(resp);
-      const { auth_uri } = await resp.json();
-      window.location.href = auth_uri;
+      const { authUri } = await resp.json();
+      window.location.href = authUri;
     } catch (error) {
       showErrorMessage(error);
       throw error;

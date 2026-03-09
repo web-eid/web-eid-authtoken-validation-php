@@ -40,8 +40,8 @@ final class MobileAuth
 
         $payload = [
             "challenge" => $challenge->getBase64EncodedNonce(),
-            "login_uri" => $this->ctx->originUrl() . "/auth/mobile/login",
-            "get_signing_certificate" => $this->ctx->mobileRequestSigningCert()
+            "loginUri" => $this->ctx->originUrl() . "/auth/mobile/login",
+            "getSigningCertificate" => $this->ctx->mobileRequestSigningCert()
         ];
 
         $baseUrl = $this->ctx->mobileBaseUrl();
@@ -50,7 +50,7 @@ final class MobileAuth
         $fragment = (str_starts_with($baseUrl, 'http') ? '/' : '//') . 'auth#';
         $authUri = rtrim($baseUrl, '/') . $fragment . $encodedPayload;
 
-        echo json_encode(["auth_uri" => $authUri]);
+        echo json_encode(["authUri" => $authUri]);
     }
 
     public function login(): void
@@ -59,9 +59,9 @@ final class MobileAuth
         $this->ctx->assertJsonContentType();
 
         $json = json_decode(file_get_contents("php://input"), true);
-        if (!isset($json["auth_token"])) {
+        if (!isset($json["authToken"])) {
             http_response_code(400);
-            echo json_encode(["error" => "Missing auth_token"]);
+            echo json_encode(["error" => "Missing authToken"]);
             return;
         }
 
@@ -69,7 +69,7 @@ final class MobileAuth
             $nonce = (new ChallengeNonceStore())->getAndRemove();
 
             $subjectName = $this->ctx->authenticate(
-                json_encode($json["auth_token"]),
+                json_encode($json["authToken"]),
                 $nonce->getBase64EncodedNonce()
             );
 

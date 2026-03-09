@@ -2,15 +2,25 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Signing you in…</title>
         <link rel="stylesheet" href="/css/bootstrap.min.css" />
         <link rel="stylesheet" href="/css/main.css" />
     </head>
-    <body>
+    <body class="loading-page">
+        <div id="spinner-message">
+            <h2>Signing you in…</h2>
+            <div class="spinner"></div>
+        </div>
+
         <div id="error-message" class="alert alert-danger" style="display: none" role="alert">
             <div class="message"></div>
             <pre class="details"></pre>
         </div>
+
+         <p class="text-center p-4" style="display: none" id="error-actions">
+            <button id="back-button" class="btn btn-primary">Back</button>
+         </p>
 
         <script type="module">
             import { showErrorMessage, checkHttpError } from "/js/errors.js";
@@ -20,7 +30,7 @@
             // top-level await is not supported in some mobile browsers/WebViews.
             (async function () {
                 const payload = parsePayload("Authentication");
-                const authToken = payload["auth_token"];
+                const authToken = payload["authToken"];
                 const csrfToken = document.querySelector('meta[name="csrftoken"]').content;
 
                 const response = await fetch("/auth/mobile/login", {
@@ -29,7 +39,7 @@
                         "Content-Type": "application/json",
                         "X-CSRF-TOKEN": csrfToken
                     },
-                  body: JSON.stringify({ auth_token: authToken }),
+                  body: JSON.stringify({ authToken: authToken }),
                   credentials: "include"
                 });
                 await checkHttpError(response);
@@ -38,6 +48,14 @@
             })().catch((error) => {
                 console.error(error);
                 showErrorMessage(error);
+                document.getElementById("spinner-message").style.display = "none";
+
+                const actions = document.getElementById("error-actions");
+                actions.style.display = "block";
+
+                document.getElementById("back-button").addEventListener("click", () => {
+                    window.location.replace("/");
+                });
             });
         </script>
     </body>
