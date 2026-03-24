@@ -1,6 +1,6 @@
 # web-eid-authtoken-validation-php
 
-![European Regional Development Fund](https://github.com/open-eid/DigiDoc4-Client/blob/master/client/images/EL_Regionaalarengu_Fond.png)
+<img src="example/public/img/eu-fund-flags.jpg" width="300" alt="European Regional Development Fund">
 
 web-eid-authtoken-validation-php is a PHP library for issuing challenge nonces and validating Web eID authentication tokens during secure authentication with electronic ID (eID) smart cards in web applications.
 
