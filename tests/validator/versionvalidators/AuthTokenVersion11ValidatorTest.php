@@ -28,6 +28,8 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 
 use PHPUnit\Framework\TestCase;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
+use web_eid\web_eid_authtoken_validation_php\authtoken\UnverifiedSigningCertificate;
+use web_eid\web_eid_authtoken_validation_php\authtoken\SupportedSignatureAlgorithm;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use phpseclib3\File\X509;
@@ -101,12 +103,12 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
      * @throws CertificateDecodingException
      * @throws AuthTokenException
      */
-    public function testMissingSigningCertificateFails(): void
+    public function testMissingSigningCertificatesFails(): void
     {
         $token = $this->createMock(WebEidAuthToken::class);
 
         $token->method('getFormat')->willReturn('web-eid:1.1');
-        $token->method('getUnverifiedSigningCertificate')->willReturn(null);
+        $token->method('getUnverifiedSigningCertificates')->willReturn([]);
 
         $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
             ->setConstructorArgs([
@@ -120,12 +122,79 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
             ->onlyMethods(['validateV1'])
             ->getMock();
 
-        // IMPORTANT: bypass v1 validation (exactly like Java test)
         $spy->method('validateV1')->willReturn(new X509());
 
         $this->expectException(AuthTokenParseException::class);
         $this->expectExceptionMessage(
-            "'unverifiedSigningCertificate' field is missing or empty"
+            "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testSigningCertificatesContainingNullEntryFails(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $token->method('getFormat')->willReturn('web-eid:1.1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn([null]);
+
+        $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
+            ->setConstructorArgs([
+                $this->createMock(SubjectCertificateValidatorBatch::class),
+                CertificateValidator::buildTrustFromCertificates([]),
+                $this->createMock(AuthTokenSignatureValidator::class),
+                new AuthTokenValidationConfiguration(),
+                null,
+                null
+            ])
+            ->onlyMethods(['validateV1'])
+            ->getMock();
+
+        $spy->method('validateV1')->willReturn(new X509());
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testSigningCertificateValueMissingFails(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $certificate = new UnverifiedSigningCertificate();
+
+        $token->method('getFormat')->willReturn('web-eid:1.1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn([$certificate]);
+
+        $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
+            ->setConstructorArgs([
+                $this->createMock(SubjectCertificateValidatorBatch::class),
+                CertificateValidator::buildTrustFromCertificates([]),
+                $this->createMock(AuthTokenSignatureValidator::class),
+                new AuthTokenValidationConfiguration(),
+                null,
+                null
+            ])
+            ->onlyMethods(['validateV1'])
+            ->getMock();
+
+        $spy->method('validateV1')->willReturn(new X509());
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'"
         );
 
         $spy->validate($token, 'nonce');
@@ -144,10 +213,14 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
 
         $base64 = base64_encode($der);
 
+        $certificate = UnverifiedSigningCertificate::fromArray([
+            'certificate' => $base64,
+            'supportedSignatureAlgorithms' => null,
+        ]);
+
         $token = $this->createMock(WebEidAuthToken::class);
         $token->method('getFormat')->willReturn('web-eid:1.1');
-        $token->method('getUnverifiedSigningCertificate')->willReturn($base64);
-        $token->method('getSupportedSignatureAlgorithms')->willReturn([]);
+        $token->method('getUnverifiedSigningCertificates')->willReturn([$certificate]);
 
         $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
             ->setConstructorArgs([

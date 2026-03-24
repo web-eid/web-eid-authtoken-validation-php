@@ -80,18 +80,22 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
     {
+        if ($this->isExactV10Format($authToken->getFormat()) && !empty($authToken->getUnverifiedSigningCertificates())) {
+            throw new AuthTokenParseException("'unverifiedSigningCertificates' field is not allowed for format '" . $authToken->getFormat() . "'");
+        }
+
         if ($authToken->getUnverifiedCertificate() === null ||
             $authToken->getUnverifiedCertificate() === '') {
             throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
         }
 
         $subjectCertificate = new X509();
-        $loaded = false;
 
         try {
             $loaded = $subjectCertificate->loadX509($authToken->getUnverifiedCertificate());
-        } catch (Throwable) {
-        }
+            } catch (Throwable $e) {
+                throw new CertificateDecodingException("'unverifiedCertificate' decode failed", 0, $e);
+            }
 
         if (!$loaded) {
             throw new CertificateDecodingException("'unverifiedCertificate' decode failed");
@@ -136,5 +140,10 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         }
 
         return $batch;
+    }
+
+    private function isExactV10Format(?string $format): bool
+    {
+        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX || $format === 'web-eid:1.0';
     }
 }

@@ -49,12 +49,9 @@ class WebEidAuthToken
      */
     private ?string $format = null;
     /**
-     * @var string Unverified signing certificate
+     * @var UnverifiedSigningCertificate[]
      */
-    private ?string $unverifiedSigningCertificate = null;
-
-    /** @var SupportedSignatureAlgorithm[] */
-    private array $supportedSignatureAlgorithms = [];
+    private array $unverifiedSigningCertificates = [];
 
     public function __construct(string $authenticationTokenJSON)
     {
@@ -65,7 +62,10 @@ class WebEidAuthToken
 
         // unverifiedCertificate
         if (isset($jsonDecoded['unverifiedCertificate'])) {
-            $this->unverifiedCertificate = $this->filterString('unverifiedCertificate', $jsonDecoded['unverifiedCertificate']);
+            $this->unverifiedCertificate = $this->filterString(
+                'unverifiedCertificate',
+                $jsonDecoded['unverifiedCertificate']
+            );
         }
         // algorithm
         if (isset($jsonDecoded['algorithm'])) {
@@ -79,15 +79,18 @@ class WebEidAuthToken
         if (isset($jsonDecoded['format'])) {
             $this->format = $this->filterString('format', $jsonDecoded['format']);
         }
-        // unverifiedSigningCertificate
-        if (isset($jsonDecoded['unverifiedSigningCertificate'])) {
-            $this->unverifiedSigningCertificate =
-                $this->filterString('unverifiedSigningCertificate', $jsonDecoded['unverifiedSigningCertificate']);
-        }
-        // supportedSignatureAlgorithms
-        if (isset($jsonDecoded['supportedSignatureAlgorithms'])) {
-            $this->supportedSignatureAlgorithms = $this->parseSupportedSignatureAlgorithms(
-                $jsonDecoded['supportedSignatureAlgorithms']
+
+        // unverifiedSigningCertificates
+        if (isset($jsonDecoded['unverifiedSigningCertificates'])) {
+            if (!is_array($jsonDecoded['unverifiedSigningCertificates'])) {
+                $type = gettype($jsonDecoded['unverifiedSigningCertificates']);
+                throw new UnexpectedValueException(
+                    "Error parsing Web eID authentication token: 'unverifiedSigningCertificates' is {$type}, array expected"
+                );
+            }
+
+            $this->unverifiedSigningCertificates = $this->parseUnverifiedSigningCertificates(
+                $jsonDecoded['unverifiedSigningCertificates']
             );
         }
     }
@@ -112,14 +115,9 @@ class WebEidAuthToken
         return $this->format;
     }
 
-    public function getUnverifiedSigningCertificate(): ?string
+    public function getUnverifiedSigningCertificates(): array
     {
-        return $this->unverifiedSigningCertificate;
-    }
-
-    public function getSupportedSignatureAlgorithms(): array
-    {
-        return $this->supportedSignatureAlgorithms;
+        return $this->unverifiedSigningCertificates;
     }
 
     private function filterString(string $key, $data): string
@@ -131,18 +129,18 @@ class WebEidAuthToken
         return $data;
     }
 
-    private function parseSupportedSignatureAlgorithms(array $list): array
+    private function parseUnverifiedSigningCertificates(array $list): array
     {
         $result = [];
 
         foreach ($list as $item) {
             if (!is_array($item)) {
                 throw new UnexpectedValueException(
-                    "Error parsing supportedSignatureAlgorithms: each item must be an object"
+                    "Error parsing unverifiedSigningCertificates: each item must be an object"
                 );
             }
 
-            $result[] = SupportedSignatureAlgorithm::fromArray($item);
+            $result[] = UnverifiedSigningCertificate::fromArray($item);
         }
 
         return $result;

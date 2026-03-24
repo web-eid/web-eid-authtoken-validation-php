@@ -72,16 +72,16 @@ final class Auth
             /* Get and remove nonce from store */
             $challengeNonce = (new ChallengeNonceStore())->getAndRemove();
 
-            $subjectName = $this->ctx->authenticate(
+            $authResult = $this->ctx->authenticate(
                 $authToken,
                 $challengeNonce->getBase64EncodedNonce()
             );
 
             session_regenerate_id();
-            $_SESSION["auth-user"] = $subjectName;
+            $_SESSION["auth-user"] = $authResult["subjectName"];
 
             echo json_encode([
-                "sub" => $subjectName
+                "sub" => $authResult["subjectName"]
             ]);
         } catch (ChallengeNonceExpiredException) {
             unset($_SESSION["auth-user"]);

@@ -63,8 +63,10 @@ class AuthTokenAlgorithmTest extends AbstractTestWithValidator
      */
     public function testWhenV11TokenMissingSupportedAlgorithmsThenValidationFails(): void
     {
-        $tokenJson = $this->removeJsonField(self::VALID_V11_AUTH_TOKEN, 'supportedSignatureAlgorithms');
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        unset($tokenFields['unverifiedSigningCertificates'][0]['supportedSignatureAlgorithms']);
 
+        $tokenJson = json_encode($tokenFields, JSON_UNESCAPED_SLASHES);
         $authToken = new WebEidAuthToken($tokenJson);
 
         $this->expectException(AuthTokenParseException::class);

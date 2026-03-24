@@ -59,45 +59,69 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
     public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
     {
         $subjectCertificate = $this->validateV1($authToken, $currentChallengeNonce);
-        $signingCertificate = $this->validateSigningCertificateExists($authToken);
-        $this->validateSupportedSignatureAlgorithms($authToken->getSupportedSignatureAlgorithms());
-        $this->validateSameSubject($subjectCertificate, $signingCertificate);
-        $this->validateSameIssuer($subjectCertificate, $signingCertificate);
-        $this->validateSigningCertificateValidity($signingCertificate);
-        $this->validateKeyUsage($signingCertificate);
+        $signingCertificates = $this->validateSigningCertificates($authToken);
+
+        foreach ($signingCertificates as $signingCertificate) {
+            $this->validateSameSubject($subjectCertificate, $signingCertificate);
+            $this->validateSameIssuer($subjectCertificate, $signingCertificate);
+            $this->validateSigningCertificateValidity($signingCertificate);
+            $this->validateKeyUsage($signingCertificate);
+        }
 
         return $subjectCertificate;
     }
 
     /**
+     * @return X509[]
      * @throws AuthTokenParseException
      * @throws CertificateDecodingException
      */
-    private function validateSigningCertificateExists(WebEidAuthToken $token): X509
+    private function validateSigningCertificates(WebEidAuthToken $token): array
     {
-        $raw = $token->getUnverifiedSigningCertificate();
+        $signingCertificates = $token->getUnverifiedSigningCertificates();
 
-        if ($raw === null || $raw === '') {
-            throw new AuthTokenParseException("'unverifiedSigningCertificate' field is missing or empty");
+        if ($signingCertificates === null || empty($signingCertificates)) {
+            throw new AuthTokenParseException(
+                "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"
+            );
         }
-        return CertificateLoader::decodeCertificateFromBase64($raw, 'unverifiedSigningCertificate');
+
+        $result = [];
+
+        foreach ($signingCertificates as $certificate) {
+            if ($certificate === null || $certificate->getCertificate() === null || $certificate->getCertificate() === '') {
+                throw new AuthTokenParseException(
+                    "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'"
+                );
+            }
+
+            $this->validateSupportedSignatureAlgorithms($certificate);
+            $result[] = CertificateLoader::decodeCertificateFromBase64(
+                $certificate->getCertificate(),
+                'unverifiedSigningCertificates'
+            );
+        }
+
+        return $result;
     }
 
     /**
      * @throws AuthTokenParseException
      */
-    private function validateSupportedSignatureAlgorithms(array $algorithms): void
+    private function validateSupportedSignatureAlgorithms($cert): void
     {
-        if (empty($algorithms)) {
+        $algorithms = $cert->getSupportedSignatureAlgorithms();
+
+        if ($algorithms === null || empty($algorithms)) {
             throw new AuthTokenParseException("'supportedSignatureAlgorithms' field is missing");
         }
 
         foreach ($algorithms as $alg) {
-            if (!$alg instanceof SupportedSignatureAlgorithm) {
-                throw new AuthTokenParseException("Unsupported signature algorithm");
-            }
-
-            if (!in_array($alg->getCryptoAlgorithm(), self::SUPPORTED_SIGNING_CRYPTO_ALGORITHMS, true)
+            if (!$alg instanceof SupportedSignatureAlgorithm
+                || $alg->getCryptoAlgorithm() === null
+                || $alg->getHashFunction() === null
+                || $alg->getPaddingScheme() === null
+                || !in_array($alg->getCryptoAlgorithm(), self::SUPPORTED_SIGNING_CRYPTO_ALGORITHMS, true)
                 || !in_array($alg->getHashFunction(), self::SUPPORTED_SIGNING_HASH_FUNCTIONS, true)
                 || !in_array($alg->getPaddingScheme(), self::SUPPORTED_SIGNING_PADDING_SCHEMES, true)) {
                 throw new AuthTokenParseException("Unsupported signature algorithm");

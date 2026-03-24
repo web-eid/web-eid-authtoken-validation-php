@@ -68,13 +68,15 @@ final class MobileAuth
         try {
             $nonce = (new ChallengeNonceStore())->getAndRemove();
 
-            $subjectName = $this->ctx->authenticate(
+            $authResult = $this->ctx->authenticate(
                 json_encode($json["authToken"]),
                 $nonce->getBase64EncodedNonce()
             );
 
             session_regenerate_id();
-            $_SESSION["auth-user"] = $subjectName;
+            $_SESSION["auth-user"] = $authResult["subjectName"];
+            $_SESSION["auth-signing-certificate"] = $authResult["signingCertificate"];
+            $_SESSION["auth-supported-signature-algorithms"] = $authResult["supportedSignatureAlgorithms"];
 
             echo json_encode(["redirect" => "/welcome"]);
         } catch (Throwable $e) {

@@ -41,8 +41,10 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
 {
     public const V11_AUTH_TOKEN = '{"algorithm":"ES384",' .
         '"unverifiedCertificate":"MIIEBDCCA2WgAwIBAgIQY5OGshxoPMFg+Wfc0gFEaTAKBggqhkjOPQQDBDBgMQswCQYDVQQGEwJFRTEbMBkGA1UECgwSU0sgSUQgU29sdXRpb25zIEFTMRcwFQYDVQRhDA5OVFJFRS0xMDc0NzAxMzEbMBkGA1UEAwwSVEVTVCBvZiBFU1RFSUQyMDE4MB4XDTIxMDcyMjEyNDMwOFoXDTI2MDcwOTIxNTk1OVowfzELMAkGA1UEBhMCRUUxKjAoBgNVBAMMIUrDlUVPUkcsSkFBSy1LUklTVEpBTiwzODAwMTA4NTcxODEQMA4GA1UEBAwHSsOVRU9SRzEWMBQGA1UEKgwNSkFBSy1LUklTVEpBTjEaMBgGA1UEBRMRUE5PRUUtMzgwMDEwODU3MTgwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAAQmwEKsJTjaMHSaZj19hb9EJaJlwbKc5VFzmlGMFSJVk4dDy+eUxa5KOA7tWXqzcmhh5SYdv+MxcaQKlKWLMa36pfgv20FpEDb03GCtLqjLTRZ7649PugAQ5EmAqIic29CjggHDMIIBvzAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIDiDBHBgNVHSAEQDA+MDIGCysGAQQBg5EhAQIBMCMwIQYIKwYBBQUHAgEWFWh0dHBzOi8vd3d3LnNrLmVlL0NQUzAIBgYEAI96AQIwHwYDVR0RBBgwFoEUMzgwMDEwODU3MThAZWVzdGkuZWUwHQYDVR0OBBYEFPlp/ceABC52itoqppEmbf71TJz6MGEGCCsGAQUFBwEDBFUwUzBRBgYEAI5GAQUwRzBFFj9odHRwczovL3NrLmVlL2VuL3JlcG9zaXRvcnkvY29uZGl0aW9ucy1mb3ItdXNlLW9mLWNlcnRpZmljYXRlcy8TAkVOMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDAfBgNVHSMEGDAWgBTAhJkpxE6fOwI09pnhClYACCk+ezBzBggrBgEFBQcBAQRnMGUwLAYIKwYBBQUHMAGGIGh0dHA6Ly9haWEuZGVtby5zay5lZS9lc3RlaWQyMDE4MDUGCCsGAQUFBzAChilodHRwOi8vYy5zay5lZS9UZXN0X29mX0VTVEVJRDIwMTguZGVyLmNydDAKBggqhkjOPQQDBAOBjAAwgYgCQgDCAgybz0u3W+tGI+AX+PiI5CrE9ptEHO5eezR1Jo4j7iGaO0i39xTGUB+NSC7P6AQbyE/ywqJjA1a62jTLcS9GHAJCARxN4NO4eVdWU3zVohCXm8WN3DWA7XUcn9TZiLGQ29P4xfQZOXJi/z4PNRRsR4plvSNB3dfyBvZn31HhC7my8woi",' .
-        '"unverifiedSigningCertificate":"X5C",' .
-        '"supportedSignatureAlgorithms":[{"cryptoAlgorithm":"RSA","hashFunction":"SHA-256","paddingScheme":"PKCS1.5"}],' .
+        '"unverifiedSigningCertificates":[{' .
+            '"certificate":"X5C",' .
+            '"supportedSignatureAlgorithms":[{"cryptoAlgorithm":"RSA","hashFunction":"SHA-256","paddingScheme":"PKCS1.5"}]' .
+        '}],' .
         '"appVersion":"https://web-eid.eu/web-eid-mobile-app/releases/v1.0.0",' .
         '"signature":"xsjXsQvVYXWcdV0YPhxLthJxtf0//R8p9WFFlYJGRARrl1ruyoAUwl0xeHgeZOKeJtwiCYCNWJzCG3VM3ydgt92bKhhk1u0JXIPVqvOkmDY72OCN4q73Y8iGSPVTgjk93TgquHlodf7YcqZNhutwNNf3oldHEWJD5zmkdwdpBFXgeOwTAdFwGljDQZbHr3h1Dr+apUDuloS0WuIzUuu8YXN2b8lh8FCTlF0G0DEjhHd/MGx8dbe3UTLHmD7K9DXv4zLJs6EF9i2v/C10SIBQDkPBSVPqMxCDPECjbEPi2+ds94eU7ThOhOQlFFtJ4KjQNTUa2crSixH7cYZF2rNNmA==",' .
         '"format":"web-eid:1.1"}';
@@ -61,26 +63,28 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
      */
     public function testWhenV11SigningCertificateFieldIsMissingThenValidationFails(): void
     {
-        $tokenJson = $this->removeJsonField(self::V11_AUTH_TOKEN, 'unverifiedSigningCertificate');
+        $tokenFields = json_decode(self::V11_AUTH_TOKEN, true);
+        unset($tokenFields['unverifiedSigningCertificates'][0]['certificate']);
+
+        $tokenJson = json_encode($tokenFields, JSON_UNESCAPED_SLASHES);
         $authToken = new WebEidAuthToken($tokenJson);
 
         $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
             ->setConstructorArgs([
-            $this->createMock(SubjectCertificateValidatorBatch::class),
-            CertificateValidator::buildTrustFromCertificates([]),
-            $this->createMock(AuthTokenSignatureValidator::class),
-            new AuthTokenValidationConfiguration(),
-            null,
-            null
+                $this->createMock(SubjectCertificateValidatorBatch::class),
+                CertificateValidator::buildTrustFromCertificates([]),
+                $this->createMock(AuthTokenSignatureValidator::class),
+                new AuthTokenValidationConfiguration(),
+                null,
+                null
             ])
             ->onlyMethods(['validateV1'])
             ->getMock();
 
-        // Bypass v1 + signature validation side effects
         $spy->method('validateV1')->willReturn(new X509());
 
         $this->expectException(AuthTokenParseException::class);
-        $this->expectExceptionMessage("'unverifiedSigningCertificate' field is missing");
+        $this->expectExceptionMessage("'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'");
 
         $spy->validate($authToken, self::VALID_CHALLENGE_NONCE);
     }
@@ -93,13 +97,13 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
     {
         $invalidCert = "This is not a certificate";
         $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
-        $tokenFields["unverifiedSigningCertificate"] = $invalidCert;
+        $tokenFields["unverifiedSigningCertificates"][0]["certificate"] = $invalidCert;
 
         $modifiedTokenJson = json_encode($tokenFields, JSON_UNESCAPED_SLASHES);
         $authToken = new WebEidAuthToken($modifiedTokenJson);
 
         $this->expectException(CertificateDecodingException::class);
-        $this->expectExceptionMessage("'unverifiedSigningCertificate' decode failed");
+        $this->expectExceptionMessage("'unverifiedSigningCertificates' decode failed");
 
         $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
     }
@@ -110,7 +114,7 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
     public function testWhenV11SigningCertificateSubjectDoesNotMatchThenValidationFails(): void
     {
         $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
-        $tokenFields["unverifiedSigningCertificate"] = self::DIFFERENT_CERT;
+        $tokenFields["unverifiedSigningCertificates"][0]["certificate"] = self::DIFFERENT_CERT;
 
         $modifiedTokenJson = json_encode($tokenFields, JSON_UNESCAPED_SLASHES);
 
@@ -129,7 +133,7 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
         $token = json_decode(self::VALID_V11_AUTH_TOKEN, true);
 
         $orig = new X509();
-        $orig->loadX509(base64_decode($token["unverifiedSigningCertificate"]));
+        $orig->loadX509(base64_decode($token["unverifiedSigningCertificates"][0]["certificate"]));
         $subjectDN = $orig->getDN();
 
         $keyPair = RSA::createKey(2048);
@@ -149,7 +153,7 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
         $der = $subject->saveX509($signed, X509::FORMAT_DER);
         $base64 = base64_encode($der);
 
-        $token["unverifiedSigningCertificate"] = $base64;
+        $token["unverifiedSigningCertificates"][0]["certificate"] = $base64;
         $authToken = new WebEidAuthToken(json_encode($token));
 
         $this->expectException(AuthTokenParseException::class);
