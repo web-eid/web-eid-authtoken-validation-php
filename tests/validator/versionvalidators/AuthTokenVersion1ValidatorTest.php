@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 
 use PHPUnit\Framework\TestCase;
+use web_eid\web_eid_authtoken_validation_php\authtoken\UnverifiedSigningCertificate;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
@@ -92,6 +93,26 @@ final class AuthTokenVersion1ValidatorTest extends TestCase
             ['web-eid:2'],
             ['webauthn:1'],
         ];
+    }
+
+    /**
+     * @throws AuthTokenException
+     */
+    public function testUnverifiedSigningCertificatesPresentForV1Fails(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $token->method('getFormat')->willReturn('web-eid:1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn([
+            $this->createMock(UnverifiedSigningCertificate::class)
+        ]);
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedSigningCertificates' field is not allowed for format 'web-eid:1'"
+        );
+
+        $this->validator->validate($token, 'nonce');
     }
 
     /**

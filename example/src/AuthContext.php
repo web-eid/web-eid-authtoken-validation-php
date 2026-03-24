@@ -60,14 +60,32 @@ final class AuthContext
     public function authenticate(
         string $authTokenJson,
         string $base64ChallengeNonce
-    ): string
+    ): array
     {
+        $authToken = new WebEidAuthToken($authTokenJson);
+
         $cert = $this->tokenValidator()->validate(
-            new WebEidAuthToken($authTokenJson),
+            $authToken,
             $base64ChallengeNonce
         );
 
-        return $this->getPrincipalNameFromCertificate($cert);;
+        $firstSigningCertificate = null;
+        $supportedSignatureAlgorithms = null;
+
+        if (!empty($authToken->getUnverifiedSigningCertificates())) {
+            $firstSigningCertificate = $authToken->getUnverifiedSigningCertificates()[0];
+
+            if ($firstSigningCertificate !== null) {
+                $supportedSignatureAlgorithms = $firstSigningCertificate->getSupportedSignatureAlgorithms();
+                $firstSigningCertificate = $firstSigningCertificate->getCertificate();
+            }
+        }
+
+        return [
+            'subjectName' => $this->getPrincipalNameFromCertificate($cert),
+            'signingCertificate' => $firstSigningCertificate,
+            'supportedSignatureAlgorithms' => $supportedSignatureAlgorithms,
+        ];
     }
 
     public function assertCsrf(bool $jsonError = true): void
