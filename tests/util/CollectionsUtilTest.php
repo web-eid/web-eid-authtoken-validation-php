@@ -51,7 +51,7 @@ class CollectionsUtilTest extends TestCase
     public function testGetSubjectDns(): void
     {
         $x509Collection = X509Collection::getSubjectDNs(null, Certificates::getTestEsteid2018CA());
-        $this->assertEquals("C=EE, O=SK ID Solutions AS/2.5.4.97=NTREE-10747013, CN=TEST of ESTEID2018", $x509Collection[0]);
+        $this->assertEquals("C=EE, O=SK ID Solutions AS/organizationIdentifier=NTREE-10747013, CN=TEST of ESTEID2018", $x509Collection[0]);
     }
 
     public function testWhenUriIsWrongTypeThenThrows(): void

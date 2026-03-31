@@ -55,7 +55,7 @@ class OcspServiceProviderTest extends TestCase
     public function testWhenAiaOcspServiceConfigurationProvidedThenCreatesAiaOcspService(): void
     {
         // In PHP validation is different
-        // we need to use TEST_of_EE-GovCA2018.pem.crt (getAiaOcspServiceConfiguration()) certificate for validation 
+        // we need to use TEST_of_EE-GovCA2018.pem.crt (getAiaOcspServiceConfiguration()) certificate for validation
 
         $ocspServiceProvider = OcspServiceMaker::getAiaOcspServiceProvider();
 
@@ -72,7 +72,7 @@ class OcspServiceProviderTest extends TestCase
         $this->assertFalse($service2015->doesSupportNonce());
 
         $this->expectException(CertificateNotTrustedException::class);
-        $this->expectExceptionMessage("Certificate C=EE, O=AS Sertifitseerimiskeskus/2.5.4.97=NTREE-10747013, CN=TEST of ESTEID-SK 2015 is not trusted");
+        $this->expectExceptionMessage("Certificate C=EE, O=AS Sertifitseerimiskeskus/organizationIdentifier=NTREE-10747013, CN=TEST of ESTEID-SK 2015 is not trusted");
         $service2015->validateResponderCertificate(Certificates::getTestEsteid2015CA(), new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
     }
 
