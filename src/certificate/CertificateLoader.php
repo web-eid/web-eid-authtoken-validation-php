@@ -30,11 +30,10 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingExcep
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use phpseclib3\File\X509;
 use BadFunctionCallException;
-use Throwable;
+use Exception;
 
 final class CertificateLoader
 {
-
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
@@ -47,8 +46,9 @@ final class CertificateLoader
      * @return array
      * @throws CertificateDecodingException
      */
-    public static function loadCertificatesFromResources(string ...$resourceNames): array
-    {
+    public static function loadCertificatesFromResources(
+        string ...$resourceNames,
+    ): array {
         $caCertificates = [];
         foreach ($resourceNames as $resourceName) {
             $cert = new X509();
@@ -62,18 +62,28 @@ final class CertificateLoader
         return $caCertificates;
     }
 
-    public static function decodeCertificateFromBase64(?string $base64, string $fieldName = 'certificate'): X509
-    {
-        if ($base64 === null || $base64 === '') {
-            throw new AuthTokenParseException("'{$fieldName}' field is missing, null or empty");
+    public static function decodeCertificateFromBase64(
+        ?string $base64,
+        string $fieldName = "certificate",
+    ): X509 {
+        if ($base64 === null || $base64 === "") {
+            throw new AuthTokenParseException(
+                "'{$fieldName}' field is missing, null or empty",
+            );
         }
         $cert = new X509();
         try {
             if (!$cert->loadX509($base64)) {
-                throw new CertificateDecodingException("'{$fieldName}' decode failed");
+                throw new CertificateDecodingException(
+                    "'{$fieldName}' decode failed",
+                );
             }
-        } catch (Throwable) {
-            throw new CertificateDecodingException("'{$fieldName}' decode failed");
+        } catch (Exception $e) {
+            throw new CertificateDecodingException(
+                "'{$fieldName}' decode failed",
+                0,
+                $e,
+            );
         }
 
         return $cert;

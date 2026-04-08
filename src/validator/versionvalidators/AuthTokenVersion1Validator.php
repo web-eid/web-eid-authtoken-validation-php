@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 
 use phpseclib3\File\X509;
-use Throwable;
+use Exception;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
 
 class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 {
-    private const V1_SUPPORTED_TOKEN_FORMAT_PREFIX = 'web-eid:1';
+    private const V1_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1";
 
     private SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators;
     private TrustedCertificates $trustedCACertificates;
@@ -55,14 +55,13 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     public function __construct(
         SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators,
-        TrustedCertificates              $trustedCACertificates,
-        AuthTokenSignatureValidator      $authTokenSignatureValidator,
+        TrustedCertificates $trustedCACertificates,
+        AuthTokenSignatureValidator $authTokenSignatureValidator,
         AuthTokenValidationConfiguration $configuration,
-        ?OcspClient                      $ocspClient,
-        ?OcspServiceProvider             $ocspServiceProvider,
-        ?LoggerInterface                 $logger = null
-    )
-    {
+        ?OcspClient $ocspClient,
+        ?OcspServiceProvider $ocspServiceProvider,
+        ?LoggerInterface $logger = null,
+    ) {
         $this->simpleSubjectCertificateValidators = $simpleSubjectCertificateValidators;
         $this->trustedCACertificates = $trustedCACertificates;
         $this->authTokenSignatureValidator = $authTokenSignatureValidator;
@@ -74,41 +73,63 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     public function supports(?string $format): bool
     {
-        return $format !== null
-            && str_starts_with($format, self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX);
+        return $format !== null &&
+            str_starts_with($format, self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX);
     }
 
-    public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
-    {
-        if ($this->isExactV10Format($authToken->getFormat()) && !empty($authToken->getUnverifiedSigningCertificates())) {
-            throw new AuthTokenParseException("'unverifiedSigningCertificates' field is not allowed for format '" . $authToken->getFormat() . "'");
+    public function validate(
+        WebEidAuthToken $authToken,
+        string $currentChallengeNonce,
+    ): X509 {
+        if (
+            $this->isExactV10Format($authToken->getFormat()) &&
+            !empty($authToken->getUnverifiedSigningCertificates())
+        ) {
+            throw new AuthTokenParseException(
+                "'unverifiedSigningCertificates' field is not allowed for format '" .
+                    $authToken->getFormat() .
+                    "'",
+            );
         }
 
-        if ($authToken->getUnverifiedCertificate() === null ||
-            $authToken->getUnverifiedCertificate() === '') {
-            throw new AuthTokenParseException("'unverifiedCertificate' field is missing, null or empty");
+        if (
+            $authToken->getUnverifiedCertificate() === null ||
+            $authToken->getUnverifiedCertificate() === ""
+        ) {
+            throw new AuthTokenParseException(
+                "'unverifiedCertificate' field is missing, null or empty",
+            );
         }
 
         $subjectCertificate = new X509();
 
         try {
-            $loaded = $subjectCertificate->loadX509($authToken->getUnverifiedCertificate());
-            } catch (Throwable $e) {
-                throw new CertificateDecodingException("'unverifiedCertificate' decode failed", 0, $e);
-            }
-
-        if (!$loaded) {
-            throw new CertificateDecodingException("'unverifiedCertificate' decode failed");
+            $loaded = $subjectCertificate->loadX509(
+                $authToken->getUnverifiedCertificate(),
+            );
+        } catch (Exception $e) {
+            throw new CertificateDecodingException(
+                "'unverifiedCertificate' decode failed",
+                $e,
+            );
         }
 
-        $this->simpleSubjectCertificateValidators->executeFor($subjectCertificate);
+        if (!$loaded) {
+            throw new CertificateDecodingException(
+                "'unverifiedCertificate' decode failed",
+            );
+        }
+
+        $this->simpleSubjectCertificateValidators->executeFor(
+            $subjectCertificate,
+        );
         $this->buildTrustValidatorBatch()->executeFor($subjectCertificate);
 
         $this->authTokenSignatureValidator->validate(
             $authToken->getAlgorithm(),
             $authToken->getSignature(),
             $subjectCertificate->getPublicKey(),
-            $currentChallengeNonce
+            $currentChallengeNonce,
         );
 
         return $subjectCertificate;
@@ -118,14 +139,14 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
     {
         $trustedValidator = new SubjectCertificateTrustedValidator(
             $this->trustedCACertificates,
-            $this->logger
+            $this->logger,
         );
 
-        $batch = new SubjectCertificateValidatorBatch(
-            $trustedValidator
-        );
+        $batch = new SubjectCertificateValidatorBatch($trustedValidator);
 
-        if ($this->configuration->isUserCertificateRevocationCheckWithOcspEnabled()) {
+        if (
+            $this->configuration->isUserCertificateRevocationCheckWithOcspEnabled()
+        ) {
             $batch->addOptional(
                 true,
                 new SubjectCertificateNotRevokedValidator(
@@ -134,8 +155,8 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
                     $this->ocspServiceProvider,
                     $this->configuration->getAllowedOcspResponseTimeSkew(),
                     $this->configuration->getMaxOcspResponseThisUpdateAge(),
-                    $this->logger
-                )
+                    $this->logger,
+                ),
             );
         }
 
@@ -144,6 +165,7 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     private function isExactV10Format(?string $format): bool
     {
-        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX || $format === 'web-eid:1.0';
+        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
+            $format === "web-eid:1.0";
     }
 }

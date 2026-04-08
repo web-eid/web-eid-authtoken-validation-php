@@ -35,23 +35,21 @@ use phpseclib3\File\X509;
 
 final class AuthContext
 {
-    public function __construct(private $config)
-    {
-    }
+    public function __construct(private $config) {}
 
     public function originUrl(): string
     {
-        return rtrim($this->config->get('origin_url'), '/');
+        return rtrim($this->config->get("origin_url"), "/");
     }
 
     public function mobileBaseUrl(): string
     {
-        return rtrim($this->config->get('mobile_base_url'), '/');
+        return rtrim($this->config->get("mobile_base_url"), "/");
     }
 
     public function mobileRequestSigningCert(): bool
     {
-        return (bool) $this->config->get('mobile_request_signing_cert');
+        return (bool) $this->config->get("mobile_request_signing_cert");
     }
 
     /**
@@ -59,14 +57,13 @@ final class AuthContext
      */
     public function authenticate(
         string $authTokenJson,
-        string $base64ChallengeNonce
-    ): array
-    {
+        string $base64ChallengeNonce,
+    ): array {
         $authToken = new WebEidAuthToken($authTokenJson);
 
         $cert = $this->tokenValidator()->validate(
             $authToken,
-            $base64ChallengeNonce
+            $base64ChallengeNonce,
         );
 
         $firstSigningCertificate = null;
@@ -82,9 +79,9 @@ final class AuthContext
         }
 
         return [
-            'subjectName' => $this->getPrincipalNameFromCertificate($cert),
-            'signingCertificate' => $firstSigningCertificate,
-            'supportedSignatureAlgorithms' => $supportedSignatureAlgorithms,
+            "subjectName" => $this->getPrincipalNameFromCertificate($cert),
+            "signingCertificate" => $firstSigningCertificate,
+            "supportedSignatureAlgorithms" => $supportedSignatureAlgorithms,
         ];
     }
 
@@ -104,51 +101,51 @@ final class AuthContext
                 echo "CSRF token missing, unable to process your request";
             }
 
-            exit;
+            exit();
         }
     }
 
     public function assertJsonContentType(bool $jsonError = true): void
     {
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $contentType = $_SERVER["CONTENT_TYPE"] ?? "";
 
-        if (!str_starts_with(strtolower($contentType), 'application/json')) {
+        if (!str_starts_with(strtolower($contentType), "application/json")) {
             http_response_code(415);
 
             if ($jsonError) {
                 echo json_encode([
-                    "error" => "Content-Type must be application/json"
+                    "error" => "Content-Type must be application/json",
                 ]);
             } else {
                 echo "Invalid Content-Type, expected application/json";
             }
-            exit;
+            exit();
         }
     }
-
 
     public function trustedIntermediateCACertificates(): array
     {
         $directory = __DIR__ . "/../certificates/";
         $certificates = glob($directory . "*.der.crt");
-        return CertificateLoader::loadCertificatesFromResources(...$certificates);
+        return CertificateLoader::loadCertificatesFromResources(
+            ...$certificates,
+        );
     }
 
     public function nonceGenerator(): ChallengeNonceGenerator
     {
-        return (new ChallengeNonceGeneratorBuilder())
-            ->withNonceTtl(300)
-            ->build();
+        return new ChallengeNonceGeneratorBuilder()->withNonceTtl(300)->build();
     }
 
     public function tokenValidator(): AuthTokenValidator
     {
         $logger = new Logger();
 
-        return (new AuthTokenValidatorBuilder($logger))
-            ->withSiteOrigin(new Uri($this->config->get('origin_url')))
-            ->withTrustedCertificateAuthorities(...$this->trustedIntermediateCACertificates())
-            ->withOcspRequestTimeout(5)
+        return new AuthTokenValidatorBuilder($logger)
+            ->withSiteOrigin(new Uri($this->config->get("origin_url")))
+            ->withTrustedCertificateAuthorities(
+                ...$this->trustedIntermediateCACertificates(),
+            )
             ->build();
     }
 
@@ -156,7 +153,7 @@ final class AuthContext
     {
         $givenName = CertificateData::getSubjectGivenName($cert);
         $surname = CertificateData::getSubjectSurname($cert);
-        return ($givenName && $surname)
+        return $givenName && $surname
             ? "$givenName $surname"
             : CertificateData::getSubjectCN($cert);
     }

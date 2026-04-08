@@ -36,19 +36,29 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingExcep
 
 class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 {
-    private const V11_SUPPORTED_TOKEN_FORMAT_PREFIX = 'web-eid:1.1';
+    private const V11_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1.1";
 
-    private const SUPPORTED_SIGNING_CRYPTO_ALGORITHMS = ['ECC', 'RSA'];
-    private const SUPPORTED_SIGNING_PADDING_SCHEMES = ['NONE', 'PKCS1.5', 'PSS'];
+    private const SUPPORTED_SIGNING_CRYPTO_ALGORITHMS = ["ECC", "RSA"];
+    private const SUPPORTED_SIGNING_PADDING_SCHEMES = [
+        "NONE",
+        "PKCS1.5",
+        "PSS",
+    ];
     private const SUPPORTED_SIGNING_HASH_FUNCTIONS = [
-        'SHA-224', 'SHA-256', 'SHA-384', 'SHA-512',
-        'SHA3-224', 'SHA3-256', 'SHA3-384', 'SHA3-512'
+        "SHA-224",
+        "SHA-256",
+        "SHA-384",
+        "SHA-512",
+        "SHA3-224",
+        "SHA3-256",
+        "SHA3-384",
+        "SHA3-512",
     ];
 
     public function supports(?string $format): bool
     {
-        return $format !== null
-            && str_starts_with($format, self::V11_SUPPORTED_TOKEN_FORMAT_PREFIX);
+        return $format !== null &&
+            str_starts_with($format, self::V11_SUPPORTED_TOKEN_FORMAT_PREFIX);
     }
 
     /**
@@ -56,13 +66,21 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
      * @throws CertificateDecodingException
      * @throws AuthTokenException
      */
-    public function validate(WebEidAuthToken $authToken, string $currentChallengeNonce): X509
-    {
-        $subjectCertificate = $this->validateV1($authToken, $currentChallengeNonce);
+    public function validate(
+        WebEidAuthToken $authToken,
+        string $currentChallengeNonce,
+    ): X509 {
+        $subjectCertificate = $this->validateV1(
+            $authToken,
+            $currentChallengeNonce,
+        );
         $signingCertificates = $this->validateSigningCertificates($authToken);
 
         foreach ($signingCertificates as $signingCertificate) {
-            $this->validateSameSubject($subjectCertificate, $signingCertificate);
+            $this->validateSameSubject(
+                $subjectCertificate,
+                $signingCertificate,
+            );
             $this->validateSameIssuer($subjectCertificate, $signingCertificate);
             $this->validateSigningCertificateValidity($signingCertificate);
             $this->validateKeyUsage($signingCertificate);
@@ -82,23 +100,27 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
         if ($signingCertificates === null || empty($signingCertificates)) {
             throw new AuthTokenParseException(
-                "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"
+                "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'",
             );
         }
 
         $result = [];
 
         foreach ($signingCertificates as $certificate) {
-            if ($certificate === null || $certificate->getCertificate() === null || $certificate->getCertificate() === '') {
+            if (
+                $certificate === null ||
+                $certificate->getCertificate() === null ||
+                $certificate->getCertificate() === ""
+            ) {
                 throw new AuthTokenParseException(
-                    "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'"
+                    "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'",
                 );
             }
 
             $this->validateSupportedSignatureAlgorithms($certificate);
             $result[] = CertificateLoader::decodeCertificateFromBase64(
                 $certificate->getCertificate(),
-                'unverifiedSigningCertificates'
+                "unverifiedSigningCertificates",
             );
         }
 
@@ -113,18 +135,36 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
         $algorithms = $cert->getSupportedSignatureAlgorithms();
 
         if ($algorithms === null || empty($algorithms)) {
-            throw new AuthTokenParseException("'supportedSignatureAlgorithms' field is missing");
+            throw new AuthTokenParseException(
+                "'supportedSignatureAlgorithms' field is missing",
+            );
         }
 
         foreach ($algorithms as $alg) {
-            if (!$alg instanceof SupportedSignatureAlgorithm
-                || $alg->getCryptoAlgorithm() === null
-                || $alg->getHashFunction() === null
-                || $alg->getPaddingScheme() === null
-                || !in_array($alg->getCryptoAlgorithm(), self::SUPPORTED_SIGNING_CRYPTO_ALGORITHMS, true)
-                || !in_array($alg->getHashFunction(), self::SUPPORTED_SIGNING_HASH_FUNCTIONS, true)
-                || !in_array($alg->getPaddingScheme(), self::SUPPORTED_SIGNING_PADDING_SCHEMES, true)) {
-                throw new AuthTokenParseException("Unsupported signature algorithm");
+            if (
+                !($alg instanceof SupportedSignatureAlgorithm) ||
+                $alg->getCryptoAlgorithm() === null ||
+                $alg->getHashFunction() === null ||
+                $alg->getPaddingScheme() === null ||
+                !in_array(
+                    $alg->getCryptoAlgorithm(),
+                    self::SUPPORTED_SIGNING_CRYPTO_ALGORITHMS,
+                    true,
+                ) ||
+                !in_array(
+                    $alg->getHashFunction(),
+                    self::SUPPORTED_SIGNING_HASH_FUNCTIONS,
+                    true,
+                ) ||
+                !in_array(
+                    $alg->getPaddingScheme(),
+                    self::SUPPORTED_SIGNING_PADDING_SCHEMES,
+                    true,
+                )
+            ) {
+                throw new AuthTokenParseException(
+                    "Unsupported signature algorithm",
+                );
             }
         }
     }
@@ -132,8 +172,10 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
     /**
      * @throws AuthTokenParseException
      */
-    private function validateSameSubject(X509 $subjectCert, X509 $signingCert): void
-    {
+    private function validateSameSubject(
+        X509 $subjectCert,
+        X509 $signingCert,
+    ): void {
         $sub = $subjectCert->getDN(true);
         $sig = $signingCert->getDN(true);
 
@@ -142,7 +184,7 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
         if ($sub !== $sig) {
             throw new AuthTokenParseException(
-                "Signing certificate subject does not match authentication certificate subject"
+                "Signing certificate subject does not match authentication certificate subject",
             );
         }
     }
@@ -150,14 +192,16 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
     /**
      * @throws AuthTokenParseException
      */
-    private function validateSameIssuer(X509 $subjectCert, X509 $signingCert): void
-    {
+    private function validateSameIssuer(
+        X509 $subjectCert,
+        X509 $signingCert,
+    ): void {
         $subjectAki = $this->extractAuthorityKeyIdentifier($subjectCert);
-        $signAki    = $this->extractAuthorityKeyIdentifier($signingCert);
+        $signAki = $this->extractAuthorityKeyIdentifier($signingCert);
 
         if (empty($subjectAki) || empty($signAki) || $subjectAki !== $signAki) {
             throw new AuthTokenParseException(
-                "Signing certificate is not issued by the same issuing authority as the authentication certificate"
+                "Signing certificate is not issued by the same issuing authority as the authentication certificate",
             );
         }
     }
@@ -165,35 +209,42 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
     /**
      * @throws AuthTokenParseException
      */
-    private function validateSigningCertificateValidity(X509 $signingCertificate): void
-    {
+    private function validateSigningCertificateValidity(
+        X509 $signingCertificate,
+    ): void {
         $valid = $signingCertificate->validateDate();
 
         if ($valid !== true) {
-            throw new AuthTokenParseException("Signing certificate is not valid: {$valid}");
+            throw new AuthTokenParseException(
+                "Signing certificate is not valid: {$valid}",
+            );
         }
     }
 
     private function extractAuthorityKeyIdentifier(X509 $cert): string
     {
-        $ext = $cert->getExtension('id-ce-authorityKeyIdentifier');
-        return $ext['keyIdentifier'] ?? '';
+        $ext = $cert->getExtension("id-ce-authorityKeyIdentifier");
+        return $ext["keyIdentifier"] ?? "";
     }
 
     private function validateKeyUsage(X509 $signingCertificate): void
     {
-        $keyUsage = $signingCertificate->getExtension('id-ce-keyUsage');
+        $keyUsage = $signingCertificate->getExtension("id-ce-keyUsage");
 
-        if (empty($keyUsage) || !in_array('nonRepudiation', $keyUsage, true)) {
-            throw new AuthTokenParseException("Signing certificate key usage extension missing or does not contain non-repudiation bit required for digital signatures");
+        if (empty($keyUsage) || !in_array("nonRepudiation", $keyUsage, true)) {
+            throw new AuthTokenParseException(
+                "Signing certificate key usage extension missing or does not contain non-repudiation bit required for digital signatures",
+            );
         }
     }
 
     /**
      * @throws AuthTokenException
      */
-    protected function validateV1(WebEidAuthToken $token, string $currentChallengeNonce): X509
-    {
+    protected function validateV1(
+        WebEidAuthToken $token,
+        string $currentChallengeNonce,
+    ): X509 {
         return parent::validate($token, $currentChallengeNonce);
     }
 }
