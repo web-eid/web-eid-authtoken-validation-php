@@ -111,25 +111,46 @@ In the following example, we are using the AltoRouter to implement the endpoint
 ```php
 class Router
 {
+    private $config;
+
+    public function __construct($config) {
+        $this->config = $config;
+    }
+
     public function init()
     {
 
         $router = new AltoRouter();
         $router->setBasePath("");
         
+        // Page routes
         $router->map("GET", "/", ["controller" => "Pages", "method" => "login"]);
+        $router->map("GET", "/logout", ["controller" => "Auth", "method" => "logout"]);
+        // Endpoint for extension errors logging
+        $router->map("POST", "/logger", ["controller" => "LogWriter", "method" => "add"]);
+
+        // Web eID routes
         $router->map("GET", "/nonce", ["controller" => "Auth", "method" => "getNonce"]);
+        $router->map("POST", "/validate", ["controller" => "Auth", "method" => "validate"]);
+        $router->map("POST", "/auth/mobile/init", ["controller" => "Auth", "method" => "mobileInit"]);
+        $router->map("GET", "/auth/mobile/login", ["controller" => "Pages", "method" => "mobileLoginView"]);
+        $router->map("POST", "/auth/mobile/login", ["controller" => "Auth", "method" => "mobileLogin"]);
+
+        // Allow route only for authenticated users
+        if (isset($_SESSION["auth-user"])) {
+            $router->map("GET", "/welcome", ["controller" => "Pages", "method" => "welcome"]);
+        }
         
         $match = $router->match();
 
         if (!$match) {
-            // Redirect to main
-            header('Location: /');
+            // Redirect to login
+            header("Location: /");
             return;
         }
 
 
-        $controller = new $match["target"]["controller"];
+        $controller = new $match["target"]["controller"]($this->config);
         $method = $match["target"]["method"];
 
         call_user_func([$controller, $method], $match["params"], []);
@@ -145,12 +166,11 @@ class Auth
 
         try {
             header("Content-Type: application/json; charset=utf-8");
-            $generator = $this->generator();
-            $challengeNonce = $generator->generateAndStoreNonce();
-            $responseArr["nonce" => $challengeNonce->getBase64EncodedNonce()];
+            $challengeNonce = $this->ctx->nonceGenerator()->generateAndStoreNonce();
+            $responseArr = ["nonce" => $challengeNonce->getBase64EncodedNonce()];
             echo json_encode($responseArr);
         } catch (Exception $e) {
-            header("HTTP/1.0 500 Internal Server Error");
+            http_response_code(500);
             echo $e->getMessage();
         }
     }
@@ -161,7 +181,7 @@ class Auth
 
 ## 6. Implement authentication
 
-Authentication consists of calling the validate() method of the authentication token validator. The internal implementation of the validation process is described in more detail below and in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
+Authentication consists of calling the `validate()` method of the authentication token validator. In the updated implementation, the authentication logic is centralized in `AuthContext`, which is used by both `Auth` for the `web-eid:1.0` authentication flow and `MobileAuth` for the `web-eid:1.1` authentication flow. The internal implementation of the validation process is described in more detail below and in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
 ```php
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
@@ -170,44 +190,56 @@ use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
 ...
 
-private function getPrincipalNameFromCertificate(X509 $userCertificate): string
+public function getPrincipalNameFromCertificate(X509 $cert): string
 {
-    try {
-        return CertificateData::getSubjectGivenName($userCertificate) . " " . CertificateData::getSubjectSurname($userCertificate);
-    } catch (Exception $e) {
-        return CertificateData::getSubjectCN($userCertificate);
-    }
+    $givenName = CertificateData::getSubjectGivenName($cert);
+    $surname = CertificateData::getSubjectSurname($cert);
+    return ($givenName && $surname)
+        ? "$givenName $surname"
+        : CertificateData::getSubjectCN($cert);
 }
 ...
 
-try {
+use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceNotFoundException;
+...
 
-    /* Get and remove nonce from store */
-    $challengeNonce = (new ChallengeNonceStore())->getAndRemove();
+public function validate()
+{
+    $this->ctx->assertCsrf();
+    $this->ctx->assertJsonContentType();
+    $authToken = file_get_contents("php://input");
 
     try {
+        /* Get and remove nonce from store */
+        $challengeNonce = (new ChallengeNonceStore())->getAndRemove();
 
-        // Build token validator
-        $tokenValidator = $this->tokenValidator();
-
-        // Validate token
-        $cert = $tokenValidator->validate(new WebEidAuthToken($authToken), $challengeNonce->getBase64EncodedNonce());
+        $authResult = $this->ctx->authenticate(
+            $authToken,
+            $challengeNonce->getBase64EncodedNonce()
+        );
 
         session_regenerate_id();
+        $_SESSION["auth-user"] = $authResult["subjectName"];
 
-        $subjectName = $this->getPrincipalNameFromCertificate($cert);
-        $result = [
-            'sub' => $subjectName
-        ];
-
-        echo json_encode($result);
-
-    } catch (Exception $e) {
-        // Handle exception
+        echo json_encode([
+            "sub" => $authResult["subjectName"]
+        ]);
+    } catch (ChallengeNonceExpiredException) {
+        unset($_SESSION["auth-user"]);
+        http_response_code(401);
+        echo "Challenge nonce not found or expired";
+    } catch (ChallengeNonceNotFoundException) {
+        unset($_SESSION["auth-user"]);
+        http_response_code(401);
+        echo "Challenge nonce not found";
+    } catch (AuthTokenParseException) {
+        unset($_SESSION["auth-user"]);
+        http_response_code(401);
+        echo "Invalid authentication token";
     }
-
-} catch (ChallengeNonceExpiredException $e) {
-    // Handle exception
 }
 ...
 ```
@@ -218,6 +250,7 @@ See the complete example in the `example` directory.
 
 - [Quickstart](#quickstart)
 - [Introduction](#introduction)
+- [Authentication token format](#authentication-token-format)
 - [Authentication token validation](#authentication-token-validation)
   - [Basic usage](#basic-usage)
   - [Extended configuration](#extended-configuration)
@@ -226,10 +259,11 @@ See the complete example in the `example` directory.
   - [Stateful and stateless authentication](#stateful-and-stateless-authentication)
 - [Challenge nonce generation](#challenge-nonce-generation)
   - [Basic usage](#basic-usage-1)
-  - [Extended configuration](#extended-configuration-1)  
+  - [Extended configuration](#extended-configuration-1)
 - [Example implementation](#example-implementation)
 - [Code formatting](#code-formatting)
 - [Testing](#testing)
+- [Authentication token format versions](#authentication-token-format-versions)
 
 # Introduction
 
@@ -237,6 +271,94 @@ The Web eID authentication token validation library for PHP contains the impleme
 
 The authentication protocol, authentication token format, validation requirements and challenge nonce usage is described in more detail in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
+# Authentication token format
+
+In the following,
+
+- **origin** is defined as the website origin, the URL serving the web application,
+- **challenge nonce** (or challenge) is defined as a cryptographic nonce, a large random number that can be used only once, with at least 256 bits of entropy.
+
+The Web eID authentication token (format **`web-eid:1.0`**) is a JSON data structure that looks like the following example:
+
+```json
+{
+  "unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4...",
+  "algorithm": "RS256",
+  "signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZha...",
+  "format": "web-eid:1.0",
+  "appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"
+}
+```
+
+It contains the following fields:
+
+- `unverifiedCertificate`: the base64-encoded DER-encoded authentication certificate of the eID user; the public key contained in this certificate should be used to verify the signature; the certificate cannot be trusted as it is received from client side and the client can submit a malicious certificate; to establish trust, it must be verified that the certificate is signed by a trusted certificate authority,
+
+- `algorithm`: the signature algorithm used to produce the signature; the allowed values are the algorithms specified in [JWA RFC](https://www.ietf.org/rfc/rfc7518.html) sections 3.3, 3.4 and 3.5:
+
+    ```
+      "ES256", "ES384", "ES512", // ECDSA
+      "PS256", "PS384", "PS512", // RSASSA-PSS
+      "RS256", "RS384", "RS512"  // RSASSA-PKCS1-v1_5
+    ```
+
+- `signature`: the base64-encoded signature of the token (see the description below),
+
+- `format`: the type identifier and version of the token format separated by a colon character '`:`', `web-eid:1.0` as of now; the version number consists of the major and minor number separated by a dot, major version changes are incompatible with previous versions, minor version changes are backwards-compatible within the given major version,
+
+- `appVersion`: the URL identifying the name and version of the application that issued the token; informative purpose, can be used to identify the affected application in case of faulty tokens.
+
+The value that is signed by the user’s authentication private key and included in the `signature` field is `hash(origin)+hash(challenge)`. The hash function is used before concatenation to ensure field separation as the hash of a value is guaranteed to have a fixed length. Otherwise the origin `example.com` with challenge nonce `.eu1234` and another origin `example.com.eu` with challenge nonce `1234` would result in the same value after concatenation. The hash function `hash` is the same hash function that is used in the signature algorithm, for example SHA256 in case of RS256.
+
+The Web eID authentication token (format **`web-eid:1.1`**) is a JSON data structure that looks like the following example:
+
+```json
+{
+  "unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4...",
+  "algorithm": "RS256",
+  "signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZha...",
+  "unverifiedSigningCertificates": [
+    {
+      "certificate": "MIIFikACB3ugAwASAgIHHFrtdZ-zeQsas1...",
+      "supportedSignatureAlgorithms": [
+        {
+          "cryptoAlgorithm": "ECC",
+          "hashFunction": "SHA-384",
+          "paddingScheme": "NONE"
+        }
+      ]
+    }
+  ],
+  "format": "web-eid:1.1",
+  "appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"
+}
+```
+It contains the following fields:
+
+- `unverifiedSigningCertificates`: an array of objects containing signing certificate information.
+
+Each object inside `unverifiedSigningCertificates` contains:
+
+- `certificate`: base64-encoded DER-encoded signing certificate,
+
+- `supportedSignatureAlgorithms`: list of supported algorithms in the following format:
+
+  - `cryptoAlgorithm`: the cryptographic algorithm used for the key,
+
+  - `hashFunction`: the hashing algorithm used,
+
+  - `paddingScheme`: the padding scheme used (if applicable).
+
+
+Allowed values are:
+
+    cryptoAlgorithm: "ECC", "RSA"
+
+    hashFunction: 
+      "SHA-224", "SHA-256", "SHA-384", "SHA-512", 
+      "SHA3-224", "SHA3-256", "SHA3-384", "SHA3-512"
+
+    paddingScheme: "NONE", "PKCS1.5", "PSS"
 
 # Authentication token validation
 
@@ -245,7 +367,7 @@ The authentication token validation process consists of two stages:
 - First, **user certificate validation**: the validator parses the token and extracts the user certificate from the *unverifiedCertificate* field. Then it checks the certificate expiration, purpose and policies. Next it checks that the certificate is signed by a trusted CA and checks the certificate status with OCSP.
 - Second, **token signature validation**: the validator validates that the token signature was created using the provided user certificate by reconstructing the signed data `hash(origin)+hash(challenge)` and using the public key from the certificate to verify the signature in the `signature` field. If the signature verification succeeds, then the origin and challenge nonce have been implicitly and correctly verified without the need to implement any additional security checks.
 
-The website back end must lookup the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website back end must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
+The website back end must look up the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website back end must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
 
 ## Basic usage
 
@@ -303,7 +425,7 @@ The following additional configuration options are available in `AuthTokenValida
 - `withMaxOcspResponseThisUpdateAge(int $maxThisUpdateAge)` – sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.
 
 
-Extended configuration example:  
+Extended configuration example:
 
 ```php
 $validator = new AuthTokenValidatorBuilder()
@@ -341,7 +463,7 @@ Nonce usage is described in more detail in the [Web eID system architecture docu
 
 ## Basic usage
 
-As described in section *[2. Configure the nonce generator](#2-configure-the-nonce-generator)*, the are no mandatory configuration parameters for the challenge nonce generator. It uses PHP Session as default storage.
+As described in section *[2. Configure the nonce generator](#2-configure-the-nonce-generator)*, there are no mandatory configuration parameters for the challenge nonce generator. It uses PHP Session as default storage.
 
 The challenge nonce store is used to save the nonce value along with the nonce expiry time. It must be possible to look up the challenge nonce data structure from the store using an identifier specific to the browser session. The values from the store are used by the token validator as described in the section *[Authentication token validation > Basic usage](#basic-usage)* that also contains recommendations for store usage and configuration.
 
@@ -354,7 +476,7 @@ $challengeNonce = $generator->generateAndStoreNonce();
 
 The `generateAndStoreNonce()` method both generates the nonce and saves it in the store.
 
-## Extended configuration  
+## Extended configuration
 
 The following additional configuration options are available in `ChallengeNonceGeneratorBuilder`:
 
@@ -380,7 +502,7 @@ Take the files from the `example` folder. You can rename this folder but in this
 
 Create new folder `certificates` in `example` folder.
 
-Download ESTEID2018 certificates in DER format from https://www.skidsolutions.eu/en/repository/certs 
+Download ESTEID2018 certificates in DER format from https://www.skidsolutions.eu/en/repository/certs
 and put them in `certificates` folder.
 
 Execute the following composer commands to install dependencies:
@@ -390,7 +512,7 @@ composer install
 composer dump-autoload
 ```
 
-Change origin url (used by token validator) to match the url you are running the example on (set to https://localhost by default) by changing the array key  `origin_url` in `example/src/app.conf.php`. You can also override settings with environmental variable that is constructed by appending uppercased setting name to prefix 'WEB_EID_SAMPLE_'. This is useful for example in containerized environments like docker. 
+Change origin url (used by token validator) to match the url you are running the example on (set to https://localhost by default) by changing the array key  `origin_url` in `example/src/app.conf.php`. You can also override settings with environmental variable that is constructed by appending uppercased setting name to prefix 'WEB_EID_SAMPLE_'. This is useful for example in containerized environments like docker.
 
 For example to override origin_url set environmental variable:
 
@@ -442,3 +564,17 @@ Run phpunit in the root directory to run all unit tests.
 ```
 ./vendor/bin/phpunit tests
 ```
+
+# Authentication Token Format Versions
+
+The Web eID authentication protocol defines two token formats currently supported by this library:
+
+- **Format v1.0** – Used in desktop Web eID authentication flows with traditional smart card readers.
+
+- **Format v1.1** – An extended token format introduced for broader device compatibility and improved interoperability.  
+  In addition to the fields present in v1.0, it includes:
+  - `unverifiedSigningCertificates` – an array of signing certificate entries. Each entry contains:
+    - `certificate` – a base64-encoded DER-encoded signing certificate;
+    - `supportedSignatureAlgorithms` – a list of supported signature algorithms associated with that certificate;
+
+Both token formats follow the same validation principles, differing only in the structure of embedded certificates and the additional verification steps required for v1.1.
