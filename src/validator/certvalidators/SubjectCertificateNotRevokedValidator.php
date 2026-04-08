@@ -29,7 +29,7 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspRequestBuilder;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspResponseValidator;
-use Throwable;
+use Exception;
 use web_eid\web_eid_authtoken_validation_php\ocsp\Ocsp;
 use web_eid\web_eid_authtoken_validation_php\ocsp\OcspBasicResponse;
 use web_eid\web_eid_authtoken_validation_php\ocsp\OcspRequest;
@@ -39,7 +39,8 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\OcspService;
 use Psr\Log\LoggerInterface;
 use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
-final class SubjectCertificateNotRevokedValidator implements SubjectCertificateValidator
+final class SubjectCertificateNotRevokedValidator implements
+    SubjectCertificateValidator
 {
     private $logger;
 
@@ -49,13 +50,14 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
     private int $allowedOcspResponseTimeSkew;
     private int $maxOcspResponseThisUpdateAge;
 
-    public function __construct(SubjectCertificateTrustedValidator $trustValidator,
+    public function __construct(
+        SubjectCertificateTrustedValidator $trustValidator,
         OcspClient $ocspClient,
         OcspServiceProvider $ocspServiceProvider,
         int $allowedOcspResponseTimeSkew,
         int $maxOcspResponseThisUpdateAge,
-        LoggerInterface $logger = null)
-    {
+        LoggerInterface $logger = null,
+    ) {
         $this->logger = $logger;
         $this->trustValidator = $trustValidator;
         $this->ocspClient = $ocspClient;
@@ -67,22 +69,34 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
     public function validate(X509 $subjectCertificate): void
     {
         try {
-
-            $ocspService = $this->ocspServiceProvider->getService($subjectCertificate);
+            $ocspService = $this->ocspServiceProvider->getService(
+                $subjectCertificate,
+            );
 
             if (!$ocspService->doesSupportNonce()) {
                 $this->logger?->debug("Disabling OCSP nonce extension");
             }
 
-            $certificateId = (new Ocsp())->generateCertificateId($subjectCertificate, $this->trustValidator->getSubjectCertificateIssuerCertificate());
-            $request = (new OcspRequestBuilder())->withCertificateId($certificateId)->enableOcspNonce($ocspService->doesSupportNonce())->build();
+            $certificateId = new Ocsp()->generateCertificateId(
+                $subjectCertificate,
+                $this->trustValidator->getSubjectCertificateIssuerCertificate(),
+            );
+            $request = new OcspRequestBuilder()
+                ->withCertificateId($certificateId)
+                ->enableOcspNonce($ocspService->doesSupportNonce())
+                ->build();
 
             $this->logger?->debug("Sending OCSP request");
 
-            $response = $this->ocspClient->request($ocspService->getAccessLocation(), $request->getEncodeDer());
+            $response = $this->ocspClient->request(
+                $ocspService->getAccessLocation(),
+                $request->getEncodeDer(),
+            );
 
             if ($response->getStatus() != "successful") {
-                throw new UserCertificateOCSPCheckFailedException("OCSP response status: " . $response->getStatus());
+                throw new UserCertificateOCSPCheckFailedException(
+                    "OCSP response status: " . $response->getStatus(),
+                );
             }
 
             $this->verifyOcspResponse($response, $ocspService, $certificateId);
@@ -91,14 +105,20 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
                 $this->checkNonce($request, $response->getBasicResponse());
             }
         } catch (UserCertificateOCSPCheckFailedException $e) {
-                throw $e;
-        } catch (Throwable $e) {
-            throw new UserCertificateOCSPCheckFailedException("Exception: " . $e->getMessage(), $e);
+            throw $e;
+        } catch (Exception $e) {
+            throw new UserCertificateOCSPCheckFailedException(
+                "Exception: " . $e->getMessage(),
+                $e,
+            );
         }
     }
 
-    private function verifyOcspResponse(OcspResponse $response, OcspService $ocspService, array $requestCertificateId): void
-    {
+    private function verifyOcspResponse(
+        OcspResponse $response,
+        OcspService $ocspService,
+        array $requestCertificateId,
+    ): void {
         $basicResponse = $response->getBasicResponse();
 
         // The verification algorithm follows RFC 2560, https://www.ietf.org/rfc/rfc2560.txt.
@@ -112,11 +132,17 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
 
         // As we sent the request for only a single certificate, we expect only a single response.
         if (count($basicResponse->getResponses()) != 1) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP response must contain one response, received " . count($basicResponse->getResponses()) . " responses instead");
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP response must contain one response, received " .
+                    count($basicResponse->getResponses()) .
+                    " responses instead",
+            );
         }
 
         if ($requestCertificateId != $basicResponse->getCertID()) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP responded with certificate ID that differs from the requested ID");
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP responded with certificate ID that differs from the requested ID",
+            );
         }
 
         //   2. The signature on the response is valid.
@@ -126,13 +152,18 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         // is standard practice.
 
         if (count($basicResponse->getCertificates()) < 1) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP response must contain the responder certificate, but none was provided");
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP response must contain the responder certificate, but none was provided",
+            );
         }
 
         // The first certificate is the responder certificate, other certificates, if given, are the certificate's chain.
         $responderCert = $basicResponse->getCertificates()[0];
 
-        OcspResponseValidator::validateResponseSignature($basicResponse, $responderCert);
+        OcspResponseValidator::validateResponseSignature(
+            $basicResponse,
+            $responderCert,
+        );
 
         //   3. The identity of the signer matches the intended recipient of the
         //      request.
@@ -150,7 +181,11 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         //      be available about the status of the certificate (nextUpdate) is
         //      greater than the current time.
 
-        OcspResponseValidator::validateCertificateStatusUpdateTime($basicResponse, $this->allowedOcspResponseTimeSkew, $this->maxOcspResponseThisUpdateAge);
+        OcspResponseValidator::validateCertificateStatusUpdateTime(
+            $basicResponse,
+            $this->allowedOcspResponseTimeSkew,
+            $this->maxOcspResponseThisUpdateAge,
+        );
 
         // Now we can accept the signed response as valid and validate the certificate status.
         OcspResponseValidator::validateSubjectCertificateStatus($response);
@@ -158,21 +193,29 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         $this->logger?->debug("OCSP check result is GOOD");
     }
 
-    private static function checkNonce(OcspRequest $request, OcspBasicResponse $basicResponse): void
-        {
-            $requestNonce = $request->getNonceExtension();
-            $responseNonce = $basicResponse->getNonceExtension();
+    private static function checkNonce(
+        OcspRequest $request,
+        OcspBasicResponse $basicResponse,
+    ): void {
+        $requestNonce = $request->getNonceExtension();
+        $responseNonce = $basicResponse->getNonceExtension();
 
-            if (empty($requestNonce)) {
-                throw new UserCertificateOCSPCheckFailedException("OCSP request nonce missing");
-            }
-
-            if (empty($responseNonce)) {
-                throw new UserCertificateOCSPCheckFailedException("OCSP response nonce missing, possible replay attack");
-            }
-
-            if ($requestNonce !== $responseNonce) {
-                throw new UserCertificateOCSPCheckFailedException("OCSP request and response nonces differ, possible replay attack");
-            }
+        if (empty($requestNonce)) {
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP request nonce missing",
+            );
         }
+
+        if (empty($responseNonce)) {
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP response nonce missing, possible replay attack",
+            );
+        }
+
+        if ($requestNonce !== $responseNonce) {
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP request and response nonces differ, possible replay attack",
+            );
+        }
+    }
 }

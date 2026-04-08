@@ -47,8 +47,12 @@ final class Auth
     {
         try {
             header("Content-Type: application/json; charset=utf-8");
-            $challengeNonce = $this->ctx->nonceGenerator()->generateAndStoreNonce();
-            $responseArr = ["nonce" => $challengeNonce->getBase64EncodedNonce()];
+            $challengeNonce = $this->ctx
+                ->nonceGenerator()
+                ->generateAndStoreNonce();
+            $responseArr = [
+                "nonce" => $challengeNonce->getBase64EncodedNonce(),
+            ];
             echo json_encode($responseArr);
         } catch (Exception $e) {
             http_response_code(500);
@@ -68,33 +72,35 @@ final class Auth
         $authToken = file_get_contents("php://input");
 
         try {
-
             /* Get and remove nonce from store */
-            $challengeNonce = (new ChallengeNonceStore())->getAndRemove();
+            $challengeNonce = new ChallengeNonceStore()->getAndRemove();
 
             $authResult = $this->ctx->authenticate(
                 $authToken,
-                $challengeNonce->getBase64EncodedNonce()
+                $challengeNonce->getBase64EncodedNonce(),
             );
 
             session_regenerate_id();
             $_SESSION["auth-user"] = $authResult["subjectName"];
 
             echo json_encode([
-                "sub" => $authResult["subjectName"]
+                "sub" => $authResult["subjectName"],
             ]);
-        } catch (ChallengeNonceExpiredException) {
+        } catch (Exception $e) {
             unset($_SESSION["auth-user"]);
             http_response_code(401);
-            echo "Challenge nonce not found or expired";
-        } catch (ChallengeNonceNotFoundException) {
-            unset($_SESSION["auth-user"]);
-            http_response_code(401);
-            echo "Challenge nonce not found";
-        } catch (AuthTokenParseException) {
-            unset($_SESSION["auth-user"]);
-            http_response_code(401);
-            echo "Invalid authentication token";
+
+            $message = match (true) {
+                $e instanceof ChallengeNonceExpiredException
+                    => "Challenge nonce not found or expired",
+                $e instanceof ChallengeNonceNotFoundException
+                    => "Challenge nonce not found",
+                $e instanceof AuthTokenParseException
+                    => "Invalid authentication token",
+                default => "Authentication failed: " . $e->getMessage(),
+            };
+
+            echo $message;
         }
     }
 
