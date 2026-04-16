@@ -72,7 +72,7 @@ class OcspServiceProviderTest extends TestCase
         $this->assertFalse($service2015->doesSupportNonce());
 
         $this->expectException(CertificateNotTrustedException::class);
-        $this->expectExceptionMessage("Certificate C=EE, O=AS Sertifitseerimiskeskus/2.5.4.97=NTREE-10747013, CN=TEST of ESTEID-SK 2015 is not trusted");
+        $this->expectExceptionMessage("Certificate C=EE, O=AS Sertifitseerimiskeskus/organizationIdentifier=NTREE-10747013, CN=TEST of ESTEID-SK 2015 is not trusted");
         $service2015->validateResponderCertificate(Certificates::getTestEsteid2015CA(), new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
     }
 
