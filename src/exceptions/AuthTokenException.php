@@ -32,15 +32,13 @@ use Throwable;
  */
 abstract class AuthTokenException extends Exception
 {
-
     /**
      * @param string $message — [optional] The Exception message to throw
      * @param int $code — [optional] The Exception code
      * @param \Throwable|null $cause
      */
-    public function __construct($message, Throwable $cause = null)
+    public function __construct($message, ?Throwable $cause = null)
     {
-
         if (is_null($cause)) {
             parent::__construct($message);
         } else {

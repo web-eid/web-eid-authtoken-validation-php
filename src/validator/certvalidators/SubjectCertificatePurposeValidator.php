@@ -29,17 +29,17 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateMissingPu
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateWrongPurposeException;
 use Psr\Log\LoggerInterface;
 
-final class SubjectCertificatePurposeValidator implements SubjectCertificateValidator
+final class SubjectCertificatePurposeValidator implements
+    SubjectCertificateValidator
 {
-
-    private const KEY_USAGE = 'id-ce-keyUsage';
+    private const KEY_USAGE = "id-ce-keyUsage";
     private const KEY_USAGE_DIGITAL_SIGNATURE = 0;
-    private const EXTENDED_KEY_USAGE = 'id-ce-extKeyUsage';
+    private const EXTENDED_KEY_USAGE = "id-ce-extKeyUsage";
     // oid 1.3.6.1.5.5.7.3.2
     private const EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION = "id-kp-clientAuth";
     private $logger;
 
-    public function __construct(LoggerInterface $logger = null)
+    public function __construct(?LoggerInterface $logger = null)
     {
         $this->logger = $logger;
     }
@@ -66,15 +66,20 @@ final class SubjectCertificatePurposeValidator implements SubjectCertificateVali
         if (!$usages || empty($usages)) {
             // Digital Signature extension present, but Extended Key Usage extension not present,
             // assume it is an authentication certificate (e.g. Luxembourg eID).
-            $this->logger?->debug("User certificate has Digital Signature key usage and no Extended Key Usage extension, this means that it can be used for client authentication.");
+            $this->logger?->debug(
+                "User certificate has Digital Signature key usage and no Extended Key Usage extension, this means that it can be used for client authentication.",
+            );
             return;
         }
         // Extended usages must contain TLS Web Client Authentication
-        if (!in_array(self::EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION, $usages)) {
+        if (
+            !in_array(self::EXTENDED_KEY_USAGE_CLIENT_AUTHENTICATION, $usages)
+        ) {
             throw new UserCertificateWrongPurposeException();
         }
 
-        $this->logger?->debug("User certificate can be used for client authentication.");
+        $this->logger?->debug(
+            "User certificate can be used for client authentication.",
+        );
     }
-
 }

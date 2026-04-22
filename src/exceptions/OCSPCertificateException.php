@@ -33,7 +33,7 @@ use Throwable;
  */
 class OCSPCertificateException extends AuthTokenException
 {
-    public function __construct(string $message, Throwable $exception = null)
+    public function __construct(string $message, ?Throwable $exception = null)
     {
         parent::__construct($message, $exception);
     }

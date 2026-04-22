@@ -30,14 +30,17 @@ use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
 use Psr\Log\LoggerInterface;
 use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
-final class SubjectCertificateTrustedValidator implements SubjectCertificateValidator
+final class SubjectCertificateTrustedValidator implements
+    SubjectCertificateValidator
 {
     private TrustedCertificates $trustedCACertificates;
     private X509 $subjectCertificateIssuerCertificate;
     private $logger;
 
-    public function __construct(TrustedCertificates $trustedCACertificates, LoggerInterface $logger = null)
-    {
+    public function __construct(
+        TrustedCertificates $trustedCACertificates,
+        ?LoggerInterface $logger = null,
+    ) {
         $this->logger = $logger;
         $this->trustedCACertificates = $trustedCACertificates;
     }
@@ -46,10 +49,12 @@ final class SubjectCertificateTrustedValidator implements SubjectCertificateVali
     {
         $this->subjectCertificateIssuerCertificate = CertificateValidator::validateIsValidAndSignedByTrustedCA(
             $subjectCertificate,
-            $this->trustedCACertificates
+            $this->trustedCACertificates,
         );
 
-        $this->logger?->debug("Subject certificate is valid and signed by a trusted CA");
+        $this->logger?->debug(
+            "Subject certificate is valid and signed by a trusted CA",
+        );
     }
 
     public function getSubjectCertificateIssuerCertificate(): X509
