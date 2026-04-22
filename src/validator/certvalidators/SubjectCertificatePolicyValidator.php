@@ -28,13 +28,16 @@ use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateDisallowedPolicyException;
 use Psr\Log\LoggerInterface;
 
-final class SubjectCertificatePolicyValidator implements SubjectCertificateValidator
+final class SubjectCertificatePolicyValidator implements
+    SubjectCertificateValidator
 {
     private $disallowedSubjectCertificatePolicyIds = [];
     private $logger;
 
-    public function __construct(array $disallowedSubjectCertificatePolicyIds, LoggerInterface $logger = null)
-    {
+    public function __construct(
+        array $disallowedSubjectCertificatePolicyIds,
+        ?LoggerInterface $logger = null,
+    ) {
         $this->logger = $logger;
         $this->disallowedSubjectCertificatePolicyIds = $disallowedSubjectCertificatePolicyIds;
     }
@@ -48,7 +51,9 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
             return;
         }
 
-        $policies = $subjectCertificate->getExtension('id-ce-certificatePolicies');
+        $policies = $subjectCertificate->getExtension(
+            "id-ce-certificatePolicies",
+        );
         // When there is no certificatePolicies or certificate parse failed
         if (!$policies) {
             return;
@@ -56,11 +61,18 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
 
         // Loop through disallowed policies array
         foreach ($policies as $policy) {
-            if (in_array($policy['policyIdentifier'], $this->disallowedSubjectCertificatePolicyIds)) {
+            if (
+                in_array(
+                    $policy["policyIdentifier"],
+                    $this->disallowedSubjectCertificatePolicyIds,
+                )
+            ) {
                 throw new UserCertificateDisallowedPolicyException();
             }
         }
 
-        $this->logger?->debug("User certificate does not contain disallowed policies.");
+        $this->logger?->debug(
+            "User certificate does not contain disallowed policies.",
+        );
     }
 }

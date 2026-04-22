@@ -56,7 +56,7 @@ final class SubjectCertificateNotRevokedValidator implements
         OcspServiceProvider $ocspServiceProvider,
         int $allowedOcspResponseTimeSkew,
         int $maxOcspResponseThisUpdateAge,
-        LoggerInterface $logger = null,
+        ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger;
         $this->trustValidator = $trustValidator;
