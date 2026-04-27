@@ -30,7 +30,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class AuthTokenAlgorithmTest extends AbstractTestWithValidator
 {
-
     public function testWhenAlgorithmNoneThenValidationFails(): void
     {
         $authToken = $this->replaceTokenField(self::VALID_AUTH_TOKEN, "algorithm", "NONE");

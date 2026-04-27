@@ -40,14 +40,14 @@ class Ocsp
      *
      * @var string
      */
-    const OCSP_REQUEST_MEDIATYPE = "application/ocsp-request";
+    public const OCSP_REQUEST_MEDIATYPE = "application/ocsp-request";
 
     /**
      * The media type (Content-Type header) that should be included in responses from the OCSP Responder URL.
      *
      * @var string
      */
-    const OCSP_RESPONSE_MEDIATYPE = "application/ocsp-response";
+    public const OCSP_RESPONSE_MEDIATYPE = "application/ocsp-response";
 
     /**
      * Response type for a basic OCSP responder

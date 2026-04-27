@@ -30,7 +30,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class AuthTokenStructureTest extends AbstractTestWithValidator
 {
-
     public function testWhenNullStrTokenThenParsingFails(): void
     {
         $this->expectException(AuthTokenParseException::class);

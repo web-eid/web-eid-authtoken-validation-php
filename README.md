@@ -423,14 +423,21 @@ requirement.
 
 # Code formatting
 
-We are using `Prettier` for code formatting. To install Prettier, use following command:
+We use the standard [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style for PHP code formatting with [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer).
 
+To install PHP_CodeSniffer, run:
 ```
-npm install --global prettier @prettier/plugin-php
+composer require --dev squizlabs/php_codesniffer
 ```
-Run command for code formatting:
+
+To automatically format the code, run:
 ```
-composer fix-php
+./vendor/bin/phpcbf
+```
+
+To check the code style, run:
+```
+./vendor/bin/phpcs
 ```
 
 # Testing

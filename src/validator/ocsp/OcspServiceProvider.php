@@ -43,7 +43,6 @@ class OcspServiceProvider
     {
         $this->designatedOcspService = !is_null($designatedOcspServiceConfiguration) ? new DesignatedOcspService($designatedOcspServiceConfiguration) : null;
         $this->aiaOcspServiceConfiguration = $aiaOcspServiceConfiguration ?? throw new InvalidArgumentException("AIA Ocsp Service Configuration must not be null");
-
     }
 
     /**

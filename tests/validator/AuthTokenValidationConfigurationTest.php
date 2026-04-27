@@ -30,7 +30,6 @@ use InvalidArgumentException;
 
 class AuthTokenValidationConfigurationTest extends TestCase
 {
-
     public function testWhenOriginUrlIsHttp(): void
     {
         $this->expectException(InvalidArgumentException::class);

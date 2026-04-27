@@ -36,7 +36,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenSignatureValida
 
 class AuthTokenSignatureValidator
 {
-
     private const ECDSA_ALGORITHMS = ['ES256', 'ES384', 'ES512'];
 
     private const RSASSA_PSS_ALGORITHMS = ['PS256', 'PS384', 'PS512'];

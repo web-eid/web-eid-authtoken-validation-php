@@ -31,7 +31,6 @@ use BadFunctionCallException;
 
 final class CertificateData
 {
-
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");

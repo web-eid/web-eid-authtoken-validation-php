@@ -32,7 +32,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidEx
 
 class CertificateValidatorTest extends TestCase
 {
-
     public function testWhenCertificateDateValid(): void
     {
         $cert = Certificates::getJaakKristjanEsteid2018Cert();

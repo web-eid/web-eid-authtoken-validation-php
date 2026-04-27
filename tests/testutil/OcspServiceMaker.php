@@ -34,7 +34,6 @@ use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOc
 
 class OcspServiceMaker
 {
-
     private const TEST_OCSP_ACCESS_LOCATION = "http://demo.sk.ee/ocsp";
     private const TEST_ESTEID_2015 = "http://aia.demo.sk.ee/esteid2015";
 

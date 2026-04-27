@@ -34,6 +34,8 @@ class CertificateLoader
 {
     private ?X509 $certificate = null;
 
+    private const CERTIFICATE_NOT_LOADED_MESSAGE = "Certificate not loaded";
+
     /**
      * Loads the certificate from file path and returns the certificate
      *
@@ -75,6 +77,9 @@ class CertificateLoader
         try {
             $loaded = $certificate->loadX509($certString);
         } catch (Exception $e) {
+            throw new OcspCertificateException(
+                "Certificate decoding from Base64 or parsing failed"
+            );
         }
         if (!$loaded) {
             throw new OcspCertificateException(
@@ -88,7 +93,7 @@ class CertificateLoader
     public function getIssuerCertificateUrl(): string
     {
         if (!$this->certificate) {
-            throw new OcspCertificateException("Certificate not loaded");
+            throw new OcspCertificateException(self::CERTIFICATE_NOT_LOADED_MESSAGE);
         }
 
         $url = "";
@@ -105,7 +110,7 @@ class CertificateLoader
     public function getOcspResponderUrl(): string
     {
         if (!$this->certificate) {
-            throw new OcspCertificateException("Certificate not loaded");
+            throw new OcspCertificateException(self::CERTIFICATE_NOT_LOADED_MESSAGE);
         }
 
         $url = "";
@@ -122,7 +127,7 @@ class CertificateLoader
     public function getCert(): X509
     {
         if (!$this->certificate) {
-            throw new OcspCertificateException("Certificate not loaded");
+            throw new OcspCertificateException(self::CERTIFICATE_NOT_LOADED_MESSAGE);
         }
         return $this->certificate;
     }

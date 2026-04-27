@@ -35,7 +35,9 @@ use phpseclib3\File\X509;
 
 final class AuthContext
 {
-    public function __construct(private $config) {}
+    public function __construct(private $config)
+    {
+    }
 
     public function originUrl(): string
     {

@@ -42,7 +42,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheck
 
 class AuthTokenCertificateTest extends AbstractTestWithValidator
 {
-
     private const AUTH_TOKEN = '{"algorithm":"ES384",' .
         '"unverifiedCertificate":"X5C",' .
         '"appVersion":"https://web-eid.eu/web-eid-app/releases/2.0.0+0",' .

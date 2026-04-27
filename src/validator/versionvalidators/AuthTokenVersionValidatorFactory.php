@@ -37,7 +37,6 @@ use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenSignatureValidat
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidationConfiguration;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
-
 use Psr\Log\LoggerInterface;
 
 final class AuthTokenVersionValidatorFactory
