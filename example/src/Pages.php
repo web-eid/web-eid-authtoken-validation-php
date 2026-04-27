@@ -24,15 +24,15 @@
 
 class Pages
 {
-    var $template;
-    var $data = [];
+    private $template;
+    private $data;
 
     public function __construct()
     {
         $this->template = new Template();
     }
 
-    private function _generateCsrfToken()
+    private function generateCsrfToken()
     {
         // Store token to session
         $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
@@ -63,7 +63,7 @@ class Pages
 
     public function __destruct()
     {
-        $this->data["token"] = $this->_generateCsrfToken();;
+        $this->data["token"] = $this->generateCsrfToken();
         echo $this->template->getHtml(__DIR__ . '/../tpl/site.phtml', $this->data);
     }
 }

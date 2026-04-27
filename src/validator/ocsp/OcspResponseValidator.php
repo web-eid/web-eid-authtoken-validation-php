@@ -37,7 +37,6 @@ use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class OcspResponseValidator
 {
-
     /**
      * Indicates that a X.509 Certificates corresponding private key may be used by an authority to sign OCSP responses.
      * <p>

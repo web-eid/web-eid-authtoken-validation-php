@@ -69,7 +69,7 @@ class Logger implements LoggerInterface
 
     public function log($level, string|\Stringable $message, array $context = []): void
     {
-        // Build the message with the current date, log level, 
+        // Build the message with the current date, log level,
         // and the string from the arguments
         $message = sprintf(
             '%s: %s%s',

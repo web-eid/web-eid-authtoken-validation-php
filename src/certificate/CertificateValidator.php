@@ -37,7 +37,6 @@ use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class CertificateValidator
 {
-
     public function __construct()
     {
         throw new BadFunctionCallException("Utility class");
@@ -49,7 +48,6 @@ final class CertificateValidator
     public static function certificateIsValidOnDate(X509 $subjectCertificate, DateTime $date, string $subject): void
     {
         if (!$subjectCertificate->validateDate($date)) {
-
             if ($date < new DateTime($subjectCertificate->getCurrentCert()['tbsCertificate']['validity']['notBefore']['utcTime'])) {
                 throw new CertificateNotYetValidException($subject);
             }
@@ -66,8 +64,7 @@ final class CertificateValidator
     public static function validateIsValidAndSignedByTrustedCA(
         X509 $certificate,
         TrustedCertificates $trustedCertificates,
-    ): X509
-    {
+    ): X509 {
         $now = DefaultClock::getInstance()->now();
         self::certificateIsValidOnDate($certificate, $now, "User");
 

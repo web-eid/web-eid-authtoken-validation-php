@@ -89,7 +89,6 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
                 ->getValidatorFor($authToken->getFormat());
 
             return $validator->validate($authToken, $currentChallengeNonce);
-
         } catch (Throwable $e) {
             $this->logger?->warning("Token validation was interrupted: " . $e->getMessage());
             throw $e;

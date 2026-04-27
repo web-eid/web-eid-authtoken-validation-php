@@ -52,7 +52,7 @@ class ChallengeNonceStore
 
     /**
      * Store challenge nonce object into session
-     * 
+     *
      * @param ChallengeNonce $challengeNonce - challenge nonce object
      */
     public function put(ChallengeNonce $challengeNonce)
@@ -62,7 +62,7 @@ class ChallengeNonceStore
 
     /**
      * Get challenge nonce from store and remove it from store
-     * 
+     *
      * @return null|ChallengeNonce
      */
     public function getAndRemove(): ?ChallengeNonce

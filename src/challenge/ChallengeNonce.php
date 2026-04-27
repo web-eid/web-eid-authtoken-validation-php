@@ -28,7 +28,6 @@ use DateTime;
 
 class ChallengeNonce
 {
-
     /**
      * @var string Base64 encoded nonce
      */
@@ -47,7 +46,7 @@ class ChallengeNonce
 
     /**
      * Get base64 encoded nounce
-     * 
+     *
      * @return string
      */
     public function getBase64EncodedNonce(): string
@@ -57,7 +56,7 @@ class ChallengeNonce
 
     /**
      * Get nounce expiration time
-     * 
+     *
      * @return DateTime
      */
     public function getExpirationTime(): DateTime

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<ruleset name="Web eID PHP PSR-12">
+    <description>PSR-12 coding standard for Web eID PHP project.</description>
+
+    <file>src</file>
+    <file>tests</file>
+    <file>example/src</file>
+    <file>example/public/index.php</file>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="p"/>
+
+    <rule ref="PSR12">
+        <!-- Existing project structure has helper classes grouped in one file. -->
+        <exclude name="PSR1.Classes.ClassDeclaration.MultipleClasses"/>
+
+        <!-- Example app currently uses global namespace classes. -->
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+
+        <!-- Existing PHPUnit tests use descriptive test method names. -->
+        <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+
+        <!-- Existing tests and certificate fixtures contain intentionally long lines. -->
+        <exclude name="Generic.Files.LineLength.TooLong"/>
+    </rule>
+</ruleset>

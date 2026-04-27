@@ -31,7 +31,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class WebEidAuthToken
 {
-
     /**
      * @var string Unverified certificate
      */

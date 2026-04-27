@@ -33,7 +33,6 @@ use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
 
 class AuthTokenValidatorBuilderTest extends TestCase
 {
-
     private static AuthTokenValidatorBuilder $builder;
 
     protected function setUp(): void
@@ -91,7 +90,7 @@ class AuthTokenValidatorBuilderTest extends TestCase
         AuthTokenValidators::getAuthTokenValidator("https:///ria.ee");
     }
 
-    public function testInvalidOcspResponseTimeSkew() : void
+    public function testInvalidOcspResponseTimeSkew(): void
     {
         $builderWithInvalidResponseTimeSkew = AuthTokenValidators::getDefaultAuthTokenValidatorBuilder()->withAllowedOcspResponseTimeSkew(-1);
         $this->expectException(InvalidArgumentException::class);
@@ -99,7 +98,7 @@ class AuthTokenValidatorBuilderTest extends TestCase
         $builderWithInvalidResponseTimeSkew->build();
     }
 
-    public function testInvalidMaxOcspResponseThisUpdateAge() : void
+    public function testInvalidMaxOcspResponseThisUpdateAge(): void
     {
         $builderWithInvalidMaxOcspResponseThisUpdateAge = AuthTokenValidators::getDefaultAuthTokenValidatorBuilder()->withMaxOcspResponseThisUpdateAge(0);
         $this->expectException(InvalidArgumentException::class);
@@ -107,7 +106,7 @@ class AuthTokenValidatorBuilderTest extends TestCase
         $builderWithInvalidMaxOcspResponseThisUpdateAge->build();
     }
 
-    public function testInvalidOcspRequestTimeout() : void
+    public function testInvalidOcspRequestTimeout(): void
     {
         $builderWithInvalidOcspRequestTimeout = AuthTokenValidators::getDefaultAuthTokenValidatorBuilder()->withOcspRequestTimeout(-1);
         $this->expectException(InvalidArgumentException::class);
