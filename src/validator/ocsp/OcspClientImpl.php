@@ -31,7 +31,6 @@ use Psr\Log\LoggerInterface;
 
 class OcspClientImpl implements OcspClient
 {
-
     private const OCSP_REQUEST_TYPE = "application/ocsp-request";
     private const OCSP_RESPONSE_TYPE = "application/ocsp-response";
     private int $requestTimeout;

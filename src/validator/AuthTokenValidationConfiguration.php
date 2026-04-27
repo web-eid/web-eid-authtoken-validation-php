@@ -30,7 +30,6 @@ use web_eid\web_eid_authtoken_validation_php\certificate\SubjectCertificatePolic
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
-
 use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
 
@@ -174,16 +173,18 @@ final class AuthTokenValidationConfiguration
         }
 
         // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
-        if (!Uri::isSameDocumentReference(
-            $uri,
-            Uri::fromParts(
-                [
+        if (
+            !Uri::isSameDocumentReference(
+                $uri,
+                Uri::fromParts(
+                    [
                     "scheme" => "https",
                     "host" => $uri->getHost(),
                     "port" => $uri->getPort(),
-                ]
+                    ]
+                )
             )
-        )) {
+        ) {
             throw new InvalidArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component");
         }
     }

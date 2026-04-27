@@ -55,7 +55,7 @@ class OcspServiceProviderTest extends TestCase
     public function testWhenAiaOcspServiceConfigurationProvidedThenCreatesAiaOcspService(): void
     {
         // In PHP validation is different
-        // we need to use TEST_of_EE-GovCA2018.pem.crt (getAiaOcspServiceConfiguration()) certificate for validation 
+        // we need to use TEST_of_EE-GovCA2018.pem.crt (getAiaOcspServiceConfiguration()) certificate for validation
 
         $ocspServiceProvider = OcspServiceMaker::getAiaOcspServiceProvider();
 

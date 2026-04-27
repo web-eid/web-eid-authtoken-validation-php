@@ -32,7 +32,6 @@ use RuntimeException;
 
 abstract class AbstractTestWithValidator extends TestCase
 {
-
     /*  notBefore Time UTCTime 2021-07-22 12:43:08 UTC
      *  notAfter Time UTCTime 2026-07-09 21:59:59 UTC
      */

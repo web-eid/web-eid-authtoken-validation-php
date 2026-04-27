@@ -25,13 +25,11 @@
 namespace web_eid\web_eid_authtoken_validation_php\authtoken;
 
 use PHPUnit\Framework\TestCase;
-
 use UnexpectedValueException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 
 class WebEidAuthTokenTest extends TestCase
 {
-
     public function testWhenFaultyAuthTokenParameter(): void
     {
         $authTokenJson = '{"unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4","algorithm": 1,"signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZh","format": "web-eid:1.0","appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"}';

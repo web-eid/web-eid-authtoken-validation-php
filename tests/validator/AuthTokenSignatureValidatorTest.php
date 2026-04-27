@@ -125,5 +125,4 @@ class AuthTokenSignatureValidatorTest extends TestCase
 
         $signatureValidator->validate("RS256", $authToken->getSignature(), $x509Certificate->getPublicKey(), AbstractTestWithValidator::VALID_CHALLENGE_NONCE);
     }
-
 }

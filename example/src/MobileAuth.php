@@ -26,7 +26,9 @@ use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
 
 final class MobileAuth
 {
-    public function __construct(private AuthContext $ctx) {}
+    public function __construct(private AuthContext $ctx)
+    {
+    }
 
     public function init(): void
     {

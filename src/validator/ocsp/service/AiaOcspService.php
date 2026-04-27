@@ -42,7 +42,6 @@ use InvalidArgumentException;
  */
 class AiaOcspService implements OcspService
 {
-
     private Uri $url;
     private TrustedCertificates $trustedCACertificates;
     private bool $supportsNonce;

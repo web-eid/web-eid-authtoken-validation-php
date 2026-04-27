@@ -32,7 +32,6 @@ use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
 
 class AuthTokenCertificateBelgianIdCardTest extends AbstractTestWithValidator
 {
-
     private const BELGIAN_TEST_ID_CARD_AUTH_TOKEN_ECC =
         '{' .
         '  "action": "web-eid:authenticate-success",' .
@@ -53,7 +52,7 @@ class AuthTokenCertificateBelgianIdCardTest extends AbstractTestWithValidator
         '  "unverifiedCertificate": "MIID7zCCA3WgAwIBAgIQEAAAAAAA8evx/gAAAAHu2TAKBggqhkjOPQQDAzAuMQswCQYDVQQGEwJCRTEfMB0GA1UEAwwWZUlEIFRFU1QgRUMgQ2l0aXplbiBDQTAeFw0yMzA5MjYyMjAwMDBaFw0zMzA5MjYyMjAwMDBaMHYxCzAJBgNVBAYTAkJFMScwJQYDVQQDDB5Ob3JhIFNwZWNpbWVuIChBdXRoZW50aWNhdGlvbikxETAPBgNVBAQMCFNwZWNpbWVuMRUwEwYDVQQqDAxOb3JhIEFuZ8OobGUxFDASBgNVBAUTCzAxMDUwMzk5ODY0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/JkeHwt4rQhx/QrpPSCLUd98YxiZRvtKyo1glLiByNvDu7D6Jgg70tj2wlrwn3X0c8Rz/Yy3SgLIPzc92ptvaJG0H52cecRKABzDKwn9Qf/ZwsasDkKnprx0KUbiTaBU9Se1AEim5hyG4naahcfQJo+SwvIMhjIVPk1l1B+fbwRBlYG+LoJXdLSwoYRWArnf+4vx2PXR1nrmfLDw0NrtuNQy637O58DSL2XGd0+jKpQfYCBrqN0B26zA2RU0Uzb0ztEf4VXYH26dmv+bqwpXdPQYPQ7elNFXzFCRnmgJfxt4aKSkGZ2sQFWrKeIRxzVizLFDnfW8TSV5S4tuwYSMwIDAQABo4IBYDCCAVwwHwYDVR0jBBgwFoAU3bN/45oZjlnJEVYCLfX6nW/ehEswDgYDVR0PAQH/BAQDAgeAMEkGA1UdIARCMEAwPgYHYDgMAQECAjAzMDEGCCsGAQUFBwIBFiVodHRwOi8vZWlkZGV2Y2FyZHMuemV0ZXNjYXJkcy5iZS9jZXJ0MBMGA1UdJQQMMAoGCCsGAQUFBwMCMEUGA1UdHwQ+MDwwOqA4oDaGNGh0dHA6Ly9laWRkZXZjYXJkcy56ZXRlc2NhcmRzLmJlL2NybC9jaXRpemVuY2FFQy5jcmwwgYEGCCsGAQUFBwEBBHUwczA+BggrBgEFBQcwAoYyaHR0cDovL2VpZGRldmNhcmRzLnpldGVzY2FyZHMuYmUvY2VydC9yb290Y2FFQy5jcnQwMQYIKwYBBQUHMAGGJWh0dHA6Ly9laWRkZXZjYXJkcy56ZXRlc2NhcmRzLmJlOjg4ODgwCgYIKoZIzj0EAwMDaAAwZQIwL3Mp3pSlxfjUQ6zlsAwLHBbs1//7vPiqx//IcyUZYuVXZ00KG8MelmaMNbmzDVxaAjEAnqHxkwV5sSDwQCUbb6Tofaypm+DO6C2LriHS5r+s84x2Eq+s+lAJ1L4WkcgsKxns"' .
         '}';
 
-    
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -88,5 +87,4 @@ class AuthTokenCertificateBelgianIdCardTest extends AbstractTestWithValidator
     {
         Dates::setMockedCertificateValidatorDate(new DateTime($date));
     }
-
 }

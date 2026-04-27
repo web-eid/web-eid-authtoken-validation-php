@@ -161,7 +161,8 @@ class OcspResponse
         }
     }
 
-    private static function getDecoded(string $encodedBER) {
+    private static function getDecoded(string $encodedBER)
+    {
         $decoded = ASN1::decodeBER($encodedBER);
         if (!is_array($decoded)) {
             throw new OcspResponseDecodeException();
