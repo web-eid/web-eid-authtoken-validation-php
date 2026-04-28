@@ -47,11 +47,24 @@ final class OcspUrl
         if (is_null($certificate)) {
             throw new InvalidArgumentException("Certificate must not be null");
         }
+
         $authorityInformationAccess = $certificate->getExtension("id-pe-authorityInfoAccess");
+
         if ($authorityInformationAccess) {
             foreach ($authorityInformationAccess as $accessDescription) {
-                if (in_array($accessDescription["accessMethod"], ["id-pkix-ocsp", "id-ad-ocsp"]) && array_key_exists("uniformResourceIdentifier", $accessDescription["accessLocation"])) {
+                $isOcspAccessMethod = in_array(
+                    $accessDescription["accessMethod"],
+                    ["id-pkix-ocsp", "id-ad-ocsp"]
+                );
+
+                $hasUri = array_key_exists(
+                    "uniformResourceIdentifier",
+                    $accessDescription["accessLocation"]
+                );
+
+                if ($isOcspAccessMethod && $hasUri) {
                     $accessLocationUrl = $accessDescription["accessLocation"]["uniformResourceIdentifier"];
+
                     return new Uri($accessLocationUrl);
                 }
             }

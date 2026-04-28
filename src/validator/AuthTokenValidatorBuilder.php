@@ -50,7 +50,8 @@ class AuthTokenValidatorBuilder
      * <p>
      * Origin is a mandatory configuration parameter.
      *
-     * @param origin origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
+     * @param origin origin URL as defined in
+     *               <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
      *               in the form of {@code <scheme> "://" <hostname> [ ":" <port> ]}
      * @return the builder instance for method chaining
      */
@@ -134,9 +135,12 @@ class AuthTokenValidatorBuilder
     public function withoutUserCertificateRevocationCheckWithOcsp(): AuthTokenValidatorBuilder
     {
         $this->configuration->setUserCertificateRevocationCheckWithOcspDisabled();
+
         $this->logger?->warning(
-            "User certificate revocation check with OCSP is disabled, you should turn off the revocation check only in exceptional circumstances",
+            "User certificate revocation check with OCSP is disabled, " .
+            "you should turn off the revocation check only in exceptional circumstances",
         );
+
         return $this;
     }
 

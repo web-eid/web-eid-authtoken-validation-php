@@ -36,5 +36,8 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
+    - name: Check code style
+      run: ./vendor/bin/phpcs
+
     - name: Run test suite
       run: composer test

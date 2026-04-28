@@ -11,17 +11,21 @@
     <arg name="colors"/>
     <arg value="p"/>
 
-    <rule ref="PSR12">
-        <!-- Existing project structure has helper classes grouped in one file. -->
-        <exclude name="PSR1.Classes.ClassDeclaration.MultipleClasses"/>
+    <rule ref="PSR12"/>
 
-        <!-- Example app currently uses global namespace classes. -->
-        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+        <exclude-pattern>src/util/CollectionsUtil.php</exclude-pattern>
+    </rule>
 
-        <!-- Existing PHPUnit tests use descriptive test method names. -->
-        <exclude name="PSR1.Methods.CamelCapsMethodName.NotCamelCaps"/>
+    <rule ref="PSR1.Classes.ClassDeclaration.MissingNamespace">
+        <exclude-pattern>example/src/*</exclude-pattern>
+    </rule>
 
-        <!-- Existing tests and certificate fixtures contain intentionally long lines. -->
-        <exclude name="Generic.Files.LineLength.TooLong"/>
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <rule ref="Generic.Files.LineLength.TooLong">
+        <exclude-pattern>tests/*</exclude-pattern>
     </rule>
 </ruleset>

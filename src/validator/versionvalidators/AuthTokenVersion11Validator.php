@@ -233,7 +233,8 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
         if (empty($keyUsage) || !in_array("nonRepudiation", $keyUsage, true)) {
             throw new AuthTokenParseException(
-                "Signing certificate key usage extension missing or does not contain non-repudiation bit required for digital signatures",
+                "Signing certificate key usage extension missing or does not " .
+                "contain non-repudiation bit required for digital signatures",
             );
         }
     }
