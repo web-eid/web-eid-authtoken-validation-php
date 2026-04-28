@@ -48,11 +48,16 @@ final class CertificateValidator
     public static function certificateIsValidOnDate(X509 $subjectCertificate, DateTime $date, string $subject): void
     {
         if (!$subjectCertificate->validateDate($date)) {
-            if ($date < new DateTime($subjectCertificate->getCurrentCert()['tbsCertificate']['validity']['notBefore']['utcTime'])) {
+            $validity = $subjectCertificate->getCurrentCert()['tbsCertificate']['validity'];
+
+            $notBefore = new DateTime($validity['notBefore']['utcTime']);
+            $notAfter = new DateTime($validity['notAfter']['utcTime']);
+
+            if ($date < $notBefore) {
                 throw new CertificateNotYetValidException($subject);
             }
 
-            if ($date > new DateTime($subjectCertificate->getCurrentCert()['tbsCertificate']['validity']['notAfter']['utcTime'])) {
+            if ($date > $notAfter) {
                 throw new CertificateExpiredException($subject);
             }
         }

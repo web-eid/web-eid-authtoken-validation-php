@@ -157,7 +157,7 @@ final class SubjectCertificateNotRevokedValidator implements
             );
         }
 
-        // The first certificate is the responder certificate, other certificates, if given, are the certificate's chain.
+        // The first certificate is the responder certificate, other certificates, if given, are the certificate's chain
         $responderCert = $basicResponse->getCertificates()[0];
 
         OcspResponseValidator::validateResponseSignature(

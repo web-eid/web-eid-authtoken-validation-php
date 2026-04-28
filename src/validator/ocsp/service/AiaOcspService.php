@@ -51,9 +51,14 @@ class AiaOcspService implements OcspService
         if (is_null($configuration)) {
             throw new InvalidArgumentException("Configuration cannot be null");
         }
+
         $this->url = self::getOcspAiaUrlFromCertificate($certificate);
         $this->trustedCACertificates = $configuration->getTrustedCACertificates();
-        $this->supportsNonce = !in_array($this->url->jsonSerialize(), $configuration->getNonceDisabledOcspUrls()->getUrlsArray());
+
+        $this->supportsNonce = !in_array(
+            $this->url->jsonSerialize(),
+            $configuration->getNonceDisabledOcspUrls()->getUrlsArray()
+        );
     }
 
     public function doesSupportNonce(): bool
@@ -79,12 +84,17 @@ class AiaOcspService implements OcspService
         try {
             $uri = OcspUrl::getOcspUri($certificate);
         } catch (Exception $e) {
-            throw new UserCertificateOCSPCheckFailedException("Getting the AIA OCSP responder field from the certificate failed");
+            throw new UserCertificateOCSPCheckFailedException(
+                "Getting the AIA OCSP responder field from the certificate failed"
+            );
         }
 
         if (is_null($uri)) {
-            throw new UserCertificateOCSPCheckFailedException("Getting the AIA OCSP responder field from the certificate failed");
+            throw new UserCertificateOCSPCheckFailedException(
+                "Getting the AIA OCSP responder field from the certificate failed"
+            );
         }
+
         return $uri;
     }
 }

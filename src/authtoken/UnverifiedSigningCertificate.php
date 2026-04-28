@@ -50,7 +50,8 @@ class UnverifiedSigningCertificate
             if (!is_array($data['supportedSignatureAlgorithms'])) {
                 $type = gettype($data['supportedSignatureAlgorithms']);
                 throw new UnexpectedValueException(
-                    "Error parsing Web eID authentication token: 'supportedSignatureAlgorithms' is {$type}, array expected"
+                    "Error parsing Web eID authentication token: " .
+                    "'supportedSignatureAlgorithms' is {$type}, array expected"
                 );
             }
 

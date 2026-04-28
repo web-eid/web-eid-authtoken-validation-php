@@ -84,7 +84,8 @@ class WebEidAuthToken
             if (!is_array($jsonDecoded['unverifiedSigningCertificates'])) {
                 $type = gettype($jsonDecoded['unverifiedSigningCertificates']);
                 throw new UnexpectedValueException(
-                    "Error parsing Web eID authentication token: 'unverifiedSigningCertificates' is {$type}, array expected"
+                    "Error parsing Web eID authentication token: " .
+                    "'unverifiedSigningCertificates' is {$type}, array expected"
                 );
             }
 
@@ -123,7 +124,10 @@ class WebEidAuthToken
     {
         $type = gettype($data);
         if ($type != "string") {
-            throw new UnexpectedValueException("Error parsing Web eID authentication token: '{$key}' is {$type}, string expected");
+            throw new UnexpectedValueException(
+                "Error parsing Web eID authentication token: " .
+                "'{$key}' is {$type}, string expected"
+            );
         }
         return $data;
     }

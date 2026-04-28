@@ -120,8 +120,9 @@ final class AuthTokenValidationConfiguration
         return $this->designatedOcspServiceConfiguration;
     }
 
-    public function setDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration): void
-    {
+    public function setDesignatedOcspServiceConfiguration(
+        DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration
+    ): void {
         $this->designatedOcspServiceConfiguration = $designatedOcspServiceConfiguration;
     }
 
@@ -158,7 +159,8 @@ final class AuthTokenValidationConfiguration
     }
 
     /**
-     * Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
+     * Validates that the given URI is an origin URL as defined in
+     * <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
      * in the form of {@code <scheme> "://" <hostname> [ ":" <port> ]}.
      *
      * @param uri URI with origin URL
@@ -185,7 +187,9 @@ final class AuthTokenValidationConfiguration
                 )
             )
         ) {
-            throw new InvalidArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component");
+            throw new InvalidArgumentException(
+                "Origin URI must only contain the HTTPS scheme, host and optional port component"
+            );
         }
     }
 }
