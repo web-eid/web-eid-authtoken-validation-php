@@ -425,14 +425,9 @@ requirement.
 
 We use the standard [PSR-12](https://www.php-fig.org/psr/psr-12/) coding style for PHP code formatting with [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer).
 
-To install PHP_CodeSniffer, run:
-```
-composer require --dev squizlabs/php_codesniffer
-```
-
 To automatically format the code, run:
 ```
-./vendor/bin/phpcbf
+composer fix-php
 ```
 
 To check the code style, run:

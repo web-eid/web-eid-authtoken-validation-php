@@ -33,7 +33,7 @@
         "psr/log": "^3.0.0"
     },
     "scripts": {
-        "fix-php": ["prettier src/**/* --write", "prettier examples/src/* --write"],
+        "fix-php": ["./vendor/bin/phpcbf"],
         "test": "phpunit --no-coverage --display-warnings",
         "test-coverage": [
             "@putenv XDEBUG_MODE=coverage",

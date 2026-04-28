@@ -75,7 +75,9 @@ class OcspClientImpl implements OcspClient
         $this->logger?->debug("OCSP response: " . $responseJson);
 
         if ($info["content_type"] !== self::OCSP_RESPONSE_TYPE) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP response content type is not " . self::OCSP_RESPONSE_TYPE);
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP response content type is not " . self::OCSP_RESPONSE_TYPE
+            );
         }
 
         return $response;

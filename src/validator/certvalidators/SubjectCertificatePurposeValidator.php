@@ -67,8 +67,11 @@ final class SubjectCertificatePurposeValidator implements
             // Digital Signature extension present, but Extended Key Usage extension not present,
             // assume it is an authentication certificate (e.g. Luxembourg eID).
             $this->logger?->debug(
-                "User certificate has Digital Signature key usage and no Extended Key Usage extension, this means that it can be used for client authentication.",
+                "User certificate has Digital Signature key usage and no " .
+                "Extended Key Usage extension, this means that it can be used " .
+                "for client authentication.",
             );
+
             return;
         }
         // Extended usages must contain TLS Web Client Authentication

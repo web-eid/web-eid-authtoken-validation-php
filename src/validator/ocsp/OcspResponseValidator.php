@@ -51,8 +51,17 @@ final class OcspResponseValidator
 
     public static function validateHasSigningExtension(X509 $certificate): void
     {
-        if (!$certificate->getExtension("id-ce-extKeyUsage") || !in_array(self::OCSP_SIGNING, $certificate->getExtension("id-ce-extKeyUsage"))) {
-            throw new OCSPCertificateException("Certificate " . $certificate->getSubjectDN(X509::DN_STRING) . " does not contain the key usage extension for OCSP response signing");
+        $extension = $certificate->getExtension("id-ce-extKeyUsage");
+
+        if (
+            !$extension ||
+            !in_array(self::OCSP_SIGNING, $extension)
+        ) {
+            throw new OCSPCertificateException(
+                "Certificate " .
+                $certificate->getSubjectDN(X509::DN_STRING) .
+                " does not contain the key usage extension for OCSP response signing"
+            );
         }
     }
 
@@ -69,8 +78,11 @@ final class OcspResponseValidator
         }
     }
 
-    public static function validateCertificateStatusUpdateTime(OcspBasicResponse $basicResponse, int $allowedOcspResponseTimeSkew, int $maxOcspResponseThisUpdateAge): void
-    {
+    public static function validateCertificateStatusUpdateTime(
+        OcspBasicResponse $basicResponse,
+        int $allowedOcspResponseTimeSkew,
+        int $maxOcspResponseThisUpdateAge
+    ): void {
         // From RFC 2560, https://www.ietf.org/rfc/rfc2560.txt:
         // 4.2.2.  Notes on OCSP Responses
         // 4.2.2.1.  Time
@@ -109,8 +121,11 @@ final class OcspResponseValidator
         }
 
         if ($nextUpdate < $thisUpdate) {
-            throw new UserCertificateOCSPCheckFailedException(self::ERROR_PREFIX .
-                "nextUpdate '" . DateAndTime::toUtcString($nextUpdate) . "' is before thisUpdate '" . DateAndTime::toUtcString($thisUpdate) . "'");
+            throw new UserCertificateOCSPCheckFailedException(
+                self::ERROR_PREFIX .
+                "nextUpdate '" . DateAndTime::toUtcString($nextUpdate) .
+                "' is before thisUpdate '" . DateAndTime::toUtcString($thisUpdate) . "'"
+            );
         }
     }
 
@@ -123,7 +138,11 @@ final class OcspResponseValidator
             return;
         }
         if ($response->isRevoked() === true) {
-            throw ($response->getRevokeReason() == "") ? new UserCertificateRevokedException() : new UserCertificateRevokedException("Revocation reason: " . $response->getRevokeReason());
+            $revokeReason = $response->getRevokeReason();
+
+            throw $revokeReason == ""
+                ? new UserCertificateRevokedException()
+                : new UserCertificateRevokedException("Revocation reason: " . $revokeReason);
         }
         throw new UserCertificateRevokedException("Status is neither good, revoked nor unknown");
     }
