@@ -34,15 +34,15 @@ class OcspUrlTest extends TestCase
 {
     public function testWhenExtensionValueIsNullThenReturnsNull()
     {
-        $mockCertificate = $this->createMock(X509::class);
-        $mockCertificate->method("getExtension")->willReturn(null);
-        $this->assertNull(OcspUrl::getOcspUri($mockCertificate));
+        $certificate = $this->createStub(X509::class);
+        $certificate->method("getExtension")->willReturn(null);
+        $this->assertNull(OcspUrl::getOcspUri($certificate));
     }
 
     public function testWhenExtensionValueIsInvalidThenReturnsNull()
     {
-        $mockCertificate = $this->createMock(X509::class);
-        $mockCertificate->method("getExtension")->willReturn([
+        $certificate = $this->createStub(X509::class);
+        $certificate->method("getExtension")->willReturn([
             [
                 "accessMethod" => "id-ad-ocsp",
                 'accessLocation' => ["uniformResourceIdentifier" => pack("c*", ...array(1, 2, 3))]
@@ -50,7 +50,7 @@ class OcspUrlTest extends TestCase
         ]);
 
         // We will get empty uri parts
-        $uri = OcspUrl::getOcspUri($mockCertificate);
+        $uri = OcspUrl::getOcspUri($certificate);
         $this->assertFalse(Uri::isAbsolute($uri));
         $this->assertEmpty($uri->getScheme());
         $this->assertEmpty($uri->getHost());
@@ -58,8 +58,8 @@ class OcspUrlTest extends TestCase
 
     public function testWhenExtensionValueIsNotAiaThenReturnsNull()
     {
-        $mockCertificate = $this->createMock(X509::class);
-        $mockCertificate->method("getExtension")->willReturn([
+        $certificate = $this->createStub(X509::class);
+        $certificate->method("getExtension")->willReturn([
             [
                 "accessMethod" => "id-ad-ocsp",
                 'accessLocation' => ["uniformResourceIdentifier" => pack("c*", ...array(
@@ -72,7 +72,7 @@ class OcspUrlTest extends TestCase
         ]);
 
         // We will get empty uri parts
-        $uri = OcspUrl::getOcspUri($mockCertificate);
+        $uri = OcspUrl::getOcspUri($certificate);
         $this->assertFalse(Uri::isAbsolute($uri));
         $this->assertEmpty($uri->getScheme());
         $this->assertEmpty($uri->getHost());

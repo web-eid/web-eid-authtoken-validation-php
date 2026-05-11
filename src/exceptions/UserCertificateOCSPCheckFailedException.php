@@ -31,7 +31,7 @@ use Throwable;
  */
 class UserCertificateOCSPCheckFailedException extends AuthTokenException
 {
-    public function __construct(string $message, Throwable $cause = null)
+    public function __construct(string $message, ?Throwable $cause = null)
     {
         parent::__construct("User certificate revocation check has failed: " . $message, $cause);
     }

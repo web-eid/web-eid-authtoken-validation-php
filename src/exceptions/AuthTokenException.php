@@ -38,7 +38,7 @@ abstract class AuthTokenException extends Exception
      * @param int $code — [optional] The Exception code
      * @param \Throwable|null $cause
      */
-    public function __construct($message, Throwable $cause = null)
+    public function __construct($message, ?Throwable $cause = null)
     {
 
         if (is_null($cause)) {

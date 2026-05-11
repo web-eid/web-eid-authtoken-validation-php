@@ -373,7 +373,6 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
     private static function setSubjectCertificateIssuerCertificate(SubjectCertificateTrustedValidator $trustedValidator): void
     {
         $reflector = new ReflectionProperty(SubjectCertificateTrustedValidator::class, 'subjectCertificateIssuerCertificate');
-        $reflector->setAccessible(true);
         $reflector->setValue($trustedValidator, Certificates::getTestEsteid2018CA());
     }
 }
