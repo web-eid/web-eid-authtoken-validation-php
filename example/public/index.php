@@ -24,12 +24,14 @@
 
 header('Content-type: text/html; charset=UTF-8');
 
+ini_set('display_errors', '0');
+
 session_start();
 
 // Uncomment following line to define the custom log location (by default the server log is used)
 //define("LOGFILE", dirname(__FILE__) . "/../log/web-eid-authtoken-validation-php.log");
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $configArr = require_once __DIR__ . '/../src/app.conf.php';
 $config = Config::fromArray($configArr)->overrideFromEnv();

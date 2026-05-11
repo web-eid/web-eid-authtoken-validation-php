@@ -136,14 +136,14 @@ final class AuthContext
 
     public function nonceGenerator(): ChallengeNonceGenerator
     {
-        return new ChallengeNonceGeneratorBuilder()->withNonceTtl(300)->build();
+        return (new ChallengeNonceGeneratorBuilder())->withNonceTtl(300)->build();
     }
 
     public function tokenValidator(): AuthTokenValidator
     {
         $logger = new Logger();
 
-        return new AuthTokenValidatorBuilder($logger)
+        return (new AuthTokenValidatorBuilder($logger))
             ->withSiteOrigin(new Uri($this->config->get("origin_url")))
             ->withTrustedCertificateAuthorities(
                 ...$this->trustedIntermediateCACertificates(),
