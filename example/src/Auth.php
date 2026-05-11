@@ -73,7 +73,7 @@ final class Auth
 
         try {
             /* Get and remove nonce from store */
-            $challengeNonce = new ChallengeNonceStore()->getAndRemove();
+            $challengeNonce = (new ChallengeNonceStore())->getAndRemove();
 
             $authResult = $this->ctx->authenticate(
                 $authToken,

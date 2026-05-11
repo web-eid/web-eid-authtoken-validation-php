@@ -77,11 +77,11 @@ final class SubjectCertificateNotRevokedValidator implements
                 $this->logger?->debug("Disabling OCSP nonce extension");
             }
 
-            $certificateId = new Ocsp()->generateCertificateId(
+            $certificateId = (new Ocsp())->generateCertificateId(
                 $subjectCertificate,
                 $this->trustValidator->getSubjectCertificateIssuerCertificate(),
             );
-            $request = new OcspRequestBuilder()
+            $request = (new OcspRequestBuilder())
                 ->withCertificateId($certificateId)
                 ->enableOcspNonce($ocspService->doesSupportNonce())
                 ->build();
