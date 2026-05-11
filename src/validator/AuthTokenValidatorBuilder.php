@@ -37,7 +37,7 @@ class AuthTokenValidatorBuilder
     private AuthTokenValidationConfiguration $configuration;
     private $logger;
 
-    public function __construct(LoggerInterface $logger = null)
+    public function __construct(?LoggerInterface $logger = null)
     {
         $this->configuration = new AuthTokenValidationConfiguration();
         $this->logger = $logger;

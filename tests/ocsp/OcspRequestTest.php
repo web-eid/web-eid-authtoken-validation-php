@@ -75,7 +75,6 @@ class OcspRequestTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($request));
         $property = $reflection->getProperty('ocspRequest');
-        $property->setAccessible(true);
 
         $this->assertEquals($this->getExpectedRequestWithCertID(), $property->getValue($request));
     }
@@ -87,7 +86,6 @@ class OcspRequestTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($request));
         $property = $reflection->getProperty('ocspRequest');
-        $property->setAccessible(true);
 
         $this->assertEquals($this->getExpectedWithNonce(), $property->getValue($request));
     }

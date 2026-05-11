@@ -33,7 +33,7 @@ final class SubjectCertificatePolicyValidator implements SubjectCertificateValid
     private $disallowedSubjectCertificatePolicyIds = [];
     private $logger;
 
-    public function __construct(array $disallowedSubjectCertificatePolicyIds, LoggerInterface $logger = null)
+    public function __construct(array $disallowedSubjectCertificatePolicyIds, ?LoggerInterface $logger = null)
     {
         $this->logger = $logger;
         $this->disallowedSubjectCertificatePolicyIds = $disallowedSubjectCertificatePolicyIds;

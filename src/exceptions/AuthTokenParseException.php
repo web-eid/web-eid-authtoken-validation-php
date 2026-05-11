@@ -30,7 +30,7 @@ use Throwable;
 
 class AuthTokenParseException extends AuthTokenException
 {
-    public function __construct(string $message, Throwable $cause = null)
+    public function __construct(string $message, ?Throwable $cause = null)
     {
         parent::__construct($message, $cause);
     }

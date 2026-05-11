@@ -130,7 +130,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['responseType'] = "responseType";
         $property->setValue($response, $mockResponse);
@@ -147,7 +146,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response'] = null;
         $property->setValue($response, $mockResponse);
@@ -168,7 +166,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response']['certs'] = [];
 
@@ -190,7 +187,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response']['signature'] = "somesignature";
 
@@ -205,7 +201,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response']['signatureAlgorithm']['algorithm'] = "NNNsha3-256NNN";
         $property->setValue($response, $mockResponse);
@@ -225,7 +220,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response']['signatureAlgorithm']['algorithm'] = "someAlgo";
         $property->setValue($response, $mockResponse);
@@ -241,7 +235,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response']['tbsResponseData']['responses'][0]['nextUpdate'] = 'Fri, 17 Sep 2021 18:25:24 +0000';
         $property->setValue($response, $mockResponse);
@@ -258,7 +251,6 @@ class OcspResponseTest extends TestCase
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
-        $property->setAccessible(true);
         $mockResponse = $property->getValue($response);
         $mockResponse['responseBytes']['response']['tbsResponseData']['responseExtensions'][0]['extnId'] = "id-pkix-ocsp-nonce1";
         $property->setValue($response, $mockResponse);

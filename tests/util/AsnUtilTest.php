@@ -35,7 +35,7 @@ class AsnUtilTest extends TestCase
         $result = AsnUtil::transcodeSignatureToDER($decodedSignature);
         $valueArr = [];
         for ($i = 0; $i < strlen($result); $i++) {
-            $valueArr[$i] = ord(substr($result, $i));
+            $valueArr[$i] = ord($result[$i]);
         }
         // First byte value
         $this->assertEquals($valueArr[0], 48);

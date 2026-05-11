@@ -64,7 +64,7 @@ final class AuthTokenValidatorImpl implements AuthTokenValidator
     /**
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      */
-    public function __construct(AuthTokenValidationConfiguration $configuration, LoggerInterface $logger = null)
+    public function __construct(AuthTokenValidationConfiguration $configuration, ?LoggerInterface $logger = null)
     {
         $this->logger = $logger;
         $this->configuration = $configuration;

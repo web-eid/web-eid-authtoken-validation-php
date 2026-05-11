@@ -36,7 +36,7 @@ final class SubjectCertificateTrustedValidator implements SubjectCertificateVali
     private X509 $subjectCertificateIssuerCertificate;
     private $logger;
 
-    public function __construct(TrustedCertificates $trustedCACertificates, LoggerInterface $logger = null)
+    public function __construct(TrustedCertificates $trustedCACertificates, ?LoggerInterface $logger = null)
     {
         $this->logger = $logger;
         $this->trustedCACertificates = $trustedCACertificates;
