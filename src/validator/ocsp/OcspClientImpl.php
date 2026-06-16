@@ -66,7 +66,9 @@ class OcspClientImpl implements OcspClient
 
         $info = curl_getinfo($curl);
         if ($info["http_code"] !== 200) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP request was not successful, response: " + $result);
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP request was not successful, response: " . (is_string($result) ? $result : '')
+            );
         }
 
         $response = new OcspResponse($result);

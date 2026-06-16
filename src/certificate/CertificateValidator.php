@@ -73,6 +73,10 @@ final class CertificateValidator
         $now = DefaultClock::getInstance()->now();
         self::certificateIsValidOnDate($certificate, $now, "User");
 
+        // Prevent SSRF via CA Issuers URI from user-provided certificate AIA.
+        // All trusted/intermediate CA certificates must be provided by configuration.
+        X509::disableURLFetch();
+
         foreach ($trustedCertificates->getCertificates() as $trustedCertificate) {
             $certificate->loadCA(
                 $trustedCertificate->saveX509($trustedCertificate->getCurrentCert(), X509::FORMAT_PEM)
