@@ -57,8 +57,7 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
     public function supports(?string $format): bool
     {
-        return $format !== null &&
-            str_starts_with($format, self::V11_SUPPORTED_TOKEN_FORMAT_PREFIX);
+        return $format === self::V11_SUPPORTED_TOKEN_FORMAT_PREFIX;
     }
 
     /**
@@ -84,6 +83,7 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
             $this->validateSameIssuer($subjectCertificate, $signingCertificate);
             $this->validateSigningCertificateValidity($signingCertificate);
             $this->validateKeyUsage($signingCertificate);
+            $this->validateSigningCertificateChain($signingCertificate);
         }
 
         return $subjectCertificate;
@@ -235,6 +235,21 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
             throw new AuthTokenParseException(
                 "Signing certificate key usage extension missing or does not " .
                 "contain non-repudiation bit required for digital signatures",
+            );
+        }
+    }
+
+    /**
+     * @throws AuthTokenParseException
+     */
+    private function validateSigningCertificateChain(X509 $signingCertificate): void
+    {
+        try {
+            $this->buildTrustValidatorBatch()->executeFor($signingCertificate);
+        } catch (AuthTokenException $e) {
+            throw new AuthTokenParseException(
+                "Signing certificate chain validation failed",
+                $e,
             );
         }
     }

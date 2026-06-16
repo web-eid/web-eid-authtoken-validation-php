@@ -72,8 +72,6 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
     {
         return [
             ['web-eid:1.1'],
-            ['web-eid:1.1.0'],
-            ['web-eid:1.10'],
         ];
     }
 
@@ -96,6 +94,8 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
             ['web-eid:1.0'],
             ['web-eid:2'],
             ['webauthn:1.1'],
+            ['web-eid:1.1.0'],
+            ['web-eid:1.10'],
         ];
     }
 
@@ -240,5 +240,40 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
         $this->expectExceptionMessage("'supportedSignatureAlgorithms' field is missing");
 
         $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testSigningCertificateChainValidationFails(): void
+    {
+        $certPath = __DIR__ . '/../../_resources/TEST_of_ESTEID2018.cer';
+        $der = file_get_contents($certPath);
+        $this->assertIsString($der, "Certificate missing at: $certPath");
+
+        $signingCertificate = new X509();
+        $this->assertNotFalse($signingCertificate->loadX509($der));
+
+        $config = new AuthTokenValidationConfiguration();
+        $config->setUserCertificateRevocationCheckWithOcspDisabled();
+
+        $validator = new class(
+            $this->createMock(SubjectCertificateValidatorBatch::class),
+            CertificateValidator::buildTrustFromCertificates([]),
+            $this->createMock(AuthTokenSignatureValidator::class),
+            $config,
+            null,
+            null
+        ) extends AuthTokenVersion11Validator {
+            public function assertChainFails(X509 $certificate): void
+            {
+                $this->buildTrustValidatorBatch()->executeFor($certificate);
+            }
+        };
+
+        $this->expectException(AuthTokenException::class);
+
+        $validator->assertChainFails($signingCertificate);
     }
 }

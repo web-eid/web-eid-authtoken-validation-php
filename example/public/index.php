@@ -26,6 +26,16 @@ header('Content-type: text/html; charset=UTF-8');
 
 ini_set('display_errors', '0');
 
+session_name('__Host-PHPSESSID');
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
 session_start();
 
 // Uncomment following line to define the custom log location (by default the server log is used)

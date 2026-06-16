@@ -73,8 +73,8 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     public function supports(?string $format): bool
     {
-        return $format !== null &&
-            str_starts_with($format, self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX);
+        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
+            $format === "web-eid:1.0";
     }
 
     public function validate(
@@ -135,7 +135,7 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         return $subjectCertificate;
     }
 
-    private function buildTrustValidatorBatch(): SubjectCertificateValidatorBatch
+    protected function buildTrustValidatorBatch(): SubjectCertificateValidatorBatch
     {
         $trustedValidator = new SubjectCertificateTrustedValidator(
             $this->trustedCACertificates,
