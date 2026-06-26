@@ -92,10 +92,11 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
             [''],
             ['web-eid:1'],
             ['web-eid:1.0'],
-            ['web-eid:2'],
-            ['webauthn:1.1'],
             ['web-eid:1.1.0'],
             ['web-eid:1.10'],
+            ['web-eid:1.2'],
+            ['web-eid:2'],
+            ['webauthn:1.1'],
         ];
     }
 
@@ -258,7 +259,7 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
         $config = new AuthTokenValidationConfiguration();
         $config->setUserCertificateRevocationCheckWithOcspDisabled();
 
-        $validator = new class(
+        $validator = new class (
             $this->createMock(SubjectCertificateValidatorBatch::class),
             CertificateValidator::buildTrustFromCertificates([]),
             $this->createMock(AuthTokenSignatureValidator::class),

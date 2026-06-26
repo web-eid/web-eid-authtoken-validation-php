@@ -36,7 +36,7 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingExcep
 
 class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 {
-    private const V11_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1.1";
+    private const V11_SUPPORTED_TOKEN_FORMAT_PATTERN = '/^web-eid:1\.1$/';
 
     private const SUPPORTED_SIGNING_CRYPTO_ALGORITHMS = ["ECC", "RSA"];
     private const SUPPORTED_SIGNING_PADDING_SCHEMES = [
@@ -57,7 +57,8 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
     public function supports(?string $format): bool
     {
-        return $format === self::V11_SUPPORTED_TOKEN_FORMAT_PREFIX;
+        return $format !== null &&
+            preg_match(self::V11_SUPPORTED_TOKEN_FORMAT_PATTERN, $format) === 1;
     }
 
     /**
