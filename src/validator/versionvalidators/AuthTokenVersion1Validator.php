@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
 class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 {
     private const V1_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1";
+    private const V1_SUPPORTED_TOKEN_FORMAT_PATTERN = '/^web-eid:1(?:\.\d+)?$/';
 
     private SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators;
     private TrustedCertificates $trustedCACertificates;
@@ -73,8 +74,8 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     public function supports(?string $format): bool
     {
-        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
-            $format === "web-eid:1.0";
+        return $format !== null &&
+            preg_match(self::V1_SUPPORTED_TOKEN_FORMAT_PATTERN, $format) === 1;
     }
 
     public function validate(
