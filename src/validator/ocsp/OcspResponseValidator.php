@@ -28,6 +28,7 @@ use BadFunctionCallException;
 use DateInterval;
 use web_eid\web_eid_authtoken_validation_php\exceptions\OCSPCertificateException;
 use phpseclib3\File\X509;
+use phpseclib3\Math\BigInteger;
 use web_eid\web_eid_authtoken_validation_php\ocsp\OcspBasicResponse;
 use web_eid\web_eid_authtoken_validation_php\ocsp\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
@@ -63,6 +64,33 @@ final class OcspResponseValidator
                 " does not contain the key usage extension for OCSP response signing"
             );
         }
+    }
+
+    /**
+     * Compares two OCSP CertID structures by their significant components.
+     *
+     * The hash algorithm parameters field may be absent on one side and an explicit
+     * ASN.1 NULL on the other, so a plain structural comparison would reject
+     * equivalent CertIDs.
+     */
+    public static function certificateIdsMatch(array $requestCertificateId, array $responseCertificateId): bool
+    {
+        return $requestCertificateId["hashAlgorithm"]["algorithm"]
+                === $responseCertificateId["hashAlgorithm"]["algorithm"]
+            && $requestCertificateId["issuerNameHash"] === $responseCertificateId["issuerNameHash"]
+            && $requestCertificateId["issuerKeyHash"] === $responseCertificateId["issuerKeyHash"]
+            && self::serialNumbersMatch(
+                $requestCertificateId["serialNumber"],
+                $responseCertificateId["serialNumber"]
+            );
+    }
+
+    private static function serialNumbersMatch($first, $second): bool
+    {
+        if ($first instanceof BigInteger && $second instanceof BigInteger) {
+            return $first->equals($second);
+        }
+        return $first == $second;
     }
 
     public static function validateResponseSignature(OcspBasicResponse $basicResponse, X509 $responderCert): void

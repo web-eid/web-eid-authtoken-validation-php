@@ -372,6 +372,41 @@ class SubjectCertificateNotRevokedValidatorTest extends TestCase
         $validator->validate($this->estEid2018Cert);
     }
 
+    public function testWhenAdditionalIntermediateCertificatesProvidedThenForwardsThemToOcspServiceProvider(): void
+    {
+        $issuerCertificate = $this->trustedValidator->getSubjectCertificateIssuerCertificate();
+        $additionalIntermediateCertificates = [Certificates::getTestEsteid2018CA()];
+
+        $ocspServiceProvider = $this->createMock(OcspServiceProvider::class);
+        $ocspServiceProvider->expects($this->once())
+            ->method("getService")
+            ->with(
+                $this->identicalTo($this->estEid2018Cert),
+                $this->identicalTo($issuerCertificate),
+                $this->identicalTo($additionalIntermediateCertificates),
+            )
+            ->willThrowException(
+                new UserCertificateOCSPCheckFailedException("stop after service selection"),
+            );
+
+        $validator = new SubjectCertificateNotRevokedValidator(
+            $this->trustedValidator,
+            self::$ocspClient,
+            $ocspServiceProvider,
+            $this->configuration->getAllowedOcspResponseTimeSkew(),
+            $this->configuration->getMaxOcspResponseThisUpdateAge(),
+            null,
+            $additionalIntermediateCertificates,
+        );
+
+        $this->expectException(UserCertificateOCSPCheckFailedException::class);
+        $this->expectExceptionMessage(
+            "User certificate revocation check has failed: stop after service selection",
+        );
+
+        $validator->validate($this->estEid2018Cert);
+    }
+
     private function getSubjectCertificateNotRevokedValidatorWithAiaOcspUsingResponse(
         $response,
     ): SubjectCertificateNotRevokedValidator {
