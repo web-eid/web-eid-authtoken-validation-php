@@ -27,29 +27,46 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\certvalidators;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
+use web_eid\web_eid_authtoken_validation_php\certificate\IntermediateRevocationChecker;
 use Psr\Log\LoggerInterface;
-use web_eid\web_eid_authtoken_validation_php\util\DefaultClock;
 
 final class SubjectCertificateTrustedValidator implements
     SubjectCertificateValidator
 {
     private TrustedCertificates $trustedCACertificates;
     private X509 $subjectCertificateIssuerCertificate;
+    /** @var X509[] */
+    private array $additionalIntermediateCertificates;
+    private ?IntermediateRevocationChecker $intermediateRevocationChecker;
     private $logger;
 
+    /**
+     * @param X509[] $additionalIntermediateCertificates token-supplied untrusted intermediate CA
+     *        certificates, used only as candidates during certification path building
+     */
     public function __construct(
         TrustedCertificates $trustedCACertificates,
         ?LoggerInterface $logger = null,
+        array $additionalIntermediateCertificates = [],
+        ?IntermediateRevocationChecker $intermediateRevocationChecker = null,
     ) {
         $this->logger = $logger;
         $this->trustedCACertificates = $trustedCACertificates;
+        $this->additionalIntermediateCertificates = $additionalIntermediateCertificates;
+        $this->intermediateRevocationChecker = $intermediateRevocationChecker;
     }
 
     public function validate(X509 $subjectCertificate): void
     {
+        // Intermediate CA certificates require revocation checks here because they are not
+        // checked elsewhere. Subject certificate revocation is handled separately by
+        // SubjectCertificateNotRevokedValidator.
         $this->subjectCertificateIssuerCertificate = CertificateValidator::validateIsValidAndSignedByTrustedCA(
             $subjectCertificate,
             $this->trustedCACertificates,
+            "User",
+            $this->additionalIntermediateCertificates,
+            $this->intermediateRevocationChecker,
         );
 
         $this->logger?->debug(
@@ -57,6 +74,10 @@ final class SubjectCertificateTrustedValidator implements
         );
     }
 
+    /**
+     * Returns the certificate that directly issued the subject certificate;
+     * the trust anchor when the anchor is the direct issuer.
+     */
     public function getSubjectCertificateIssuerCertificate(): X509
     {
         return $this->subjectCertificateIssuerCertificate;
