@@ -39,7 +39,10 @@ class OcspServiceProviderTest extends TestCase
     public function testWhenDesignatedOcspServiceConfigurationProvidedThenCreatesDesignatedOcspService(): void
     {
         $ocspServiceProvider = OcspServiceMaker::getDesignatedOcspServiceProvider();
-        $service = $ocspServiceProvider->getService(Certificates::getJaakKristjanEsteid2018Cert());
+        $service = $ocspServiceProvider->getService(
+            Certificates::getJaakKristjanEsteid2018Cert(),
+            Certificates::getTestEsteid2018CA()
+        );
 
         $this->assertEquals($service->getAccessLocation(), new Uri("http://demo.sk.ee/ocsp"));
         $this->assertTrue($service->doesSupportNonce());
@@ -59,7 +62,10 @@ class OcspServiceProviderTest extends TestCase
 
         $ocspServiceProvider = OcspServiceMaker::getAiaOcspServiceProvider();
 
-        $service2018 = $ocspServiceProvider->getService(Certificates::getJaakKristjanEsteid2018Cert());
+        $service2018 = $ocspServiceProvider->getService(
+            Certificates::getJaakKristjanEsteid2018Cert(),
+            Certificates::getTestEsteid2018CA()
+        );
 
         $this->assertEquals($service2018->getAccessLocation()->jsonSerialize(), (new Uri("http://aia.demo.sk.ee/esteid2018"))->jsonSerialize());
         $this->assertTrue($service2018->doesSupportNonce());
@@ -67,7 +73,10 @@ class OcspServiceProviderTest extends TestCase
         $service2018->validateResponderCertificate(Certificates::getTestEsteid2018CA(), new DateTime('Thursday, August 26, 2021 5:46:40 PM'));
 
         // Responder certificate issuer is not in trusted certificates
-        $service2015 = $ocspServiceProvider->getService(Certificates::getMariLiisEsteid2015Cert());
+        $service2015 = $ocspServiceProvider->getService(
+            Certificates::getMariLiisEsteid2015Cert(),
+            Certificates::getTestEsteid2015CA()
+        );
         $this->assertEquals($service2015->getAccessLocation()->jsonSerialize(), (new Uri("http://aia.demo.sk.ee/esteid2015"))->jsonSerialize());
         $this->assertFalse($service2015->doesSupportNonce());
 
@@ -79,10 +88,15 @@ class OcspServiceProviderTest extends TestCase
     public function testWhenAiaOcspServiceConfigurationDoesNotHaveResponderCertTrustedCaThenThrows(): void
     {
         $ocspServiceProvider = OcspServiceMaker::getAiaOcspServiceProvider();
-        $service2018 = $ocspServiceProvider->getService(Certificates::getJaakKristjanEsteid2018Cert());
+        $service2018 = $ocspServiceProvider->getService(
+            Certificates::getJaakKristjanEsteid2018Cert(),
+            Certificates::getTestEsteid2018CA()
+        );
 
+        // The responder certificate is not signed by a trusted CA, so certification path
+        // validation fails before the delegated responder checks are reached.
         $wrongResponderCert = Certificates::getMariliisEsteid2015Cert();
-        $this->expectException(OCSPCertificateException::class);
+        $this->expectException(CertificateNotTrustedException::class);
 
         $service2018->validateResponderCertificate($wrongResponderCert, new DateTime("Thursday, August 26, 2021 5:46:40 PM"));
     }

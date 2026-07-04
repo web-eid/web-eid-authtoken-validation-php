@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2026 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
 
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotTrustedException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\OCSPCertificateException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspUrl;
@@ -44,16 +46,31 @@ class AiaOcspService implements OcspService
 {
     private Uri $url;
     private TrustedCertificates $trustedCACertificates;
+    private X509 $certificateIssuerCertificate;
+    /** @var X509[] */
+    private array $additionalIntermediateCertificates;
     private bool $supportsNonce;
 
-    public function __construct(AiaOcspServiceConfiguration $configuration, X509 $certificate)
-    {
+    /**
+     * @param X509 $certificate the subject certificate whose revocation status is checked
+     * @param X509 $certificateIssuerCertificate the certificate that directly issued the subject certificate
+     * @param X509[] $additionalIntermediateCertificates token-supplied untrusted intermediate CA
+     *        certificates, offered as candidates when building the responder certificate chain
+     */
+    public function __construct(
+        AiaOcspServiceConfiguration $configuration,
+        X509 $certificate,
+        X509 $certificateIssuerCertificate,
+        array $additionalIntermediateCertificates = [],
+    ) {
         if (is_null($configuration)) {
             throw new InvalidArgumentException("Configuration cannot be null");
         }
 
         $this->url = self::getOcspAiaUrlFromCertificate($certificate);
         $this->trustedCACertificates = $configuration->getTrustedCACertificates();
+        $this->certificateIssuerCertificate = $certificateIssuerCertificate;
+        $this->additionalIntermediateCertificates = $additionalIntermediateCertificates;
 
         $this->supportsNonce = !in_array(
             $this->url->jsonSerialize(),
@@ -73,10 +90,43 @@ class AiaOcspService implements OcspService
 
     public function validateResponderCertificate(X509 $cert, DateTime $now): void
     {
-        CertificateValidator::certificateIsValidOnDate($cert, $now, "AIA OCSP responder");
-        // Trusted certificates' validity has been already verified in validateCertificateExpiry().
+        // Certification path validation includes the date-validity check of the responder
+        // certificate. Token-supplied intermediates are offered as path-building candidates.
+        // Responder certificates are deliberately not revocation-checked (RFC 6960 4.2.2.2.1
+        // id-pkix-ocsp-nocheck convention; querying an OCSP service about its own signer
+        // certificate would be circular).
+        $responderIssuerCertificate = CertificateValidator::validateIsValidAndSignedByTrustedCA(
+            $cert,
+            $this->trustedCACertificates,
+            "AIA OCSP responder",
+            $this->additionalIntermediateCertificates,
+            null,
+            $now,
+        );
+
         OcspResponseValidator::validateHasSigningExtension($cert);
-        CertificateValidator::validateIsValidAndSignedByTrustedCA($cert, $this->trustedCACertificates);
+
+        // RFC 6960 section 4.2.2.2: the response must be signed by the CA that issued the
+        // subject certificate or by a responder directly delegated by it. CA identity is
+        // compared by subject and public key so that equivalent cross-certificates for the
+        // same CA are accepted.
+        if (self::representsSameCA($cert, $this->certificateIssuerCertificate)) {
+            // The response is signed by the issuing CA itself.
+            return;
+        }
+
+        if (!self::representsSameCA($responderIssuerCertificate, $this->certificateIssuerCertificate)) {
+            throw new CertificateNotTrustedException(
+                $cert,
+                new OCSPCertificateException("OCSP responder is not authorized by the subject certificate issuer"),
+            );
+        }
+    }
+
+    private static function representsSameCA(X509 $first, X509 $second): bool
+    {
+        return $first->getSubjectDN(X509::DN_STRING) === $second->getSubjectDN(X509::DN_STRING)
+            && $first->getPublicKey()->toString('PKCS8') === $second->getPublicKey()->toString('PKCS8');
     }
 
     private static function getOcspAiaUrlFromCertificate(X509 $certificate): Uri
