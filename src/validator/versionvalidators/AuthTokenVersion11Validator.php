@@ -26,10 +26,13 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 
+use Exception;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\authtoken\SupportedSignatureAlgorithm;
+use web_eid\web_eid_authtoken_validation_php\authtoken\UnverifiedSigningCertificate;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
+use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
@@ -77,40 +80,57 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
             $authToken,
             $currentChallengeNonce,
         );
-        $signingCertificates = $this->validateSigningCertificates($authToken);
 
-        foreach ($signingCertificates as $signingCertificate) {
+        foreach ($this->validateSigningCertificates($authToken) as $unverifiedSigningCertificate) {
+            $signingCertificate = CertificateLoader::decodeCertificateFromBase64(
+                $unverifiedSigningCertificate->getCertificate(),
+                "unverifiedSigningCertificates",
+            );
+
             $this->validateSameSubject(
                 $subjectCertificate,
                 $signingCertificate,
             );
             $this->validateSameIssuer($subjectCertificate, $signingCertificate);
-            $this->validateSigningCertificateValidity($signingCertificate);
             $this->validateKeyUsage($signingCertificate);
-            $this->validateSigningCertificateChain($signingCertificate);
+            $this->validateSigningCertificateChain(
+                $signingCertificate,
+                CertificateLoader::decodeCertificatesFromBase64(
+                    $unverifiedSigningCertificate->getIntermediateCertificates(),
+                    "intermediateCertificates",
+                ),
+            );
         }
 
         return $subjectCertificate;
     }
 
     /**
-     * @return X509[]
+     * @return UnverifiedSigningCertificate[]
      * @throws AuthTokenParseException
-     * @throws CertificateDecodingException
      */
     private function validateSigningCertificates(WebEidAuthToken $token): array
     {
         $signingCertificates = $token->getUnverifiedSigningCertificates();
+        $intermediateCertificates = $token->getUnverifiedIntermediateCertificates();
 
-        if ($signingCertificates === null || empty($signingCertificates)) {
+        // When the authentication certificate's intermediate certificates are present,
+        // signing certificates are optional.
+        if (
+            $signingCertificates === null &&
+            $intermediateCertificates !== null &&
+            $intermediateCertificates !== []
+        ) {
+            return [];
+        }
+
+        if ($signingCertificates === null || $signingCertificates === []) {
             throw new AuthTokenParseException(
                 "'unverifiedSigningCertificates' field is missing, null or empty for format '" .
                     $token->getFormat() .
                     "'",
             );
         }
-
-        $result = [];
 
         foreach ($signingCertificates as $certificate) {
             if (
@@ -126,13 +146,14 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
             }
 
             $this->validateSupportedSignatureAlgorithms($certificate);
-            $result[] = CertificateLoader::decodeCertificateFromBase64(
-                $certificate->getCertificate(),
-                "unverifiedSigningCertificates",
+            self::validateIntermediateCertificatesField(
+                $certificate->getIntermediateCertificates(),
+                "intermediateCertificates",
+                $token->getFormat(),
             );
         }
 
-        return $result;
+        return $signingCertificates;
     }
 
     /**
@@ -214,21 +235,6 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
         }
     }
 
-    /**
-     * @throws AuthTokenParseException
-     */
-    private function validateSigningCertificateValidity(
-        X509 $signingCertificate,
-    ): void {
-        $valid = $signingCertificate->validateDate();
-
-        if ($valid !== true) {
-            throw new AuthTokenParseException(
-                "Signing certificate is not valid: {$valid}",
-            );
-        }
-    }
-
     private function extractAuthorityKeyIdentifier(X509 $cert): string
     {
         $ext = $cert->getExtension("id-ce-authorityKeyIdentifier");
@@ -248,13 +254,26 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
     }
 
     /**
+     * @param X509[] $intermediateCertificates
      * @throws AuthTokenParseException
      */
-    private function validateSigningCertificateChain(X509 $signingCertificate): void
-    {
+    private function validateSigningCertificateChain(
+        X509 $signingCertificate,
+        array $intermediateCertificates,
+    ): void {
         try {
-            $this->buildTrustValidatorBatch()->executeFor($signingCertificate);
-        } catch (AuthTokenException $e) {
+            // The signing certificate itself deliberately gets no revocation check during
+            // authentication: its revocation status matters at signing time and is the
+            // signature validation service's concern. Token-supplied intermediate
+            // certificates in its path are checked for revocation.
+            CertificateValidator::validateIsValidAndSignedByTrustedCA(
+                $signingCertificate,
+                $this->trustedCACertificates,
+                "Signing",
+                $intermediateCertificates,
+                $this->intermediateRevocationChecker,
+            );
+        } catch (Exception $e) {
             throw new AuthTokenParseException(
                 "Signing certificate chain validation failed",
                 $e,
