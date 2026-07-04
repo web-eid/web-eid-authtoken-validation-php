@@ -87,4 +87,32 @@ final class CertificateLoader
 
         return $cert;
     }
+
+    /**
+     * Decodes a list of base64-encoded DER certificates.
+     * A null or empty input list yields an empty array.
+     *
+     * @param string[]|null $certificatesInBase64
+     * @return X509[]
+     * @throws AuthTokenParseException
+     * @throws CertificateDecodingException
+     */
+    public static function decodeCertificatesFromBase64(
+        ?array $certificatesInBase64,
+        string $fieldName = "certificate",
+    ): array {
+        if ($certificatesInBase64 === null || $certificatesInBase64 === []) {
+            return [];
+        }
+
+        $decodedCertificates = [];
+        foreach ($certificatesInBase64 as $certificateInBase64) {
+            $decodedCertificates[] = self::decodeCertificateFromBase64(
+                $certificateInBase64,
+                $fieldName,
+            );
+        }
+
+        return $decodedCertificates;
+    }
 }

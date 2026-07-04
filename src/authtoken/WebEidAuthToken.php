@@ -48,9 +48,16 @@ class WebEidAuthToken
      */
     private ?string $format = null;
     /**
-     * @var UnverifiedSigningCertificate[]
+     * @var UnverifiedSigningCertificate[]|null
      */
-    private array $unverifiedSigningCertificates = [];
+    private ?array $unverifiedSigningCertificates = null;
+    /**
+     * Unverified intermediate CA certificates of the authentication certificate,
+     * used only as candidate certificates during certification path building.
+     *
+     * @var string[]|null
+     */
+    private ?array $unverifiedIntermediateCertificates = null;
 
     public function __construct(string $authenticationTokenJSON)
     {
@@ -93,6 +100,21 @@ class WebEidAuthToken
                 $jsonDecoded['unverifiedSigningCertificates']
             );
         }
+
+        // unverifiedIntermediateCertificates
+        if (isset($jsonDecoded['unverifiedIntermediateCertificates'])) {
+            if (!is_array($jsonDecoded['unverifiedIntermediateCertificates'])) {
+                $type = gettype($jsonDecoded['unverifiedIntermediateCertificates']);
+                throw new UnexpectedValueException(
+                    "Error parsing Web eID authentication token: " .
+                    "'unverifiedIntermediateCertificates' is {$type}, array expected"
+                );
+            }
+
+            $this->unverifiedIntermediateCertificates = $this->parseIntermediateCertificates(
+                $jsonDecoded['unverifiedIntermediateCertificates']
+            );
+        }
     }
 
     public function getUnverifiedCertificate(): ?string
@@ -115,9 +137,20 @@ class WebEidAuthToken
         return $this->format;
     }
 
-    public function getUnverifiedSigningCertificates(): array
+    /**
+     * @return UnverifiedSigningCertificate[]|null
+     */
+    public function getUnverifiedSigningCertificates(): ?array
     {
         return $this->unverifiedSigningCertificates;
+    }
+
+    /**
+     * @return string[]|null
+     */
+    public function getUnverifiedIntermediateCertificates(): ?array
+    {
+        return $this->unverifiedIntermediateCertificates;
     }
 
     private function filterString(string $key, $data): string
@@ -147,5 +180,24 @@ class WebEidAuthToken
         }
 
         return $result;
+    }
+
+    /**
+     * Entries are kept as-is (including null and empty strings); their content is
+     * validated by the version validators with format-specific error messages.
+     */
+    private function parseIntermediateCertificates(array $list): array
+    {
+        foreach ($list as $item) {
+            if ($item !== null && !is_string($item)) {
+                $type = gettype($item);
+                throw new UnexpectedValueException(
+                    "Error parsing Web eID authentication token: " .
+                    "'unverifiedIntermediateCertificates' entry is {$type}, string expected"
+                );
+            }
+        }
+
+        return array_values($list);
     }
 }
