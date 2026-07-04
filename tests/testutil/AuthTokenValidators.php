@@ -29,6 +29,7 @@ use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 
 final class AuthTokenValidators
 {
@@ -107,6 +108,35 @@ final class AuthTokenValidators
                 __DIR__ . "/../_resources/VRK TEST CA for Test Purposes - G4.crt"
             )
         );
+    }
+
+    public static function getAuthTokenValidatorForBelgianIdCardWithOcspCheck(OcspClient $ocspClient): AuthTokenValidator
+    {
+        return (self::getAuthTokenValidatorBuilder(
+            "https://47f0-46-131-86-189.ngrok-free.app",
+            CertificateLoader::loadCertificatesFromResources(
+                __DIR__ . "/../_resources/eID TEST EC Citizen CA.cer"
+            )
+        ))
+            // The recorded OCSP response used in tests was created without a nonce.
+            ->withNonceDisabledOcspUrls(new Uri("http://eiddevcards.zetescards.be:8888"))
+            ->withOcspClient($ocspClient)
+            ->build();
+    }
+
+    public static function getAuthTokenValidatorForFinnishIdCardWithOcspCheck(OcspClient $ocspClient): AuthTokenValidator
+    {
+        return (self::getAuthTokenValidatorBuilder(
+            "https://47f0-46-131-86-189.ngrok-free.app",
+            CertificateLoader::loadCertificatesFromResources(
+                __DIR__ . "/../_resources/DVV TEST Certificates - G5E.crt",
+                __DIR__ . "/../_resources/VRK TEST CA for Test Purposes - G4.crt"
+            )
+        ))
+            // The recorded OCSP response used in tests was created without a nonce.
+            ->withNonceDisabledOcspUrls(new Uri("http://ocsptest.fineid.fi/dvvtp5ec"))
+            ->withOcspClient($ocspClient)
+            ->build();
     }
 
     public static function getAuthTokenValidatorWithWrongTrustedCertificate(): AuthTokenValidator
