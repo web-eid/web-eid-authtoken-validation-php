@@ -81,7 +81,6 @@ final class CertificateLoader
         } catch (Exception $e) {
             throw new CertificateDecodingException(
                 "'{$fieldName}' decode failed",
-                0,
                 $e,
             );
         }

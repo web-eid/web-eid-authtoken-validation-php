@@ -24,10 +24,12 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\exceptions;
 
+use Throwable;
+
 class CertificateDecodingException extends AuthTokenException
 {
-    public function __construct(string $resource)
+    public function __construct(string $resource, ?Throwable $cause = null)
     {
-        parent::__construct("Certificate decoding from Base64 or parsing failed for " . $resource);
+        parent::__construct("Certificate decoding from Base64 or parsing failed for " . $resource, $cause);
     }
 }
