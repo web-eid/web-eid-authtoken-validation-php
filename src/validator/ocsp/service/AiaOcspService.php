@@ -104,16 +104,17 @@ class AiaOcspService implements OcspService
             $now,
         );
 
-        OcspResponseValidator::validateHasSigningExtension($cert);
-
         // RFC 6960 section 4.2.2.2: the response must be signed by the CA that issued the
         // subject certificate or by a responder directly delegated by it. CA identity is
         // compared by subject and public key so that equivalent cross-certificates for the
         // same CA are accepted.
         if (self::representsSameCA($cert, $this->certificateIssuerCertificate)) {
-            // The response is signed by the issuing CA itself.
+            // The response is signed by the issuing CA itself; the OCSP-signing extended key
+            // usage is required only for delegated responder certificates.
             return;
         }
+
+        OcspResponseValidator::validateHasSigningExtension($cert);
 
         if (!self::representsSameCA($responderIssuerCertificate, $this->certificateIssuerCertificate)) {
             throw new CertificateNotTrustedException(

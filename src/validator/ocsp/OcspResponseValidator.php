@@ -61,7 +61,7 @@ final class OcspResponseValidator
             throw new OCSPCertificateException(
                 "Certificate " .
                 $certificate->getSubjectDN(X509::DN_STRING) .
-                " does not contain the key usage extension for OCSP response signing"
+                " does not contain the extended key usage extension value for OCSP response signing"
             );
         }
     }
