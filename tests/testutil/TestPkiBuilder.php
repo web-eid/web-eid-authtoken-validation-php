@@ -131,6 +131,7 @@ final class TestPkiBuilder
      * Builds a CRL signed by the given CA that revokes the given serial numbers.
      *
      * @param string[] $revokedSerialNumbers decimal serial number strings
+     * @param bool $includeNextUpdate whether the CRL contains a nextUpdate field
      * @return string the CRL in PEM format
      */
     public function buildCrl(
@@ -138,13 +139,16 @@ final class TestPkiBuilder
         array $revokedSerialNumbers,
         ?DateTime $thisUpdate = null,
         ?DateTime $nextUpdate = null,
+        bool $includeNextUpdate = true,
     ): string {
         $authority = $this->toSigningAuthority($issuerCa);
 
         // Sign an empty CRL first; X509::revoke() requires an already loaded CRL.
         $signer = new X509();
         $signer->setStartDate($thisUpdate ?? new DateTime("-1 hour"));
-        $signer->setEndDate($nextUpdate ?? new DateTime("+1 day"));
+        if ($includeNextUpdate) {
+            $signer->setEndDate($nextUpdate ?? new DateTime("+1 day"));
+        }
         $signed = $signer->signCRL($authority, new X509());
         if ($signed === false) {
             throw new RuntimeException("Signing the test CRL failed");
@@ -164,7 +168,9 @@ final class TestPkiBuilder
 
         $resigner = new X509();
         $resigner->setStartDate($thisUpdate ?? new DateTime("-1 hour"));
-        $resigner->setEndDate($nextUpdate ?? new DateTime("+1 day"));
+        if ($includeNextUpdate) {
+            $resigner->setEndDate($nextUpdate ?? new DateTime("+1 day"));
+        }
         $resigned = $resigner->signCRL($authority, $crl);
         if ($resigned === false) {
             throw new RuntimeException("Re-signing the test CRL failed");
