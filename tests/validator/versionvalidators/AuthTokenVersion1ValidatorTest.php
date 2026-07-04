@@ -123,6 +123,25 @@ final class AuthTokenVersion1ValidatorTest extends TestCase
     /**
      * @throws AuthTokenException
      */
+    public function testUnverifiedIntermediateCertificatesPresentForV1Fails(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $token->method('getFormat')->willReturn('web-eid:1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn(null);
+        $token->method('getUnverifiedIntermediateCertificates')->willReturn(['MIICintermediate']);
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedIntermediateCertificates' field is not allowed for format 'web-eid:1'"
+        );
+
+        $this->validator->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws AuthTokenException
+     */
     public function testMissingUnverifiedCertificateFails(): void
     {
         $token = $this->createMock(WebEidAuthToken::class);
