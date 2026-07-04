@@ -53,4 +53,74 @@ class WebEidAuthTokenTest extends TestCase
         $this->expectException(AuthTokenParseException::class);
         new WebEidAuthToken("somestring");
     }
+
+    public function testWhenSigningAndIntermediateCertificateFieldsAreAbsentThenGettersReturnNull(): void
+    {
+        $authTokenJson = '{"unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4","algorithm": "RS256","signature": "HBjNXIaUskXbfhzYQHvwjKDUWfNu4yxXZh","format": "web-eid:1.0"}';
+        $authToken = new WebEidAuthToken($authTokenJson);
+        $this->assertNull($authToken->getUnverifiedSigningCertificates());
+        $this->assertNull($authToken->getUnverifiedIntermediateCertificates());
+    }
+
+    public function testWhenUnverifiedIntermediateCertificatesArePresentThenTheyAreParsed(): void
+    {
+        $authTokenJson = '{"unverifiedCertificate": "MIIFozCCA4ugAwIBAgIQHFpdK-zCQsFW4","format": "web-eid:1.1","unverifiedIntermediateCertificates": ["MIICintermediate1", "MIICintermediate2"]}';
+        $authToken = new WebEidAuthToken($authTokenJson);
+        $this->assertSame(
+            ["MIICintermediate1", "MIICintermediate2"],
+            $authToken->getUnverifiedIntermediateCertificates()
+        );
+    }
+
+    public function testWhenUnverifiedIntermediateCertificatesContainNullAndEmptyEntriesThenTheyAreKept(): void
+    {
+        $authTokenJson = '{"format": "web-eid:1.1","unverifiedIntermediateCertificates": ["MIICintermediate1", null, ""]}';
+        $authToken = new WebEidAuthToken($authTokenJson);
+        $this->assertSame(
+            ["MIICintermediate1", null, ""],
+            $authToken->getUnverifiedIntermediateCertificates()
+        );
+    }
+
+    public function testWhenUnverifiedIntermediateCertificatesEntryIsNotStringThenParsingFails(): void
+    {
+        $authTokenJson = '{"format": "web-eid:1.1","unverifiedIntermediateCertificates": [123]}';
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessage("'unverifiedIntermediateCertificates' entry is integer, string expected");
+        new WebEidAuthToken($authTokenJson);
+    }
+
+    public function testWhenUnverifiedIntermediateCertificatesIsNotArrayThenParsingFails(): void
+    {
+        $authTokenJson = '{"format": "web-eid:1.1","unverifiedIntermediateCertificates": "MIICintermediate1"}';
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessage("'unverifiedIntermediateCertificates' is string, array expected");
+        new WebEidAuthToken($authTokenJson);
+    }
+
+    public function testWhenSigningCertificateIntermediateCertificatesArePresentThenTheyAreParsed(): void
+    {
+        $authTokenJson = '{"format": "web-eid:1.1","unverifiedSigningCertificates": [' .
+            '{"certificate": "MIIDsigning1","intermediateCertificates": ["MIICintermediate1", "MIICintermediate2"]},' .
+            '{"certificate": "MIIDsigning2"}' .
+            ']}';
+        $authToken = new WebEidAuthToken($authTokenJson);
+        $signingCertificates = $authToken->getUnverifiedSigningCertificates();
+        $this->assertCount(2, $signingCertificates);
+        $this->assertSame(
+            ["MIICintermediate1", "MIICintermediate2"],
+            $signingCertificates[0]->getIntermediateCertificates()
+        );
+        $this->assertNull($signingCertificates[1]->getIntermediateCertificates());
+    }
+
+    public function testWhenSigningCertificateIntermediateCertificatesEntryIsNotStringThenParsingFails(): void
+    {
+        $authTokenJson = '{"format": "web-eid:1.1","unverifiedSigningCertificates": [' .
+            '{"certificate": "MIIDsigning1","intermediateCertificates": [true]}' .
+            ']}';
+        $this->expectException(UnexpectedValueException::class);
+        $this->expectExceptionMessage("'intermediateCertificates' entry is boolean, string expected");
+        new WebEidAuthToken($authTokenJson);
+    }
 }
