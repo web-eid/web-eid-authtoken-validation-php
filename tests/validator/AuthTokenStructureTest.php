@@ -48,7 +48,23 @@ class AuthTokenStructureTest extends AbstractTestWithValidator
     {
         $this->expectException(AuthTokenParseException::class);
         $this->expectExceptionMessage("Auth token is too long");
-        $this->validator->parse(str_repeat("1", 10001));
+        $this->validator->parse(str_repeat("1", 65537));
+    }
+
+    public function testWhenTokenLongerThanPreviousLimitThenParsingSucceeds(): void
+    {
+        $token = $this->validator->parse(
+            self::VALID_AUTH_TOKEN . str_repeat(" ", 10001 - strlen(self::VALID_AUTH_TOKEN))
+        );
+        $this->assertNotNull($token->getUnverifiedCertificate());
+    }
+
+    public function testWhenTokenAtMaximumLengthThenParsingSucceeds(): void
+    {
+        $token = $this->validator->parse(
+            self::VALID_AUTH_TOKEN . str_repeat(" ", 65536 - strlen(self::VALID_AUTH_TOKEN))
+        );
+        $this->assertNotNull($token->getUnverifiedCertificate());
     }
 
     public function testWhenUnknownTokenVersionThenParsingFails(): void
