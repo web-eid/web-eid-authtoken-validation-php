@@ -32,9 +32,11 @@ use web_eid\web_eid_authtoken_validation_php\testutil\TestPkiBuilder;
 use web_eid\web_eid_authtoken_validation_php\testutil\TestPkiCredential;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use PHPUnit\Framework\TestCase;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateExpiredException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotTrustedException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateRevokedException;
 
 class CertificateValidatorTest extends TestCase
 {
@@ -270,6 +272,91 @@ class CertificateValidatorTest extends TestCase
             null,
             new DateTime()
         );
+    }
+
+    public function testWhenCheckerThrowsForIntermediateThenThrowsNamingOffendingIntermediate(): void
+    {
+        $checkerException = new CertificateRevokedException("Intermediate CA certificate has been revoked");
+        $checker = new class ($checkerException) implements IntermediateRevocationChecker {
+            public function __construct(private AuthTokenException $exception)
+            {
+            }
+
+            public function validateNotRevoked(
+                X509 $certificate,
+                X509 $issuerCertificate,
+                array $additionalIntermediateCertificates,
+            ): void {
+                if ($certificate->getSubjectDN(X509::DN_STRING) === "CN=Test CA B") {
+                    throw $this->exception;
+                }
+            }
+        };
+
+        try {
+            CertificateValidator::validateIsValidAndSignedByTrustedCA(
+                self::$chainLeaf->getCertificate(),
+                new TrustedCertificates([self::$root->getCertificate()]),
+                "User",
+                [self::$caA->getCertificate(), self::$caB->getCertificate(), self::$caC->getCertificate()],
+                $checker,
+                new DateTime()
+            );
+            $this->fail("Expected " . CertificateNotTrustedException::class . " was not thrown");
+        } catch (CertificateNotTrustedException $exception) {
+            // The exception must name the offending intermediate, not the leaf.
+            $this->assertSame("Certificate CN=Test CA B is not trusted", $exception->getMessage());
+            $this->assertSame($checkerException, $exception->getPrevious());
+        }
+    }
+
+    public function testWhenCheckerGivenThenItIsCalledOncePerNonAnchorIntermediateWithDirectIssuer(): void
+    {
+        $checker = new class implements IntermediateRevocationChecker {
+            public array $calls = [];
+
+            public function validateNotRevoked(
+                X509 $certificate,
+                X509 $issuerCertificate,
+                array $additionalIntermediateCertificates,
+            ): void {
+                $this->calls[] = [
+                    $certificate->getSubjectDN(X509::DN_STRING),
+                    $issuerCertificate->getSubjectDN(X509::DN_STRING),
+                ];
+            }
+        };
+
+        CertificateValidator::validateIsValidAndSignedByTrustedCA(
+            self::$chainLeaf->getCertificate(),
+            new TrustedCertificates([self::$root->getCertificate()]),
+            "User",
+            [self::$caA->getCertificate(), self::$caB->getCertificate(), self::$caC->getCertificate()],
+            $checker,
+            new DateTime()
+        );
+
+        // Neither the leaf nor the trust anchor is checked, each intermediate is
+        // checked exactly once and is paired with its direct issuer.
+        $this->assertSame([
+            ["CN=Test CA A", "CN=Test CA B"],
+            ["CN=Test CA B", "CN=Test CA C"],
+            ["CN=Test CA C", "CN=Test Root CA"],
+        ], $checker->calls);
+    }
+
+    public function testWhenCheckerIsNullThenNoRevocationCheckingIsDone(): void
+    {
+        $result = CertificateValidator::validateIsValidAndSignedByTrustedCA(
+            self::$chainLeaf->getCertificate(),
+            new TrustedCertificates([self::$root->getCertificate()]),
+            "User",
+            [self::$caA->getCertificate(), self::$caB->getCertificate(), self::$caC->getCertificate()],
+            null,
+            new DateTime()
+        );
+
+        $this->assertCertificateEquals(self::$caA, $result);
     }
 
     public function testWhenLeafExpiredThenErrorMessageUsesCertificateSubjectLabel(): void

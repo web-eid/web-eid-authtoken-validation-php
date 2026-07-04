@@ -30,6 +30,7 @@ use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
 use BadFunctionCallException;
 use DateTime;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateExpiredException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotTrustedException;
@@ -74,6 +75,10 @@ final class CertificateValidator
      * optionally using token-supplied intermediate CA certificates as untrusted path-building
      * candidates. The built path must always terminate at a configured trust anchor.
      *
+     * When an intermediate revocation checker is given, every non-anchor intermediate
+     * certificate of the built path is checked for revocation; an intermediate that is
+     * revoked or whose status cannot be established fails the validation.
+     *
      * @param string $certificateSubject leaf certificate role label used in validity error
      *        messages, e.g. "User", "Signing" or "AIA OCSP responder"
      * @param X509[] $additionalIntermediateCertificates untrusted candidate certificates
@@ -87,6 +92,7 @@ final class CertificateValidator
         TrustedCertificates $trustedCertificates,
         string $certificateSubject = "User",
         array $additionalIntermediateCertificates = [],
+        ?IntermediateRevocationChecker $intermediateRevocationChecker = null,
         ?DateTime $now = null,
     ): X509 {
         $now = $now ?? DefaultClock::getInstance()->now();
@@ -102,6 +108,15 @@ final class CertificateValidator
             $additionalIntermediateCertificates,
             $now,
         );
+
+        if ($intermediateRevocationChecker !== null) {
+            self::validateIntermediateCertificatesNotRevoked(
+                $path,
+                $trustAnchor,
+                $additionalIntermediateCertificates,
+                $intermediateRevocationChecker,
+            );
+        }
 
         // Verify that the trust anchor is presently valid; it is not covered by the checks above.
         self::certificateIsValidOnDate($trustAnchor, $now, "Trusted CA");
@@ -243,4 +258,31 @@ final class CertificateValidator
         }
     }
 
+    /**
+     * Checks the revocation status of the non-anchor intermediate certificates of the built
+     * path, i.e. everything except the leaf, whose revocation policy is role-specific and
+     * applied by the caller, and the trust anchor, which is not part of the built path.
+     *
+     * @param X509[] $path
+     * @param X509[] $additionalIntermediateCertificates
+     */
+    private static function validateIntermediateCertificatesNotRevoked(
+        array $path,
+        X509 $trustAnchor,
+        array $additionalIntermediateCertificates,
+        IntermediateRevocationChecker $intermediateRevocationChecker,
+    ): void {
+        for ($i = 1; $i < count($path); $i++) {
+            $issuer = $path[$i + 1] ?? $trustAnchor;
+            try {
+                $intermediateRevocationChecker->validateNotRevoked(
+                    $path[$i],
+                    $issuer,
+                    $additionalIntermediateCertificates,
+                );
+            } catch (AuthTokenException $e) {
+                throw new CertificateNotTrustedException($path[$i], $e);
+            }
+        }
+    }
 }
