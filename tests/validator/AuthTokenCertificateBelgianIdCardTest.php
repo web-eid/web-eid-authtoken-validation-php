@@ -26,9 +26,12 @@
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
 use DateTime;
+use GuzzleHttp\Psr7\Uri;
+use web_eid\web_eid_authtoken_validation_php\ocsp\OcspResponse;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
 use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
 use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 
 class AuthTokenCertificateBelgianIdCardTest extends AbstractTestWithValidator
 {
@@ -83,8 +86,41 @@ class AuthTokenCertificateBelgianIdCardTest extends AbstractTestWithValidator
         $validator->validate($token, 'YPVgYc7Qds0qmK/RilPLffnsIg7IIovM4BAWqGZWwiY=');
     }
 
+    public function testWhenIdCardIsValidatedWithAiaOcspCheckThenDelegatedResponderIsAuthorizedAndValidationSucceeds(): void
+    {
+        $this->expectNotToPerformAssertions();
+        // The OCSP response was recorded from the card's AIA OCSP responder at http://eiddevcards.zetescards.be:8888
+        // on 2026-07-02. Its responder certificate is issued by eID TEST EC Citizen CA, the issuer of the
+        // authentication certificate, so the RFC 6960 delegated-responder authorization check in AiaOcspService
+        // must accept it. The clock is set to the recording time as the response thisUpdate age is limited.
+        $this->mockDate("2026-07-02T08:39:30Z");
+        $recordedResponseClient = self::getRecordedResponseClient("ocsp_response_belgian_test_id_card.der");
+        $validator = AuthTokenValidators::getAuthTokenValidatorForBelgianIdCardWithOcspCheck($recordedResponseClient);
+        $token = $validator->parse(self::BELGIAN_TEST_ID_CARD_AUTH_TOKEN_ECC);
+
+        $validator->validate($token, 'iMeEwP2cgUINY2XoO/lqEpOUn7z/ysHRqGXkGKC4VXE=');
+    }
+
     private function mockDate(string $date)
     {
         Dates::setMockedCertificateValidatorDate(new DateTime($date));
+    }
+
+    private static function getRecordedResponseClient(string $resource): OcspClient
+    {
+        $response = file_get_contents(__DIR__ . "/../_resources/" . $resource);
+        return new class ($response) implements OcspClient {
+            private $response;
+
+            public function __construct($response)
+            {
+                $this->response = $response;
+            }
+
+            public function request(Uri $url, string $requestBody): OcspResponse
+            {
+                return new OcspResponse($this->response);
+            }
+        };
     }
 }
