@@ -32,6 +32,7 @@ use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
 use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\ResponderIssuerMatchingPolicy;
 
 final class AuthTokenValidationConfiguration
 {
@@ -44,6 +45,8 @@ final class AuthTokenValidationConfiguration
     private array $disallowedSubjectCertificatePolicies;
     private UriCollection $nonceDisabledOcspUrls;
     private ?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration = null;
+    private ResponderIssuerMatchingPolicy $aiaOcspResponderIssuerMatchingPolicy =
+        ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE;
 
     /**
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
@@ -134,6 +137,16 @@ final class AuthTokenValidationConfiguration
     public function getNonceDisabledOcspUrls(): UriCollection
     {
         return $this->nonceDisabledOcspUrls;
+    }
+
+    public function getAiaOcspResponderIssuerMatchingPolicy(): ResponderIssuerMatchingPolicy
+    {
+        return $this->aiaOcspResponderIssuerMatchingPolicy;
+    }
+
+    public function setAiaOcspResponderIssuerMatchingPolicy(ResponderIssuerMatchingPolicy $matchingPolicy): void
+    {
+        $this->aiaOcspResponderIssuerMatchingPolicy = $matchingPolicy;
     }
 
     /**

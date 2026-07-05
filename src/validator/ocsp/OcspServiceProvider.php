@@ -28,6 +28,7 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use InvalidArgumentException;
 use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\certificate\IntermediateRevocationChecker;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspService;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServiceConfiguration;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspService;
@@ -38,10 +39,12 @@ class OcspServiceProvider
 {
     private ?DesignatedOcspService $designatedOcspService;
     private AiaOcspServiceConfiguration $aiaOcspServiceConfiguration;
+    private ?IntermediateRevocationChecker $intermediateRevocationChecker;
 
     public function __construct(
         ?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration,
-        AiaOcspServiceConfiguration $aiaOcspServiceConfiguration
+        AiaOcspServiceConfiguration $aiaOcspServiceConfiguration,
+        ?IntermediateRevocationChecker $intermediateRevocationChecker = null,
     ) {
         $this->designatedOcspService = !is_null($designatedOcspServiceConfiguration)
             ? new DesignatedOcspService($designatedOcspServiceConfiguration)
@@ -49,6 +52,7 @@ class OcspServiceProvider
 
         $this->aiaOcspServiceConfiguration = $aiaOcspServiceConfiguration
             ?? throw new InvalidArgumentException("AIA Ocsp Service Configuration must not be null");
+        $this->intermediateRevocationChecker = $intermediateRevocationChecker;
     }
 
     /**
@@ -75,7 +79,8 @@ class OcspServiceProvider
             $this->aiaOcspServiceConfiguration,
             $certificate,
             $certificateIssuerCertificate,
-            $additionalIntermediateCertificates
+            $additionalIntermediateCertificates,
+            $this->intermediateRevocationChecker,
         );
     }
 }

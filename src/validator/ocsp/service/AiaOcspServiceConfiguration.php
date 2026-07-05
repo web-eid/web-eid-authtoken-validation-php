@@ -31,11 +31,16 @@ class AiaOcspServiceConfiguration
 {
     private UriCollection $nonceDisabledOcspUrls;
     private TrustedCertificates $trustedCACertificates;
+    private ResponderIssuerMatchingPolicy $responderIssuerMatchingPolicy;
 
-    public function __construct(UriCollection $nonceDisabledOcspUrls, TrustedCertificates $trustedCACertificates)
-    {
+    public function __construct(
+        UriCollection $nonceDisabledOcspUrls,
+        TrustedCertificates $trustedCACertificates,
+        ResponderIssuerMatchingPolicy $responderIssuerMatchingPolicy = ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE,
+    ) {
         $this->nonceDisabledOcspUrls = $nonceDisabledOcspUrls;
         $this->trustedCACertificates = $trustedCACertificates;
+        $this->responderIssuerMatchingPolicy = $responderIssuerMatchingPolicy;
     }
 
     public function getNonceDisabledOcspUrls()
@@ -46,5 +51,10 @@ class AiaOcspServiceConfiguration
     public function getTrustedCACertificates()
     {
         return $this->trustedCACertificates;
+    }
+
+    public function getResponderIssuerMatchingPolicy(): ResponderIssuerMatchingPolicy
+    {
+        return $this->responderIssuerMatchingPolicy;
     }
 }
