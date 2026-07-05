@@ -28,8 +28,10 @@ use GuzzleHttp\Psr7\Uri;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Psr7\Exception\MalformedUriException;
+use ReflectionProperty;
 use web_eid\web_eid_authtoken_validation_php\testutil\Logger;
 use web_eid\web_eid_authtoken_validation_php\testutil\AuthTokenValidators;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\ResponderIssuerMatchingPolicy;
 
 class AuthTokenValidatorBuilderTest extends TestCase
 {
@@ -112,5 +114,18 @@ class AuthTokenValidatorBuilderTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage("OCSP request timeout must be greater than zero");
         $builderWithInvalidOcspRequestTimeout->build();
+    }
+
+    public function testWithAiaOcspResponderIssuerMatchingPolicySetsConfiguration(): void
+    {
+        (self::$builder)->withAiaOcspResponderIssuerMatchingPolicy(ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY);
+
+        $configuration = (new ReflectionProperty(AuthTokenValidatorBuilder::class, "configuration"))
+            ->getValue(self::$builder);
+
+        $this->assertSame(
+            ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY,
+            $configuration->getAiaOcspResponderIssuerMatchingPolicy()
+        );
     }
 }

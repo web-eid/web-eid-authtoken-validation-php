@@ -102,7 +102,8 @@ final class AuthTokenVersionValidatorFactory
 
         $aiaOcspServiceConfiguration = new AiaOcspServiceConfiguration(
             $validationConfig->getNonceDisabledOcspUrls(),
-            $trustedCACertificates
+            $trustedCACertificates,
+            $validationConfig->getAiaOcspResponderIssuerMatchingPolicy()
         );
 
         // The OCSP client is needed even when the user certificate revocation check is
@@ -127,7 +128,8 @@ final class AuthTokenVersionValidatorFactory
         if ($validationConfig->isUserCertificateRevocationCheckWithOcspEnabled()) {
             $ocspServiceProvider = new OcspServiceProvider(
                 $validationConfig->getDesignatedOcspServiceConfiguration(),
-                $aiaOcspServiceConfiguration
+                $aiaOcspServiceConfiguration,
+                $intermediateRevocationChecker
             );
         }
 

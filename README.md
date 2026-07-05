@@ -309,6 +309,8 @@ The following additional configuration options are available in `AuthTokenValida
 
 - `withNonceDisabledOcspUrls(URI ...$urls)` – adds the given URLs to the list of OCSP responder access location URLs for which the nonce protocol extension will be disabled. Some OCSP responders don't support the nonce extension.
 
+- `withAiaOcspResponderIssuerMatchingPolicy(ResponderIssuerMatchingPolicy $matchingPolicy)` – controls how an AIA OCSP responder's issuer is matched against the user certificate's issuer. The default `EXACT_CERTIFICATE` policy requires the same X.509 certificate. Use `SUBJECT_AND_PUBLIC_KEY` to accept equivalent cross-certificates with the same subject and public key; this also enables revocation checking for non-anchor intermediate certificates in the responder's certification path.
+
 - `withAllowedOcspResponseTimeSkew(int $allowedTimeSkew)` – sets the allowed time skew for OCSP response's `thisUpdate` and `nextUpdate` times to allow discrepancies between the system clock and the OCSP responder's clock or revocation updates that are not published in real time. The default allowed time skew is 15 minutes. The relatively long default is specifically chosen to account for one particular OCSP responder that used CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
 
 - `withMaxOcspResponseThisUpdateAge(int $maxThisUpdateAge)` – sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.
@@ -329,6 +331,8 @@ $validator = new AuthTokenValidatorBuilder()
 ### Certificates' Authority Information Access (AIA) extension
 
 Unless a designated OCSP responder service is in use, it is required that the AIA extension that contains the certificate’s OCSP responder access location is present in the user certificate. The AIA OCSP URL will be used to check the certificate revocation status with OCSP.
+
+By default, the certificate that directly signs an AIA OCSP response, or issues a delegated AIA OCSP responder, must exactly match the certificate that issued the user certificate. Deployments that require equivalent cross-certificates can explicitly select `ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY` with `withAiaOcspResponderIssuerMatchingPolicy()`. This policy also requires the revocation status of every non-anchor intermediate certificate in the responder's certification path to be established.
 
 Note that there may be limitations to using AIA URLs as the services behind these URLs provide different security and SLA guarantees than dedicated OCSP responder services. In case you need a SLA guarantee, use a designated OCSP responder service.
 

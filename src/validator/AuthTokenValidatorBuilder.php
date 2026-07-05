@@ -31,6 +31,7 @@ use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\util\X509Collection;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\ResponderIssuerMatchingPolicy;
 use Psr\Log\LoggerInterface;
 
 class AuthTokenValidatorBuilder
@@ -229,6 +230,26 @@ class AuthTokenValidatorBuilder
                 ),
         );
 
+        return $this;
+    }
+
+    /**
+     * Sets how an AIA OCSP responder certificate issuer is matched against the issuer of the subject certificate.
+     * The default is {@see ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE}. Use
+     * {@see ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY} only when equivalent cross-certificates must be
+     * accepted. Under that policy, non-anchor intermediate certificates in the responder's certification path are
+     * checked for revocation.
+     *
+     * @param ResponderIssuerMatchingPolicy $matchingPolicy AIA OCSP responder issuer matching policy
+     * @return the builder instance for method chaining
+     */
+    public function withAiaOcspResponderIssuerMatchingPolicy(
+        ResponderIssuerMatchingPolicy $matchingPolicy,
+    ): AuthTokenValidatorBuilder {
+        $this->configuration->setAiaOcspResponderIssuerMatchingPolicy($matchingPolicy);
+        $this->logger?->debug(
+            "AIA OCSP responder issuer matching policy set to " . $matchingPolicy->name,
+        );
         return $this;
     }
 

@@ -131,6 +131,7 @@ final class IntermediateRevocationCheckerImpl implements IntermediateRevocationC
             $certificate,
             $issuerCertificate,
             $additionalIntermediateCertificates,
+            $this,
         );
 
         $certificateId = (new Ocsp())->generateCertificateId($certificate, $issuerCertificate);

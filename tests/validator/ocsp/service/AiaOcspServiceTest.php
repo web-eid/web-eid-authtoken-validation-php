@@ -26,8 +26,11 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
 
 use DateTime;
 use phpseclib3\File\X509;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use web_eid\web_eid_authtoken_validation_php\certificate\IntermediateRevocationChecker;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotTrustedException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateRevocationCheckFailedException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\OCSPCertificateException;
 use web_eid\web_eid_authtoken_validation_php\testutil\TestPkiBuilder;
 use web_eid\web_eid_authtoken_validation_php\testutil\TestPkiCredential;
@@ -66,11 +69,10 @@ class AiaOcspServiceTest extends TestCase
         self::$delegatedResponder = self::$pki->buildOcspResponder("Test OCSP Responder", self::$intermediate);
         self::$siblingCa = self::$pki->buildIntermediateCa("Test Sibling CA", self::$root);
         self::$siblingResponder = self::$pki->buildOcspResponder("Test Sibling OCSP Responder", self::$siblingCa);
-        // Same subject DN and public key as the intermediate CA, different serial and issuer.
-        self::$crossIntermediate = self::$pki->buildCrossCertificate(
-            self::$intermediate,
-            self::$pki->buildRootCa("Other Root CA")
-        );
+        // An equivalent cross-certificate for the intermediate CA: same subject DN and public
+        // key, but a distinct certificate (different serial number), also issued by the trusted
+        // root so that it can chain to a trust anchor on its own.
+        self::$crossIntermediate = self::$pki->buildCrossCertificate(self::$intermediate, self::$root);
         // Same subject DN as the intermediate CA, different key.
         self::$impostorIntermediate = self::$pki->buildImpostorCa(self::$intermediate, self::$root);
         self::$rootDelegatedResponder = self::$pki->buildOcspResponder("Root Delegated OCSP Responder", self::$root);
@@ -81,15 +83,31 @@ class AiaOcspServiceTest extends TestCase
         );
     }
 
-    public function testWhenResponderIsDelegatedByIssuerAndIntermediateIsSuppliedThenSucceeds(): void
-    {
+    #[DataProvider('matchingPolicies')]
+    public function testWhenResponderIsDelegatedByIssuerAndIntermediateIsSuppliedThenSucceeds(
+        ResponderIssuerMatchingPolicy $matchingPolicy,
+    ): void {
         $this->expectNotToPerformAssertions();
 
         $service = $this->getAiaOcspService(
             self::$intermediate->getCertificate(),
-            [self::$intermediate->getCertificate()]
+            [self::$intermediate->getCertificate()],
+            $matchingPolicy,
         );
         $service->validateResponderCertificate(self::$delegatedResponder->getCertificate(), new DateTime());
+    }
+
+    public function testWhenMatchingPolicyIsNotSpecifiedThenExactCertificateMatchingIsUsed(): void
+    {
+        $configuration = new AiaOcspServiceConfiguration(
+            new UriCollection(),
+            new TrustedCertificates([self::$root->getCertificate()])
+        );
+
+        $this->assertSame(
+            ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE,
+            $configuration->getResponderIssuerMatchingPolicy()
+        );
     }
 
     public function testWhenIntermediateIsNotSuppliedThenResponderPathBuildingFails(): void
@@ -101,17 +119,104 @@ class AiaOcspServiceTest extends TestCase
         $service->validateResponderCertificate(self::$delegatedResponder->getCertificate(), new DateTime());
     }
 
-    public function testWhenIssuerIsEquivalentCrossCertificateThenSucceeds(): void
+    public function testWhenIntermediateRevocationStatusIsUnknownThenOnlySubjectAndPublicKeyPolicyFails(): void
     {
-        $this->expectNotToPerformAssertions();
+        // Simulates an intermediate whose revocation status cannot be established, e.g. because
+        // it has no usable OCSP or CRL revocation source.
+        $alwaysFailingChecker = new class implements IntermediateRevocationChecker {
+            public function validateNotRevoked(
+                X509 $certificate,
+                X509 $issuerCertificate,
+                array $additionalIntermediateCertificates,
+            ): void {
+                throw new CertificateRevocationCheckFailedException(
+                    "Revocation status of the intermediate CA certificate could not be established"
+                );
+            }
+        };
 
-        // The subject certificate issuer is represented by an equivalent cross-certificate
-        // that has the same subject DN and public key, but a different serial number.
+        $exactService = $this->getAiaOcspService(
+            self::$intermediate->getCertificate(),
+            [self::$intermediate->getCertificate()],
+            ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE,
+            $alwaysFailingChecker,
+        );
+        $subjectAndPublicKeyService = $this->getAiaOcspService(
+            self::$intermediate->getCertificate(),
+            [self::$intermediate->getCertificate()],
+            ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY,
+            $alwaysFailingChecker,
+        );
+
+        // The exact-certificate policy never checks the responder's own path intermediates, so
+        // the always-failing checker is never consulted.
+        $exactService->validateResponderCertificate(self::$delegatedResponder->getCertificate(), new DateTime());
+
+        $this->expectException(CertificateNotTrustedException::class);
+        $subjectAndPublicKeyService->validateResponderCertificate(
+            self::$delegatedResponder->getCertificate(),
+            new DateTime()
+        );
+    }
+
+    public function testWhenIssuerIsEquivalentCrossCertificateWithDefaultPolicyThenFails(): void
+    {
+        // The responder still chains to the root via the real intermediate, so its issuer in the
+        // built path is the real intermediate. The subject certificate issuer is passed as the
+        // equivalent cross-certificate (same subject and public key, different certificate),
+        // which the default exact-certificate policy must reject.
         $service = $this->getAiaOcspService(
             self::$crossIntermediate->getCertificate(),
             [self::$intermediate->getCertificate()]
         );
+
+        try {
+            $service->validateResponderCertificate(self::$delegatedResponder->getCertificate(), new DateTime());
+            $this->fail("Expected " . CertificateNotTrustedException::class . " was not thrown");
+        } catch (CertificateNotTrustedException $exception) {
+            $this->assertInstanceOf(OCSPCertificateException::class, $exception->getPrevious());
+            $this->assertSame(self::NOT_AUTHORIZED_MESSAGE, $exception->getPrevious()->getMessage());
+        }
+    }
+
+    public function testWhenIssuerIsEquivalentCrossCertificateWithSubjectAndPublicKeyPolicyThenSucceeds(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        $service = $this->getAiaOcspService(
+            self::$crossIntermediate->getCertificate(),
+            [self::$intermediate->getCertificate()],
+            ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY,
+        );
         $service->validateResponderCertificate(self::$delegatedResponder->getCertificate(), new DateTime());
+    }
+
+    public function testWhenResponseIsSignedByEquivalentCrossCertificateWithDefaultPolicyThenFails(): void
+    {
+        $service = $this->getAiaOcspService(self::$intermediate->getCertificate(), []);
+
+        try {
+            $service->validateResponderCertificate(self::$crossIntermediate->getCertificate(), new DateTime());
+            $this->fail("Expected " . CertificateNotTrustedException::class . " was not thrown");
+        } catch (CertificateNotTrustedException $exception) {
+            $this->assertInstanceOf(OCSPCertificateException::class, $exception->getPrevious());
+            $this->assertStringContainsString(
+                "equivalent to but not the same as the subject certificate issuer",
+                $exception->getPrevious()->getMessage()
+            );
+        }
+    }
+
+    public function testWhenResponseIsSignedByEquivalentCrossCertificateWithSubjectAndPublicKeyPolicyThenSucceeds(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        $service = $this->getAiaOcspService(
+            self::$intermediate->getCertificate(),
+            [],
+            ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY,
+        );
+        $service->validateResponderCertificate(self::$crossIntermediate->getCertificate(), new DateTime());
     }
 
     public function testWhenResponderIsDelegatedBySiblingCaThenFails(): void
@@ -134,14 +239,17 @@ class AiaOcspServiceTest extends TestCase
         }
     }
 
-    public function testWhenIssuerIsImpostorWithSameNameButDifferentKeyThenFails(): void
-    {
+    #[DataProvider('matchingPolicies')]
+    public function testWhenIssuerIsImpostorWithSameNameButDifferentKeyThenFails(
+        ResponderIssuerMatchingPolicy $matchingPolicy,
+    ): void {
         // The responder chains to the genuine intermediate CA, but the subject certificate
         // issuer is an impostor CA with the same subject DN and a different key, so the
         // CA identity comparison must fail.
         $service = $this->getAiaOcspService(
             self::$impostorIntermediate->getCertificate(),
-            [self::$intermediate->getCertificate()]
+            [self::$intermediate->getCertificate()],
+            $matchingPolicy,
         );
 
         try {
@@ -171,13 +279,15 @@ class AiaOcspServiceTest extends TestCase
         }
     }
 
-    public function testWhenResponderIsTheIssuingCaItselfThenOcspSigningEkuIsNotRequired(): void
-    {
+    #[DataProvider('matchingPolicies')]
+    public function testWhenResponderIsTheIssuingCaItselfThenOcspSigningEkuIsNotRequired(
+        ResponderIssuerMatchingPolicy $matchingPolicy,
+    ): void {
         $this->expectNotToPerformAssertions();
 
         // The issuing CA signs its own OCSP responses; the intermediate CA certificate
         // does not have the OCSP-signing extended key usage.
-        $service = $this->getAiaOcspService(self::$intermediate->getCertificate(), []);
+        $service = $this->getAiaOcspService(self::$intermediate->getCertificate(), [], $matchingPolicy);
         $service->validateResponderCertificate(self::$intermediate->getCertificate(), new DateTime());
     }
 
@@ -196,22 +306,35 @@ class AiaOcspServiceTest extends TestCase
         $service->validateResponderCertificate(self::$responderWithoutEku->getCertificate(), new DateTime());
     }
 
+    /** @return array<string, array{ResponderIssuerMatchingPolicy}> */
+    public static function matchingPolicies(): array
+    {
+        return [
+            "EXACT_CERTIFICATE" => [ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE],
+            "SUBJECT_AND_PUBLIC_KEY" => [ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY],
+        ];
+    }
+
     /**
      * @param X509[] $additionalIntermediateCertificates
      */
     private function getAiaOcspService(
         X509 $certificateIssuerCertificate,
         array $additionalIntermediateCertificates,
+        ?ResponderIssuerMatchingPolicy $matchingPolicy = null,
+        ?IntermediateRevocationChecker $intermediateRevocationChecker = null,
     ): AiaOcspService {
         $configuration = new AiaOcspServiceConfiguration(
             new UriCollection(),
-            new TrustedCertificates([self::$root->getCertificate()])
+            new TrustedCertificates([self::$root->getCertificate()]),
+            $matchingPolicy ?? ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE,
         );
         return new AiaOcspService(
             $configuration,
             self::$leaf->getCertificate(),
             $certificateIssuerCertificate,
-            $additionalIntermediateCertificates
+            $additionalIntermediateCertificates,
+            $intermediateRevocationChecker,
         );
     }
 }
