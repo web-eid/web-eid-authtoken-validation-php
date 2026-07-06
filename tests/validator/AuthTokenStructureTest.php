@@ -58,4 +58,12 @@ class AuthTokenStructureTest extends AbstractTestWithValidator
         $this->expectExceptionMessage("Token format version 'invalid' is currently not supported");
         $this->validator->validate($token, "");
     }
+
+    public function testWhenTokenFormatIsMissingThenValidationFailsWithParseException(): void
+    {
+        $token = $this->removeTokenField(self::VALID_AUTH_TOKEN, "format");
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage("Token format version 'null' is currently not supported");
+        $this->validator->validate($token, "");
+    }
 }
