@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2026 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,21 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\exceptions;
+declare(strict_types=1);
 
-use Throwable;
+namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
-class CertificateDecodingException extends AuthTokenException
+use GuzzleHttp\Psr7\Uri;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateRevocationCheckFailedException;
+
+/**
+ * Fetches certificate revocation lists from CRL distribution point URLs.
+ */
+interface CrlClient
 {
-    public function __construct(string $resource, ?Throwable $cause = null)
-    {
-        parent::__construct("Certificate decoding from Base64 or parsing failed for " . $resource, $cause);
-    }
+    /**
+     * @return string the raw CRL bytes (DER or PEM)
+     * @throws CertificateRevocationCheckFailedException when the CRL cannot be fetched
+     */
+    public function fetch(Uri $uri): string;
 }

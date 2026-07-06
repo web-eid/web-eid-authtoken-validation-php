@@ -75,6 +75,16 @@ class AuthTokenVersionValidatorFactoryTest extends TestCase
         ];
     }
 
+    public function testWhenFormatIsNullThenGetValidatorForThrowsParseException(): void
+    {
+        $factory = new AuthTokenVersionValidatorFactory([]);
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage("Token format version 'null' is currently not supported");
+
+        $factory->getValidatorFor(null);
+    }
+
     /**
      * @throws AuthTokenParseException
      */

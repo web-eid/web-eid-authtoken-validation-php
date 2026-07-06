@@ -29,6 +29,8 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 use phpseclib3\File\X509;
 use Exception;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
+use web_eid\web_eid_authtoken_validation_php\certificate\CertificateLoader;
+use web_eid\web_eid_authtoken_validation_php\certificate\IntermediateRevocationChecker;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
 use web_eid\web_eid_authtoken_validation_php\util\TrustedCertificates;
@@ -46,12 +48,13 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
     private const V1_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1";
 
     private SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators;
-    private TrustedCertificates $trustedCACertificates;
+    protected TrustedCertificates $trustedCACertificates;
     private AuthTokenSignatureValidator $authTokenSignatureValidator;
     private AuthTokenValidationConfiguration $configuration;
     private ?OcspClient $ocspClient;
     private ?OcspServiceProvider $ocspServiceProvider;
-    private ?LoggerInterface $logger;
+    protected ?IntermediateRevocationChecker $intermediateRevocationChecker;
+    protected ?LoggerInterface $logger;
 
     public function __construct(
         SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators,
@@ -61,6 +64,7 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         ?OcspClient $ocspClient,
         ?OcspServiceProvider $ocspServiceProvider,
         ?LoggerInterface $logger = null,
+        ?IntermediateRevocationChecker $intermediateRevocationChecker = null,
     ) {
         $this->simpleSubjectCertificateValidators = $simpleSubjectCertificateValidators;
         $this->trustedCACertificates = $trustedCACertificates;
@@ -69,27 +73,34 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         $this->ocspClient = $ocspClient;
         $this->ocspServiceProvider = $ocspServiceProvider;
         $this->logger = $logger;
+        $this->intermediateRevocationChecker = $intermediateRevocationChecker;
     }
 
     public function supports(?string $format): bool
     {
-        return $format !== null &&
-            str_starts_with($format, self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX);
+        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
+            $format === "web-eid:1.0";
     }
 
     public function validate(
         WebEidAuthToken $authToken,
         string $currentChallengeNonce,
     ): X509 {
-        if (
-            $this->isExactV10Format($authToken->getFormat()) &&
-            !empty($authToken->getUnverifiedSigningCertificates())
-        ) {
-            throw new AuthTokenParseException(
-                "'unverifiedSigningCertificates' field is not allowed for format '" .
-                    $authToken->getFormat() .
-                    "'",
-            );
+        if ($this->isExactV10Format($authToken->getFormat())) {
+            if ($authToken->getUnverifiedSigningCertificates() !== null) {
+                throw new AuthTokenParseException(
+                    "'unverifiedSigningCertificates' field is not allowed for format '" .
+                        $authToken->getFormat() .
+                        "'",
+                );
+            }
+            if ($authToken->getUnverifiedIntermediateCertificates() !== null) {
+                throw new AuthTokenParseException(
+                    "'unverifiedIntermediateCertificates' field is not allowed for format '" .
+                        $authToken->getFormat() .
+                        "'",
+                );
+            }
         }
 
         if (
@@ -120,10 +131,14 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
             );
         }
 
+        $additionalIntermediateCertificates =
+            $this->decodeAdditionalIntermediateCertificates($authToken);
+
         $this->simpleSubjectCertificateValidators->executeFor(
             $subjectCertificate,
         );
-        $this->buildTrustValidatorBatch()->executeFor($subjectCertificate);
+        $this->buildTrustValidatorBatch($additionalIntermediateCertificates)
+            ->executeFor($subjectCertificate);
 
         $this->authTokenSignatureValidator->validate(
             $authToken->getAlgorithm(),
@@ -135,11 +150,18 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         return $subjectCertificate;
     }
 
-    private function buildTrustValidatorBatch(): SubjectCertificateValidatorBatch
-    {
+    /**
+     * @param X509[] $additionalIntermediateCertificates token-supplied untrusted intermediate CA
+     *        certificates, used only as candidates during certification path building
+     */
+    protected function buildTrustValidatorBatch(
+        array $additionalIntermediateCertificates = [],
+    ): SubjectCertificateValidatorBatch {
         $trustedValidator = new SubjectCertificateTrustedValidator(
             $this->trustedCACertificates,
             $this->logger,
+            $additionalIntermediateCertificates,
+            $this->intermediateRevocationChecker,
         );
 
         $batch = new SubjectCertificateValidatorBatch($trustedValidator);
@@ -156,11 +178,58 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
                     $this->configuration->getAllowedOcspResponseTimeSkew(),
                     $this->configuration->getMaxOcspResponseThisUpdateAge(),
                     $this->logger,
+                    $additionalIntermediateCertificates,
                 ),
             );
         }
 
         return $batch;
+    }
+
+    /**
+     * @return X509[]
+     * @throws AuthTokenParseException
+     * @throws CertificateDecodingException
+     */
+    private function decodeAdditionalIntermediateCertificates(
+        WebEidAuthToken $authToken,
+    ): array {
+        self::validateIntermediateCertificatesField(
+            $authToken->getUnverifiedIntermediateCertificates(),
+            "unverifiedIntermediateCertificates",
+            $authToken->getFormat(),
+        );
+
+        return CertificateLoader::decodeCertificatesFromBase64(
+            $authToken->getUnverifiedIntermediateCertificates(),
+            "unverifiedIntermediateCertificates",
+        );
+    }
+
+    /**
+     * @param string[]|null $intermediateCertificates
+     * @throws AuthTokenParseException
+     */
+    protected static function validateIntermediateCertificatesField(
+        ?array $intermediateCertificates,
+        string $fieldName,
+        ?string $format,
+    ): void {
+        if ($intermediateCertificates === null) {
+            return;
+        }
+        if ($intermediateCertificates === []) {
+            throw new AuthTokenParseException(
+                "'{$fieldName}' must not be empty for format '{$format}'",
+            );
+        }
+        foreach ($intermediateCertificates as $certificate) {
+            if ($certificate === null || $certificate === "") {
+                throw new AuthTokenParseException(
+                    "'{$fieldName}' must not contain null or empty entries for format '{$format}'",
+                );
+            }
+        }
     }
 
     private function isExactV10Format(?string $format): bool

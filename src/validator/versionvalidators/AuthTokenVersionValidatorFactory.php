@@ -29,6 +29,8 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificateValidatorBatch;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificatePurposeValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificatePolicyValidator;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\CrlClientImpl;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\IntermediateRevocationCheckerImpl;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClientImpl;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspServiceProvider;
@@ -52,7 +54,7 @@ final class AuthTokenVersionValidatorFactory
         $this->validators = $validators;
     }
 
-    public function supports(string $format): bool
+    public function supports(?string $format): bool
     {
         foreach ($this->validators as $validator) {
             if ($validator->supports($format)) {
@@ -65,7 +67,7 @@ final class AuthTokenVersionValidatorFactory
     /**
      * @throws AuthTokenParseException
      */
-    public function getValidatorFor(string $format): AuthTokenVersionValidator
+    public function getValidatorFor(?string $format): AuthTokenVersionValidator
     {
         foreach ($this->validators as $validator) {
             if ($validator->supports($format)) {
@@ -73,8 +75,9 @@ final class AuthTokenVersionValidatorFactory
             }
         }
 
+        $formatLabel = $format ?? "null";
         throw new AuthTokenParseException(
-            "Token format version '{$format}' is currently not supported"
+            "Token format version '{$formatLabel}' is currently not supported"
         );
     }
 
@@ -97,21 +100,36 @@ final class AuthTokenVersionValidatorFactory
             )
         );
 
-        $ocspClient = null;
+        $aiaOcspServiceConfiguration = new AiaOcspServiceConfiguration(
+            $validationConfig->getNonceDisabledOcspUrls(),
+            $trustedCACertificates,
+            $validationConfig->getAiaOcspResponderIssuerMatchingPolicy()
+        );
+
+        // The OCSP client is needed even when the user certificate revocation check is
+        // disabled: token-supplied intermediate CA certificates are always checked for
+        // revocation when they are part of a built certification path.
+        $ocspClient = $providedOcspClient ?? OcspClientImpl::build(
+            $validationConfig->getOcspRequestTimeout(),
+            $logger
+        );
+
+        $intermediateRevocationChecker = new IntermediateRevocationCheckerImpl(
+            $ocspClient,
+            CrlClientImpl::build($validationConfig->getOcspRequestTimeout(), $logger),
+            $aiaOcspServiceConfiguration,
+            $validationConfig->getAllowedOcspResponseTimeSkew(),
+            $validationConfig->getMaxOcspResponseThisUpdateAge(),
+            $logger
+        );
+
         $ocspServiceProvider = null;
 
         if ($validationConfig->isUserCertificateRevocationCheckWithOcspEnabled()) {
-            $ocspClient = $providedOcspClient ?? OcspClientImpl::build(
-                $validationConfig->getOcspRequestTimeout(),
-                $logger
-            );
-
             $ocspServiceProvider = new OcspServiceProvider(
                 $validationConfig->getDesignatedOcspServiceConfiguration(),
-                new AiaOcspServiceConfiguration(
-                    $validationConfig->getNonceDisabledOcspUrls(),
-                    $trustedCACertificates
-                )
+                $aiaOcspServiceConfiguration,
+                $intermediateRevocationChecker
             );
         }
 
@@ -126,7 +144,8 @@ final class AuthTokenVersionValidatorFactory
             $validationConfig,
             $ocspClient,
             $ocspServiceProvider,
-            $logger
+            $logger,
+            $intermediateRevocationChecker
         );
 
         $validator1 = new AuthTokenVersion1Validator(
@@ -136,7 +155,8 @@ final class AuthTokenVersionValidatorFactory
             $validationConfig,
             $ocspClient,
             $ocspServiceProvider,
-            $logger
+            $logger,
+            $intermediateRevocationChecker
         );
 
         return new self([

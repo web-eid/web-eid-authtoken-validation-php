@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2026 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,13 @@ namespace web_eid\web_eid_authtoken_validation_php\exceptions;
 
 use Throwable;
 
-class CertificateDecodingException extends AuthTokenException
+/**
+ * Thrown when a certificate other than the user certificate has been revoked.
+ */
+class CertificateRevokedException extends AuthTokenException
 {
-    public function __construct(string $resource, ?Throwable $cause = null)
+    public function __construct(string $message, ?Throwable $cause = null)
     {
-        parent::__construct("Certificate decoding from Base64 or parsing failed for " . $resource, $cause);
+        parent::__construct($message, $cause);
     }
 }

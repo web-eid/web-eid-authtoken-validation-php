@@ -26,11 +26,15 @@ declare(strict_types=1);
 
 namespace web_eid\web_eid_authtoken_validation_php\validator\versionvalidators;
 
+use DateTime;
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateValidator;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
 use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateExpiredException;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateNotYetValidException;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
+use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
 use web_eid\web_eid_authtoken_validation_php\validator\certvalidators\SubjectCertificateValidatorBatch;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenSignatureValidator;
 use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidationConfiguration;
@@ -51,11 +55,167 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
 
     public const DIFFERENT_CERT = "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";
 
+    protected function tearDown(): void
+    {
+        Dates::resetMockedCertificateValidatorDate();
+    }
+
     public function testWhenValidV11TokenThenValidationSucceeds(): void
     {
         $authToken = new WebEidAuthToken(self::VALID_V11_AUTH_TOKEN);
         $this->expectNotToPerformAssertions();
         $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * The provided intermediate certificate is the configured trust anchor itself,
+     * so the certification path terminates immediately at the anchor and the
+     * intermediate candidate stays unused; no revocation check is performed.
+     *
+     * @throws AuthTokenParseException
+     */
+    public function testWhenValidV11TokenWithIntermediateCertificatesThenValidationSucceeds(): void
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        $tokenFields["unverifiedIntermediateCertificates"] = [self::getTestEsteid2018CAInBase64()];
+
+        $authToken = new WebEidAuthToken(json_encode($tokenFields, JSON_UNESCAPED_SLASHES));
+
+        $this->expectNotToPerformAssertions();
+        $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * @throws AuthTokenParseException
+     */
+    public function testWhenV11IntermediateCertificatesIsEmptyThenValidationFails(): void
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        $tokenFields["unverifiedIntermediateCertificates"] = [];
+
+        $authToken = new WebEidAuthToken(json_encode($tokenFields, JSON_UNESCAPED_SLASHES));
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedIntermediateCertificates' must not be empty for format 'web-eid:1.1'"
+        );
+
+        $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * @throws AuthTokenParseException
+     */
+    public function testWhenV11IntermediateCertificatesContainEmptyEntryThenValidationFails(): void
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        $tokenFields["unverifiedIntermediateCertificates"] = [""];
+
+        $authToken = new WebEidAuthToken(json_encode($tokenFields, JSON_UNESCAPED_SLASHES));
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedIntermediateCertificates' must not contain null or empty entries for format 'web-eid:1.1'"
+        );
+
+        $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * @throws AuthTokenParseException
+     */
+    public function testWhenV11IntermediateCertificatesContainInvalidBase64ThenValidationFails(): void
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        $tokenFields["unverifiedIntermediateCertificates"] = ["not-valid-base64!!!"];
+
+        $authToken = new WebEidAuthToken(json_encode($tokenFields, JSON_UNESCAPED_SLASHES));
+
+        $this->expectException(CertificateDecodingException::class);
+        $this->expectExceptionMessage("'unverifiedIntermediateCertificates' decode failed");
+
+        $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * When the authentication certificate's intermediate certificates are present,
+     * signing certificates are optional and their validation is skipped.
+     *
+     * @throws AuthTokenParseException
+     */
+    public function testWhenV11SigningCertificatesAbsentAndIntermediateCertificatesPresentThenValidationSucceeds(): void
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        unset($tokenFields["unverifiedSigningCertificates"]);
+        $tokenFields["unverifiedIntermediateCertificates"] = [self::getTestEsteid2018CAInBase64()];
+
+        $authToken = new WebEidAuthToken(json_encode($tokenFields, JSON_UNESCAPED_SLASHES));
+
+        $this->expectNotToPerformAssertions();
+        $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * @throws AuthTokenParseException
+     */
+    public function testWhenV11SigningCertificateHasIntermediateCertificatesThenValidationSucceeds(): void
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+        $tokenFields["unverifiedSigningCertificates"][0]["intermediateCertificates"] =
+            [self::getTestEsteid2018CAInBase64()];
+
+        $authToken = new WebEidAuthToken(json_encode($tokenFields, JSON_UNESCAPED_SLASHES));
+
+        $this->expectNotToPerformAssertions();
+        $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    /**
+     * With a mocked far-future clock the authentication certificate would expire first
+     * in validateV1, so the signing certificate chain is exercised directly with the
+     * authentication certificate validation mocked out.
+     *
+     * @throws AuthTokenParseException
+     */
+    public function testWhenClockIsInFarFutureThenSigningCertificateChainValidationFailsWithExpiredCertificate(): void
+    {
+        Dates::setMockedCertificateValidatorDate(new DateTime("2099-01-01 00:00:00"));
+
+        $authToken = new WebEidAuthToken(self::VALID_V11_AUTH_TOKEN);
+        $spy = $this->createValidatorWithMockedValidateV1ReturningAuthCertificate();
+
+        try {
+            $spy->validate($authToken, self::VALID_CHALLENGE_NONCE);
+            $this->fail("Expected AuthTokenParseException was not thrown");
+        } catch (AuthTokenParseException $e) {
+            $this->assertSame("Signing certificate chain validation failed", $e->getMessage());
+            $this->assertInstanceOf(CertificateExpiredException::class, $e->getPrevious());
+            $this->assertSame("Signing certificate has expired", $e->getPrevious()->getMessage());
+        }
+    }
+
+    /**
+     * With a mocked past clock the authentication certificate would be not yet valid
+     * first in validateV1, so the signing certificate chain is exercised directly with
+     * the authentication certificate validation mocked out.
+     *
+     * @throws AuthTokenParseException
+     */
+    public function testWhenClockIsInPastThenSigningCertificateChainValidationFailsWithNotYetValidCertificate(): void
+    {
+        Dates::setMockedCertificateValidatorDate(new DateTime("2000-01-01 00:00:00"));
+
+        $authToken = new WebEidAuthToken(self::VALID_V11_AUTH_TOKEN);
+        $spy = $this->createValidatorWithMockedValidateV1ReturningAuthCertificate();
+
+        try {
+            $spy->validate($authToken, self::VALID_CHALLENGE_NONCE);
+            $this->fail("Expected AuthTokenParseException was not thrown");
+        } catch (AuthTokenParseException $e) {
+            $this->assertSame("Signing certificate chain validation failed", $e->getMessage());
+            $this->assertInstanceOf(CertificateNotYetValidException::class, $e->getPrevious());
+            $this->assertSame("Signing certificate is not yet valid", $e->getPrevious()->getMessage());
+        }
     }
 
     /**
@@ -162,5 +322,36 @@ class AuthTokenV11CertificateTest extends AbstractTestWithValidator
         );
 
         $this->validator->validate($authToken, self::VALID_CHALLENGE_NONCE);
+    }
+
+    private function createValidatorWithMockedValidateV1ReturningAuthCertificate(): AuthTokenVersion11Validator
+    {
+        $tokenFields = json_decode(self::VALID_V11_AUTH_TOKEN, true);
+
+        $authCertificate = new X509();
+        $this->assertNotFalse($authCertificate->loadX509($tokenFields["unverifiedCertificate"]));
+
+        $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
+            ->setConstructorArgs([
+                $this->createMock(SubjectCertificateValidatorBatch::class),
+                CertificateValidator::buildTrustFromCertificates([]),
+                $this->createMock(AuthTokenSignatureValidator::class),
+                new AuthTokenValidationConfiguration(),
+                null,
+                null
+            ])
+            ->onlyMethods(['validateV1'])
+            ->getMock();
+
+        $spy->method('validateV1')->willReturn($authCertificate);
+
+        return $spy;
+    }
+
+    private static function getTestEsteid2018CAInBase64(): string
+    {
+        return base64_encode(
+            file_get_contents(__DIR__ . '/../../_resources/TEST_of_ESTEID2018.cer')
+        );
     }
 }

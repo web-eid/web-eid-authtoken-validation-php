@@ -35,10 +35,11 @@ interface AuthTokenVersionValidator
     /**
      * Returns whether this validator supports validation of the given token format.
      *
-     * @param string $format the format string from the Web eID authentication token (e.g. "web-eid:1.0", "web-eid:1.1")
+     * @param string|null $format the format string from the Web eID authentication token
+     *        (e.g. "web-eid:1.0", "web-eid:1.1")
      * @return true if this validator can handle the given format, false otherwise
      */
-    public function supports(string $format): bool;
+    public function supports(?string $format): bool;
 
     /**
      * Validates the Web eID authentication token signed by the subject and returns

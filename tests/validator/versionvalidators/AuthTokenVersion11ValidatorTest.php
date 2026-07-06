@@ -72,8 +72,6 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
     {
         return [
             ['web-eid:1.1'],
-            ['web-eid:1.1.0'],
-            ['web-eid:1.10'],
         ];
     }
 
@@ -94,6 +92,9 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
             [''],
             ['web-eid:1'],
             ['web-eid:1.0'],
+            ['web-eid:1.1.0'],
+            ['web-eid:1.10'],
+            ['web-eid:1.2'],
             ['web-eid:2'],
             ['webauthn:1.1'],
         ];
@@ -240,5 +241,197 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
         $this->expectExceptionMessage("'supportedSignatureAlgorithms' field is missing");
 
         $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testWhenSigningCertificatesMissingAndIntermediateCertificatesPresentThenSigningCertificateValidationIsSkipped(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $token->method('getFormat')->willReturn('web-eid:1.1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn(null);
+        $token->method('getUnverifiedIntermediateCertificates')->willReturn(['MIICintermediate']);
+
+        $spy = $this->createValidatorWithMockedValidateV1();
+
+        $this->assertInstanceOf(X509::class, $spy->validate($token, 'nonce'));
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testWhenSigningCertificatesAndIntermediateCertificatesMissingThenValidationFails(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $token->method('getFormat')->willReturn('web-eid:1.1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn(null);
+        $token->method('getUnverifiedIntermediateCertificates')->willReturn(null);
+
+        $spy = $this->createValidatorWithMockedValidateV1();
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testWhenSigningCertificatesEmptyAndIntermediateCertificatesPresentThenValidationFails(): void
+    {
+        $token = $this->createMock(WebEidAuthToken::class);
+
+        $token->method('getFormat')->willReturn('web-eid:1.1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn([]);
+        $token->method('getUnverifiedIntermediateCertificates')->willReturn(['MIICintermediate']);
+
+        $spy = $this->createValidatorWithMockedValidateV1();
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testWhenSigningCertificateIntermediateCertificatesEmptyThenValidationFails(): void
+    {
+        $token = $this->createTokenWithSigningCertificateIntermediateCertificates([]);
+
+        $spy = $this->createValidatorWithMockedValidateV1();
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'intermediateCertificates' must not be empty for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testWhenSigningCertificateIntermediateCertificatesContainNullEntryThenValidationFails(): void
+    {
+        $token = $this->createTokenWithSigningCertificateIntermediateCertificates([null]);
+
+        $spy = $this->createValidatorWithMockedValidateV1();
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'intermediateCertificates' must not contain null or empty entries for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testWhenSigningCertificateIntermediateCertificatesContainEmptyEntryThenValidationFails(): void
+    {
+        $token = $this->createTokenWithSigningCertificateIntermediateCertificates(['']);
+
+        $spy = $this->createValidatorWithMockedValidateV1();
+
+        $this->expectException(AuthTokenParseException::class);
+        $this->expectExceptionMessage(
+            "'intermediateCertificates' must not contain null or empty entries for format 'web-eid:1.1'"
+        );
+
+        $spy->validate($token, 'nonce');
+    }
+
+    /**
+     * @throws CertificateDecodingException
+     * @throws AuthTokenException
+     */
+    public function testSigningCertificateChainValidationFails(): void
+    {
+        $certPath = __DIR__ . '/../../_resources/TEST_of_ESTEID2018.cer';
+        $der = file_get_contents($certPath);
+        $this->assertIsString($der, "Certificate missing at: $certPath");
+
+        $signingCertificate = new X509();
+        $this->assertNotFalse($signingCertificate->loadX509($der));
+
+        $config = new AuthTokenValidationConfiguration();
+        $config->setUserCertificateRevocationCheckWithOcspDisabled();
+
+        $validator = new class (
+            $this->createMock(SubjectCertificateValidatorBatch::class),
+            CertificateValidator::buildTrustFromCertificates([]),
+            $this->createMock(AuthTokenSignatureValidator::class),
+            $config,
+            null,
+            null
+        ) extends AuthTokenVersion11Validator {
+            public function assertChainFails(X509 $certificate): void
+            {
+                $this->buildTrustValidatorBatch()->executeFor($certificate);
+            }
+        };
+
+        $this->expectException(AuthTokenException::class);
+
+        $validator->assertChainFails($signingCertificate);
+    }
+
+    private function createValidatorWithMockedValidateV1(): AuthTokenVersion11Validator
+    {
+        $spy = $this->getMockBuilder(AuthTokenVersion11Validator::class)
+            ->setConstructorArgs([
+                $this->createMock(SubjectCertificateValidatorBatch::class),
+                CertificateValidator::buildTrustFromCertificates([]),
+                $this->createMock(AuthTokenSignatureValidator::class),
+                new AuthTokenValidationConfiguration(),
+                null,
+                null
+            ])
+            ->onlyMethods(['validateV1'])
+            ->getMock();
+
+        $spy->method('validateV1')->willReturn(new X509());
+
+        return $spy;
+    }
+
+    private function createTokenWithSigningCertificateIntermediateCertificates(
+        array $intermediateCertificates
+    ): WebEidAuthToken {
+        $certPath = __DIR__ . '/../../_resources/ESTEID2018.cer';
+        $der = file_get_contents($certPath);
+
+        $this->assertIsString($der, "Certificate missing at: $certPath");
+
+        $certificate = UnverifiedSigningCertificate::fromArray([
+            'certificate' => base64_encode($der),
+            'supportedSignatureAlgorithms' => [
+                ['cryptoAlgorithm' => 'RSA', 'hashFunction' => 'SHA-256', 'paddingScheme' => 'PKCS1.5'],
+            ],
+            'intermediateCertificates' => $intermediateCertificates,
+        ]);
+
+        $token = $this->createMock(WebEidAuthToken::class);
+        $token->method('getFormat')->willReturn('web-eid:1.1');
+        $token->method('getUnverifiedSigningCertificates')->willReturn([$certificate]);
+
+        return $token;
     }
 }

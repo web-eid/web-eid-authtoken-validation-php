@@ -49,21 +49,29 @@ final class SubjectCertificateNotRevokedValidator implements
     private OcspServiceProvider $ocspServiceProvider;
     private int $allowedOcspResponseTimeSkew;
     private int $maxOcspResponseThisUpdateAge;
+    /** @var X509[] */
+    private array $additionalIntermediateCertificates;
 
+    /**
+     * @param X509[] $additionalIntermediateCertificates token-supplied untrusted intermediate CA
+     *        certificates, offered as candidates when validating the OCSP responder certificate chain
+     */
     public function __construct(
         SubjectCertificateTrustedValidator $trustValidator,
         OcspClient $ocspClient,
         OcspServiceProvider $ocspServiceProvider,
         int $allowedOcspResponseTimeSkew,
         int $maxOcspResponseThisUpdateAge,
-        ?LoggerInterface $logger = null)
-    {
+        ?LoggerInterface $logger = null,
+        array $additionalIntermediateCertificates = []
+    ) {
         $this->logger = $logger;
         $this->trustValidator = $trustValidator;
         $this->ocspClient = $ocspClient;
         $this->ocspServiceProvider = $ocspServiceProvider;
         $this->allowedOcspResponseTimeSkew = $allowedOcspResponseTimeSkew;
         $this->maxOcspResponseThisUpdateAge = $maxOcspResponseThisUpdateAge;
+        $this->additionalIntermediateCertificates = $additionalIntermediateCertificates;
     }
 
     public function validate(X509 $subjectCertificate): void
@@ -71,6 +79,8 @@ final class SubjectCertificateNotRevokedValidator implements
         try {
             $ocspService = $this->ocspServiceProvider->getService(
                 $subjectCertificate,
+                $this->trustValidator->getSubjectCertificateIssuerCertificate(),
+                $this->additionalIntermediateCertificates,
             );
 
             if (!$ocspService->doesSupportNonce()) {
@@ -139,7 +149,12 @@ final class SubjectCertificateNotRevokedValidator implements
             );
         }
 
-        if ($requestCertificateId != $basicResponse->getCertID()) {
+        if (
+            !OcspResponseValidator::certificateIdsMatch(
+                $requestCertificateId,
+                $basicResponse->getCertID(),
+            )
+        ) {
             throw new UserCertificateOCSPCheckFailedException(
                 "OCSP responded with certificate ID that differs from the requested ID",
             );

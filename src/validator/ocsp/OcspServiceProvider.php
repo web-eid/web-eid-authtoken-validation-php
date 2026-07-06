@@ -28,6 +28,7 @@ namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
 use InvalidArgumentException;
 use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\certificate\IntermediateRevocationChecker;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspService;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\AiaOcspServiceConfiguration;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspService;
@@ -38,10 +39,12 @@ class OcspServiceProvider
 {
     private ?DesignatedOcspService $designatedOcspService;
     private AiaOcspServiceConfiguration $aiaOcspServiceConfiguration;
+    private ?IntermediateRevocationChecker $intermediateRevocationChecker;
 
     public function __construct(
         ?DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration,
-        AiaOcspServiceConfiguration $aiaOcspServiceConfiguration
+        AiaOcspServiceConfiguration $aiaOcspServiceConfiguration,
+        ?IntermediateRevocationChecker $intermediateRevocationChecker = null,
     ) {
         $this->designatedOcspService = !is_null($designatedOcspServiceConfiguration)
             ? new DesignatedOcspService($designatedOcspServiceConfiguration)
@@ -49,21 +52,35 @@ class OcspServiceProvider
 
         $this->aiaOcspServiceConfiguration = $aiaOcspServiceConfiguration
             ?? throw new InvalidArgumentException("AIA Ocsp Service Configuration must not be null");
+        $this->intermediateRevocationChecker = $intermediateRevocationChecker;
     }
 
     /**
      * A static factory method that returns either the designated or AIA OCSP service instance depending on whether
      * the designated OCSP service is configured and supports the issuer of the certificate.
      *
-     * @param certificate subject certificate that is to be checked with OCSP
+     * @param X509 $certificate subject certificate that is to be checked with OCSP
+     * @param X509 $certificateIssuerCertificate the certificate that directly issued the subject certificate
+     * @param X509[] $additionalIntermediateCertificates token-supplied untrusted intermediate CA certificates
      * @return OcspService either the designated or AIA OCSP service instance
      */
-    public function getService(X509 $certificate): OcspService
-    {
+    public function getService(
+        X509 $certificate,
+        X509 $certificateIssuerCertificate,
+        array $additionalIntermediateCertificates = []
+    ): OcspService {
         if (!is_null($this->designatedOcspService) && $this->designatedOcspService->supportsIssuerOf($certificate)) {
+            // The designated responder is pinned by equality, so the subject issuer and token-supplied
+            // intermediate certificates are not needed for its validation.
             return $this->designatedOcspService;
         }
 
-        return new AiaOcspService($this->aiaOcspServiceConfiguration, $certificate);
+        return new AiaOcspService(
+            $this->aiaOcspServiceConfiguration,
+            $certificate,
+            $certificateIssuerCertificate,
+            $additionalIntermediateCertificates,
+            $this->intermediateRevocationChecker,
+        );
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2026 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,29 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\exceptions;
+declare(strict_types=1);
 
-use Throwable;
+namespace web_eid\web_eid_authtoken_validation_php\certificate;
 
-class CertificateDecodingException extends AuthTokenException
+use phpseclib3\File\X509;
+use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenException;
+
+/**
+ * Checks the revocation status of a non-anchor intermediate CA certificate that is part
+ * of a built certification path. An intermediate that is revoked or whose revocation
+ * status cannot be established must not become part of a trusted path.
+ */
+interface IntermediateRevocationChecker
 {
-    public function __construct(string $resource, ?Throwable $cause = null)
-    {
-        parent::__construct("Certificate decoding from Base64 or parsing failed for " . $resource, $cause);
-    }
+    /**
+     * @param X509[] $additionalIntermediateCertificates token-supplied candidate certificates
+     *        of the same certification path, offered as candidates when validating the
+     *        OCSP responder certificate chain
+     * @throws AuthTokenException when the certificate is revoked or its status cannot be established
+     */
+    public function validateNotRevoked(
+        X509 $certificate,
+        X509 $issuerCertificate,
+        array $additionalIntermediateCertificates,
+    ): void;
 }

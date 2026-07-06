@@ -27,9 +27,35 @@ namespace web_eid\web_eid_authtoken_validation_php\validator;
 use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Psr7\Uri;
 use InvalidArgumentException;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\ResponderIssuerMatchingPolicy;
 
 class AuthTokenValidationConfigurationTest extends TestCase
 {
+    public function testAiaOcspResponderIssuerMatchingPolicyDefaultsToExactCertificate(): void
+    {
+        $configuration = new AuthTokenValidationConfiguration();
+
+        $this->assertSame(
+            ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE,
+            $configuration->getAiaOcspResponderIssuerMatchingPolicy()
+        );
+        $this->assertSame(
+            ResponderIssuerMatchingPolicy::EXACT_CERTIFICATE,
+            (clone $configuration)->getAiaOcspResponderIssuerMatchingPolicy()
+        );
+    }
+
+    public function testAiaOcspResponderIssuerMatchingPolicyIsPreservedByClone(): void
+    {
+        $configuration = new AuthTokenValidationConfiguration();
+        $configuration->setAiaOcspResponderIssuerMatchingPolicy(ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY);
+
+        $this->assertSame(
+            ResponderIssuerMatchingPolicy::SUBJECT_AND_PUBLIC_KEY,
+            (clone $configuration)->getAiaOcspResponderIssuerMatchingPolicy()
+        );
+    }
+
     public function testWhenOriginUrlIsHttp(): void
     {
         $this->expectException(InvalidArgumentException::class);

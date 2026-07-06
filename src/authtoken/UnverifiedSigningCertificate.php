@@ -38,12 +38,34 @@ class UnverifiedSigningCertificate
     /** @var SupportedSignatureAlgorithm[] */
     private array $supportedSignatureAlgorithms = [];
 
+    /**
+     * Unverified intermediate CA certificates of the signing certificate,
+     * used only as candidate certificates during certification path building.
+     *
+     * @var string[]|null
+     */
+    private ?array $intermediateCertificates = null;
+
     public static function fromArray(array $data): self
     {
         $result = new self();
 
         if (isset($data['certificate'])) {
             $result->certificate = self::filterString('certificate', $data['certificate']);
+        }
+
+        if (isset($data['intermediateCertificates'])) {
+            if (!is_array($data['intermediateCertificates'])) {
+                $type = gettype($data['intermediateCertificates']);
+                throw new UnexpectedValueException(
+                    "Error parsing Web eID authentication token: " .
+                    "'intermediateCertificates' is {$type}, array expected"
+                );
+            }
+
+            $result->intermediateCertificates = self::parseIntermediateCertificates(
+                $data['intermediateCertificates']
+            );
         }
 
         if (isset($data['supportedSignatureAlgorithms'])) {
@@ -73,6 +95,14 @@ class UnverifiedSigningCertificate
         return $this->supportedSignatureAlgorithms;
     }
 
+    /**
+     * @return string[]|null
+     */
+    public function getIntermediateCertificates(): ?array
+    {
+        return $this->intermediateCertificates;
+    }
+
     private static function filterString(string $key, $data): string
     {
         $type = gettype($data);
@@ -83,6 +113,25 @@ class UnverifiedSigningCertificate
         }
 
         return $data;
+    }
+
+    /**
+     * Entries are kept as-is (including null and empty strings); their content is
+     * validated by the version validators with format-specific error messages.
+     */
+    private static function parseIntermediateCertificates(array $list): array
+    {
+        foreach ($list as $item) {
+            if ($item !== null && !is_string($item)) {
+                $type = gettype($item);
+                throw new UnexpectedValueException(
+                    "Error parsing Web eID authentication token: " .
+                    "'intermediateCertificates' entry is {$type}, string expected"
+                );
+            }
+        }
+
+        return array_values($list);
     }
 
     private static function parseSupportedSignatureAlgorithms(array $list): array

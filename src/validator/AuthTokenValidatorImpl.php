@@ -38,7 +38,7 @@ use web_eid\web_eid_authtoken_validation_php\validator\versionvalidators\AuthTok
 final class AuthTokenValidatorImpl implements AuthTokenValidator
 {
     private const TOKEN_MIN_LENGTH = 100;
-    private const TOKEN_MAX_LENGTH = 10000;
+    private const TOKEN_MAX_LENGTH = 65536;
 
     private AuthTokenVersionValidatorFactory $tokenValidatorFactory;
     private ?LoggerInterface $logger;

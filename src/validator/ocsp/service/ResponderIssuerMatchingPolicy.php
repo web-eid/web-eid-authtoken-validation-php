@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2026 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,23 @@
  * SOFTWARE.
  */
 
-namespace web_eid\web_eid_authtoken_validation_php\exceptions;
+declare(strict_types=1);
 
-use Throwable;
+namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp\service;
 
-class CertificateDecodingException extends AuthTokenException
+/**
+ * Determines how the issuer authorizing an AIA OCSP responder is matched against the
+ * subject certificate's issuer.
+ */
+enum ResponderIssuerMatchingPolicy
 {
-    public function __construct(string $resource, ?Throwable $cause = null)
-    {
-        parent::__construct("Certificate decoding from Base64 or parsing failed for " . $resource, $cause);
-    }
+    /** Requires the same encoded X.509 certificate. */
+    case EXACT_CERTIFICATE;
+
+    /**
+     * Accepts different certificates that contain the same subject and public key.
+     * Non-anchor intermediate certificates in the responder's certification path are
+     * checked for revocation.
+     */
+    case SUBJECT_AND_PUBLIC_KEY;
 }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2026 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,66 +22,55 @@
  * SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace web_eid\web_eid_authtoken_validation_php\validator\ocsp;
 
-use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheckFailedException;
 use GuzzleHttp\Psr7\Uri;
-use web_eid\web_eid_authtoken_validation_php\ocsp\OcspResponse;
 use Psr\Log\LoggerInterface;
+use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateRevocationCheckFailedException;
 
-class OcspClientImpl implements OcspClient
+class CrlClientImpl implements CrlClient
 {
-    private const OCSP_REQUEST_TYPE = "application/ocsp-request";
-    private const OCSP_RESPONSE_TYPE = "application/ocsp-response";
     private int $requestTimeout;
     private $logger;
 
-    public function __construct(int $ocspRequestTimeout, ?LoggerInterface $logger = null)
+    public function __construct(int $requestTimeout, ?LoggerInterface $logger = null)
     {
-        $this->requestTimeout = $ocspRequestTimeout;
+        $this->requestTimeout = $requestTimeout;
         $this->logger = $logger;
     }
 
-    public static function build(int $ocspRequestTimeout, ?LoggerInterface $logger = null): OcspClient
+    public static function build(int $requestTimeout, ?LoggerInterface $logger = null): CrlClient
     {
-        return new OcspClientImpl($ocspRequestTimeout, $logger);
+        return new CrlClientImpl($requestTimeout, $logger);
     }
 
-    public function request(Uri $uri, string $encodedOcspRequest): OcspResponse
+    public function fetch(Uri $uri): string
     {
+        $this->logger?->debug("Fetching CRL from " . $uri->jsonSerialize());
+
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $uri->jsonSerialize());
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_FAILONERROR, true);
-        curl_setopt($curl, CURLOPT_POST, true);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, ["Content-Type: " . self::OCSP_REQUEST_TYPE]);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $encodedOcspRequest);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $this->requestTimeout);
         curl_setopt($curl, CURLOPT_TIMEOUT, $this->requestTimeout);
         $result = curl_exec($curl);
 
         if (curl_errno($curl)) {
-            throw new UserCertificateOCSPCheckFailedException(curl_error($curl));
+            throw new CertificateRevocationCheckFailedException(
+                "CRL request failed: " . curl_error($curl)
+            );
         }
 
         $info = curl_getinfo($curl);
-        if ($info["http_code"] !== 200) {
-            throw new UserCertificateOCSPCheckFailedException(
-                "OCSP request was not successful, response: " . (is_string($result) ? $result : '')
+        if ($info["http_code"] !== 200 || !is_string($result) || $result === "") {
+            throw new CertificateRevocationCheckFailedException(
+                "CRL request was not successful, HTTP status: " . $info["http_code"]
             );
         }
 
-        $response = new OcspResponse($result);
-
-        $responseJson = json_encode($response->getResponse(), JSON_INVALID_UTF8_IGNORE);
-        $this->logger?->debug("OCSP response: " . $responseJson);
-
-        if ($info["content_type"] !== self::OCSP_RESPONSE_TYPE) {
-            throw new UserCertificateOCSPCheckFailedException(
-                "OCSP response content type is not " . self::OCSP_RESPONSE_TYPE
-            );
-        }
-
-        return $response;
+        return $result;
     }
 }
