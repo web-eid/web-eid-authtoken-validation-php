@@ -52,7 +52,7 @@ final class AuthTokenVersionValidatorFactory
         $this->validators = $validators;
     }
 
-    public function supports(string $format): bool
+    public function supports(?string $format): bool
     {
         foreach ($this->validators as $validator) {
             if ($validator->supports($format)) {
@@ -65,7 +65,7 @@ final class AuthTokenVersionValidatorFactory
     /**
      * @throws AuthTokenParseException
      */
-    public function getValidatorFor(string $format): AuthTokenVersionValidator
+    public function getValidatorFor(?string $format): AuthTokenVersionValidator
     {
         foreach ($this->validators as $validator) {
             if ($validator->supports($format)) {
@@ -73,8 +73,9 @@ final class AuthTokenVersionValidatorFactory
             }
         }
 
+        $formatLabel = $format ?? "null";
         throw new AuthTokenParseException(
-            "Token format version '{$format}' is currently not supported"
+            "Token format version '{$formatLabel}' is currently not supported"
         );
     }
 
