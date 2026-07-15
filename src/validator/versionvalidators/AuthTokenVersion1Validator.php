@@ -43,7 +43,8 @@ use Psr\Log\LoggerInterface;
 
 class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 {
-    private const V1_SUPPORTED_TOKEN_FORMAT_PREFIX = "web-eid:1";
+    protected const SUPPORTED_EXACT_MAJOR_VERSION = 1;
+    private const SUPPORTED_MINIMAL_MINOR_VERSION = 0;
 
     private SubjectCertificateValidatorBatch $simpleSubjectCertificateValidators;
     private TrustedCertificates $trustedCACertificates;
@@ -73,8 +74,11 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
 
     public function supports(?string $format): bool
     {
-        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
-            $format === "web-eid:1.0";
+        return AuthTokenVersion::supports(
+            $format,
+            self::SUPPORTED_EXACT_MAJOR_VERSION,
+            self::SUPPORTED_MINIMAL_MINOR_VERSION,
+        );
     }
 
     public function validate(
@@ -82,7 +86,11 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         string $currentChallengeNonce,
     ): X509 {
         if (
-            $this->isExactV10Format($authToken->getFormat()) &&
+            AuthTokenVersion::supportsExactly(
+                $authToken->getFormat(),
+                self::SUPPORTED_EXACT_MAJOR_VERSION,
+                self::SUPPORTED_MINIMAL_MINOR_VERSION,
+            ) &&
             !empty($authToken->getUnverifiedSigningCertificates())
         ) {
             throw new AuthTokenParseException(
@@ -161,11 +169,5 @@ class AuthTokenVersion1Validator implements AuthTokenVersionValidator
         }
 
         return $batch;
-    }
-
-    private function isExactV10Format(?string $format): bool
-    {
-        return $format === self::V1_SUPPORTED_TOKEN_FORMAT_PREFIX ||
-            $format === "web-eid:1.0";
     }
 }

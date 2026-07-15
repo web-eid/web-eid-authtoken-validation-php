@@ -36,7 +36,7 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\CertificateDecodingExcep
 
 class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 {
-    private const V11_SUPPORTED_TOKEN_FORMAT_PATTERN = '/^web-eid:1\.1$/';
+    private const SUPPORTED_MINIMAL_MINOR_VERSION = 1;
 
     private const SUPPORTED_SIGNING_CRYPTO_ALGORITHMS = ["ECC", "RSA"];
     private const SUPPORTED_SIGNING_PADDING_SCHEMES = [
@@ -57,8 +57,11 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
     public function supports(?string $format): bool
     {
-        return $format !== null &&
-            preg_match(self::V11_SUPPORTED_TOKEN_FORMAT_PATTERN, $format) === 1;
+        return AuthTokenVersion::supports(
+            $format,
+            self::SUPPORTED_EXACT_MAJOR_VERSION,
+            self::SUPPORTED_MINIMAL_MINOR_VERSION,
+        );
     }
 
     /**
@@ -101,7 +104,9 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
 
         if ($signingCertificates === null || empty($signingCertificates)) {
             throw new AuthTokenParseException(
-                "'unverifiedSigningCertificates' field is missing, null or empty for format 'web-eid:1.1'",
+                "'unverifiedSigningCertificates' field is missing, null or empty for format '" .
+                    $token->getFormat() .
+                    "'",
             );
         }
 
@@ -114,7 +119,9 @@ class AuthTokenVersion11Validator extends AuthTokenVersion1Validator
                 $certificate->getCertificate() === ""
             ) {
                 throw new AuthTokenParseException(
-                    "'unverifiedSigningCertificates' contains a null or empty entry for format 'web-eid:1.1'",
+                    "'unverifiedSigningCertificates' contains a null or empty entry for format '" .
+                        $token->getFormat() .
+                        "'",
                 );
             }
 
