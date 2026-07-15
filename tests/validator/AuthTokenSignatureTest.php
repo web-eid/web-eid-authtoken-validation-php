@@ -42,6 +42,13 @@ class AuthTokenSignatureTest extends AbstractTestWithValidator
         '"signature":"arx164xRiwhIQDINe0J+ZxJWZFOQTx0PBtOaWaxAe7gofEIHRIbV1w0sOCYBJnvmvMem9hU4nc2+iJx2x8poYck4Z6eI3GwtiksIec3XQ9ZIk1n/XchXnmPn3GYV+HzJ",' .
         '"format":"web-eid:1.0"}';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Ensure that the certificates do not expire.
+        Dates::setMockedCertificateValidatorDate(new DateTime("2021-07-23"));
+    }
+
     protected function tearDown(): void
     {
         Dates::resetMockedCertificateValidatorDate();
@@ -75,7 +82,6 @@ class AuthTokenSignatureTest extends AbstractTestWithValidator
 
     public function testWhenTokenWithWrongCertThenValidationFails(): void
     {
-        Dates::setMockedCertificateValidatorDate(new DateTime('2024-08-01 10:13:43.000'));
         $authTokenValidator = AuthTokenValidators::getAuthTokenValidator();
         $authTokenWithWrongCert = $authTokenValidator->parse(self::AUTH_TOKEN_WRONG_CERT);
 
