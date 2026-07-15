@@ -24,11 +24,25 @@
 
 namespace web_eid\web_eid_authtoken_validation_php\validator;
 
+use DateTime;
 use web_eid\web_eid_authtoken_validation_php\testutil\AbstractTestWithValidator;
 use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenParseException;
+use web_eid\web_eid_authtoken_validation_php\testutil\Dates;
 
 class AuthTokenAlgorithmTest extends AbstractTestWithValidator
 {
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Ensure that the certificates do not expire.
+        Dates::setMockedCertificateValidatorDate(new DateTime("2021-07-23"));
+    }
+
+    protected function tearDown(): void
+    {
+        Dates::resetMockedCertificateValidatorDate();
+    }
 
     public function testWhenAlgorithmNoneThenValidationFails(): void
     {
