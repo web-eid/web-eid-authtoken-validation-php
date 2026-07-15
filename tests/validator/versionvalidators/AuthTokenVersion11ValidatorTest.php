@@ -72,6 +72,9 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
     {
         return [
             ['web-eid:1.1'],
+            ['web-eid:1.2'],
+            ['web-eid:1.10'],
+            ['web-eid:1.999'],
         ];
     }
 
@@ -92,10 +95,12 @@ final class AuthTokenVersion11ValidatorTest extends TestCase
             [''],
             ['web-eid:1'],
             ['web-eid:1.0'],
+            ['web-eid:1.'],
+            ['web-eid:1.0TEST'],
+            ['web-eid:1.00'],
             ['web-eid:1.1.0'],
-            ['web-eid:1.10'],
-            ['web-eid:1.2'],
             ['web-eid:2'],
+            ['web-eid:0.9'],
             ['webauthn:1.1'],
         ];
     }
