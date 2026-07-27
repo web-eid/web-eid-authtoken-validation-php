@@ -312,7 +312,7 @@ It contains the following fields:
 
 - `signature`: the base64-encoded signature of the token (see the description below),
 
-- `format`: the type identifier and version of the token format separated by a colon character '`:`', `web-eid:1.0` as of now; the version number consists of the major and minor number separated by a dot, major version changes are incompatible with previous versions, minor version changes are backwards-compatible within the given major version,
+- `format`: the type identifier and version of the token format separated by a colon character '`:`', `web-eid:1.0` or `web-eid:1.1` as of now; the version number consists of the major and minor number separated by a dot, major version changes are incompatible with previous versions, minor version changes are backwards-compatible within the given major version,
 
 - `appVersion`: the URL identifying the name and version of the application that issued the token; informative purpose, can be used to identify the affected application in case of faulty tokens.
 
@@ -370,10 +370,16 @@ Allowed values are:
 
 # Authentication token validation
 
-The authentication token validation process consists of two stages:
+The authentication token validation process consists of the following stages:
 
 - First, **user certificate validation**: the validator parses the token and extracts the user certificate from the *unverifiedCertificate* field. Then it checks the certificate expiration, purpose and policies. Next it checks that the certificate is signed by a trusted CA and checks the certificate status with OCSP.
 - Second, **token signature validation**: the validator validates that the token signature was created using the provided user certificate by reconstructing the signed data `hash(origin)+hash(challenge)` and using the public key from the certificate to verify the signature in the `signature` field. If the signature verification succeeds, then the origin and challenge nonce have been implicitly and correctly verified without the need to implement any additional security checks.
+- Additional validation for **Web eID authentication tokens (format v1.1)**: the token must contain the `unverifiedSigningCertificates` field with at least one signing certificate entry. Each entry's `supportedSignatureAlgorithms` are validated against the set of allowed cryptographic algorithms, hash functions, and padding schemes. For each signing certificate, the following checks are performed:
+    - The subject must match the subject of the authentication certificate, ensuring both certificates belong to the same user.
+    - The issuing authority must match that of the authentication certificate, verified via the Authority Key Identifier (AKI) extension.
+    - The certificate must be within its validity period.
+    - The certificate must contain the non-repudiation key usage bit required for digital signatures.
+    - The certificate chain must validate against the configured trusted certificate authorities.
 
 The website back end must look up the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website back end must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
 
@@ -421,6 +427,8 @@ The following additional configuration options are available in `AuthTokenValida
 - `withoutUserCertificateRevocationCheckWithOcsp()` – turns off user certificate revocation check with OCSP. OCSP check is enabled by default and the OCSP responder access location URL is extracted from the user certificate AIA extension unless a designated OCSP service is activated.
 
 - `withDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration serviceConfiguration)` – activates the provided designated OCSP responder service configuration for user certificate revocation check with OCSP. The designated service is only used for checking the status of the certificates whose issuers are supported by the service, for other certificates the default AIA extension service access location will be used. See configuration examples in `testutil/OcspServiceMaker.php` - `getDesignatedOcspServiceConfiguration()`.
+
+- `withOcspClient(OcspClient $ocspClient)` – uses the provided OCSP client instance during user certificate revocation check with OCSP. This gives the possibility to configure request timeouts, proxies etc. or provide an implementation that uses an altogether different HTTP client.
 
 - `withOcspRequestTimeout(int $ocspRequestTimeout)` – sets both the connection and response timeout of user certificate revocation check OCSP requests. Default is 5 seconds.
 
