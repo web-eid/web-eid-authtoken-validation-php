@@ -61,7 +61,7 @@ public function generator(): ChallengeNonceGenerator
 ...
 ```
 
-PHP Session is been used for storing the challenge nonce.
+PHP session is used for storing the challenge nonce.
 
 ## 3. Add trusted certificate authority certificates
 
@@ -179,13 +179,54 @@ class Auth
             echo json_encode($responseArr);
         } catch (Exception $e) {
             http_response_code(500);
-            echo $e->getMessage();
+            echo "Nonce generation failed";
         }
     }
     ...
 }
 
 ```
+
+### Issuing challenge nonces for Web eID for Mobile
+
+The `POST /auth/mobile/init` endpoint initiates authentication flows that use **Web eID token format v1.1**. It generates a challenge nonce and returns a deep link URI that embeds a base64-encoded payload containing the challenge nonce, the login endpoint URL and whether the mobile application should include the signing certificate information in the authentication token. The mobile application opens the deep link, signs the challenge and posts the `web-eid:1.1` authentication token to the `POST /auth/mobile/login` endpoint, which validates it with the same `AuthContext::authenticate()` method that is used in the regular flow. See the full implementation in `example/src/MobileAuth.php`.
+
+```php
+final class MobileAuth
+{
+    public function __construct(private AuthContext $ctx)
+    {
+    }
+
+    public function init(): void
+    {
+        header("Content-Type: application/json; charset=utf-8");
+
+        if (!isset($_SESSION["csrf-token"])) {
+            $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
+        }
+
+        $challenge = $this->ctx->nonceGenerator()->generateAndStoreNonce();
+
+        $payload = [
+            "challenge" => $challenge->getBase64EncodedNonce(),
+            "loginUri" => $this->ctx->originUrl() . "/auth/mobile/login",
+            "getSigningCertificate" => $this->ctx->mobileRequestSigningCert()
+        ];
+
+        $baseUrl = $this->ctx->mobileBaseUrl();
+        $encodedPayload = base64_encode(json_encode($payload));
+
+        $fragment = (str_starts_with($baseUrl, 'http') ? '/' : '//') . 'auth#';
+        $authUri = rtrim($baseUrl, '/') . $fragment . $encodedPayload;
+
+        echo json_encode(["authUri" => $authUri]);
+    }
+    ...
+}
+```
+
+The deep link base URL and whether the signing certificate is requested are configured with the `mobile_base_url` and `mobile_request_signing_cert` settings, see section *[Example implementation](#example-implementation)*.
 
 ## 6. Implement authentication
 
@@ -275,7 +316,7 @@ See the complete example in the `example` directory.
 
 # Introduction
 
-The Web eID authentication token validation library for PHP contains the implementation of the Web eID authentication token validation process in its entirety to ensure that the authentication token sent by the Web eID browser extension contains valid, consistent data that has not been modified by a third party. It also implements secure challenge nonce generation as required by the Web eID authentication protocol. It is easy to configure and integrate into your authentication service.
+The Web eID authentication token validation library for PHP contains the implementation of the Web eID authentication token validation process in its entirety to ensure that the authentication token sent by the Web eID browser extension or mobile application contains valid, consistent data that has not been modified by a third party. It also implements secure challenge nonce generation as required by the Web eID authentication protocol. It is easy to configure and integrate into your authentication service.
 
 The authentication protocol, authentication token format, validation requirements and challenge nonce usage is described in more detail in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
@@ -416,8 +457,8 @@ CertificateData::getSubjectCN($userCertificate); // "JÕEORG\\,JAAK-KRISTJAN\\,3
 CertificateData::getSubjectIdCode($userCertificate); // "PNOEE-38001085718"
 CertificateData::getSubjectCountryCode($userCertificate); // "EE"
 
-ucwords(CertificateData::getSubjectGivenName($userCertificate), "-"); // "Jaak-Kristjan"
-ucwords(CertificateData::getSubjectSurname(userCertificate)); // "Jõeorg"
+ucwords(mb_strtolower(CertificateData::getSubjectGivenName($userCertificate)), "-"); // "Jaak-Kristjan"
+ucwords(mb_strtolower(CertificateData::getSubjectSurname($userCertificate))); // "Jõeorg"
 ```
 
 ## Extended configuration
@@ -444,12 +485,14 @@ The following additional configuration options are available in `AuthTokenValida
 Extended configuration example:
 
 ```php
-$validator = new AuthTokenValidatorBuilder()
-  ->withSiteOrigin("https://example.org")
-  ->withTrustedCertificateAuthorities(trustedCertificateAuthorities())
+$validator = (new AuthTokenValidatorBuilder())
+  ->withSiteOrigin(new Uri("https://example.org"))
+  ->withTrustedCertificateAuthorities(...self::trustedIntermediateCACertificates())
   ->withoutUserCertificateRevocationCheckWithOcsp()
-  ->withDisallowedCertificatePolicies(["1.2.3"])
+  ->withDisallowedCertificatePolicies("1.2.3")
   ->withNonceDisabledOcspUrls(new Uri("http://aia.example.org/cert"))
+  ->withAllowedOcspResponseTimeSkew(10) // in minutes
+  ->withMaxOcspResponseThisUpdateAge(5) // in minutes
   ->build();
 ```
 
@@ -479,11 +522,11 @@ Nonce usage is described in more detail in the [Web eID system architecture docu
 
 ## Basic usage
 
-As described in section *[2. Configure the nonce generator](#2-configure-the-nonce-generator)*, there are no mandatory configuration parameters for the challenge nonce generator. It uses PHP Session as default storage.
+As described in section *[2. Configure the challenge nonce store](#2-configure-the-challenge-nonce-store)*, there are no mandatory configuration parameters for the challenge nonce generator. It uses PHP Session as default storage.
 
 The challenge nonce store is used to save the nonce value along with the nonce expiry time. It must be possible to look up the challenge nonce data structure from the store using an identifier specific to the browser session. The values from the store are used by the token validator as described in the section *[Authentication token validation > Basic usage](#basic-usage)* that also contains recommendations for store usage and configuration.
 
-The nonce generator configuration and construction is described in more detail in section *[3. Configure the nonce generator](#3-configure-the-nonce-generator)*. Once the generator object has been constructed, it can be used for generating nonces as follows:
+The nonce generator configuration and construction is described in more detail in section *[2. Configure the challenge nonce store](#2-configure-the-challenge-nonce-store)*. Once the generator object has been constructed, it can be used for generating nonces as follows:
 
 ```php
 $generator = (new ChallengeNonceGeneratorBuilder())->build();
@@ -497,14 +540,15 @@ The `generateAndStoreNonce()` method both generates the nonce and saves it in th
 The following additional configuration options are available in `ChallengeNonceGeneratorBuilder`:
 
 - `withNonceTtl(int $seconds)` – overrides the default challenge nonce time-to-live duration. When the time-to-live passes, the nonce is considered to be expired. Default challenge nonce time-to-live is 5 minutes.
-- `withSecureRandom(SecureRandom)` - allows to specify a custom `SecureRandom` instance.
+- `withChallengeNonceStore(ChallengeNonceStore $store)` – sets the challenge nonce store where the generated challenge nonces are stored. The PHP session based store is used by default.
+- `withSecureRandom(callable $secureRandom)` – allows to specify a custom source of random bytes. The callable receives the required number of bytes as input and returns random bytes.
 
 Extended configuration example:
 
 ```php  
 $generator = (new ChallengeNonceGeneratorBuilder())
   ->withNonceTtl(300) // 5 minutes
-  ->withSecureRandom(customSecureRandom)  
+  ->withSecureRandom($customSecureRandom)
   ->build();
 ```
 
@@ -535,6 +579,11 @@ For example to override origin_url set environmental variable:
 ```
 WEB_EID_SAMPLE_ORIGIN_URL
 ```
+
+The Web eID for Mobile authentication flow is configured with the following additional settings in `example/src/app.conf.php`:
+
+- `mobile_base_url` – the base URL used for building the mobile authentication deep link, `web-eid-mobile://` by default;
+- `mobile_request_signing_cert` – whether the mobile application is asked to include the signing certificate information (`unverifiedSigningCertificates`) in the authentication token, `false` by default.
 Point your Apache web server Document Root to `/example/public` folder.
 
 # Dependency versioning policy
