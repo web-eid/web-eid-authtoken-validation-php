@@ -37,6 +37,7 @@ class OcspResponse
 {
     private array $ocspResponse = [];
     private string $revokeReason = "";
+    private ?OcspBasicResponse $basicResponse = null;
 
     public function __construct(string $encodedBER)
     {
@@ -59,6 +60,10 @@ class OcspResponse
 
     public function getBasicResponse(): OcspBasicResponse
     {
+        if ($this->basicResponse !== null) {
+            return $this->basicResponse;
+        }
+
         if (
             Ocsp::ID_PKIX_OCSP_BASIC_STRING !=
             $this->ocspResponse["responseBytes"]["responseType"]
@@ -75,7 +80,7 @@ class OcspResponse
             );
         }
 
-        return new OcspBasicResponse(
+        return $this->basicResponse = new OcspBasicResponse(
             $this->ocspResponse["responseBytes"]["response"]
         );
     }
@@ -109,37 +114,6 @@ class OcspResponse
             return true;
         }
         return null;
-    }
-
-    public function validateSignature(): void
-    {
-        $basicResponse = $this->getBasicResponse();
-        $this->validateResponse($basicResponse);
-
-        $responderCert = $basicResponse->getCertificates()[0];
-        // get public key from responder certificate in order to verify signature on response
-        $publicKey = $responderCert
-            ->getPublicKey()
-            ->withHash($basicResponse->getSignatureAlgorithm());
-        // verify response data
-        $encodedTbsResponseData = $basicResponse->getEncodedResponseData();
-        $signature = $basicResponse->getSignature();
-
-        if (!$publicKey->verify($encodedTbsResponseData, $signature)) {
-            throw new OcspVerifyFailedException(
-                "OCSP response signature is not valid"
-            );
-        }
-    }
-
-    public function validateCertificateId(array $requestCertificateId): void
-    {
-        $basicResponse = $this->getBasicResponse();
-        if ($requestCertificateId != $basicResponse->getCertID()) {
-            throw new OcspVerifyFailedException(
-                "OCSP responded with certificate ID that differs from the requested ID"
-            );
-        }
     }
 
     private function validateResponse(OcspBasicResponse $basicResponse): void

@@ -37,6 +37,7 @@ use web_eid\web_eid_authtoken_validation_php\util\AsnUtil;
 class OcspBasicResponse
 {
     private array $ocspBasicResponse = [];
+    private ?array $certificates = null;
 
     public function __construct(array $ocspBasicResponse)
     {
@@ -53,6 +54,10 @@ class OcspBasicResponse
      */
     public function getCertificates(): array
     {
+        if ($this->certificates !== null) {
+            return $this->certificates;
+        }
+
         $certificatesArr = [];
         if (isset($this->ocspBasicResponse["certs"])) {
             foreach ($this->ocspBasicResponse["certs"] as $cert) {
@@ -69,7 +74,7 @@ class OcspBasicResponse
             unset($x509);
         }
 
-        return $certificatesArr;
+        return $this->certificates = $certificatesArr;
     }
 
     public function getSignature(): string

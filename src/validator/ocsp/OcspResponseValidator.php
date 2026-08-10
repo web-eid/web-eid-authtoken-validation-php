@@ -117,15 +117,15 @@ final class OcspResponseValidator
 
     public static function validateSubjectCertificateStatus(OcspResponse $response): void
     {
-        if (is_null($response->isRevoked())) {
+        $isRevoked = $response->isRevoked();
+
+        if (is_null($isRevoked)) {
             throw new UserCertificateRevokedException("Unknown status");
         }
-        if ($response->isRevoked() === false) {
+        if ($isRevoked === false) {
             return;
         }
-        if ($response->isRevoked() === true) {
-            throw ($response->getRevokeReason() == "") ? new UserCertificateRevokedException() : new UserCertificateRevokedException("Revocation reason: " . $response->getRevokeReason());
-        }
-        throw new UserCertificateRevokedException("Status is neither good, revoked nor unknown");
+
+        throw ($response->getRevokeReason() == "") ? new UserCertificateRevokedException() : new UserCertificateRevokedException("Revocation reason: " . $response->getRevokeReason());
     }
 }

@@ -85,40 +85,6 @@ class CertificateLoader
         return $this;
     }
 
-    public function getIssuerCertificateUrl(): string
-    {
-        if (!$this->certificate) {
-            throw new OcspCertificateException("Certificate not loaded");
-        }
-
-        $url = "";
-        $opts = $this->certificate->getExtension("id-pe-authorityInfoAccess");
-        foreach ($opts as $opt) {
-            if ($opt["accessMethod"] == "id-ad-caIssuers") {
-                $url = $opt["accessLocation"]["uniformResourceIdentifier"];
-                break;
-            }
-        }
-        return $url;
-    }
-
-    public function getOcspResponderUrl(): string
-    {
-        if (!$this->certificate) {
-            throw new OcspCertificateException("Certificate not loaded");
-        }
-
-        $url = "";
-        $opts = $this->certificate->getExtension("id-pe-authorityInfoAccess");
-        foreach ($opts as $opt) {
-            if ($opt["accessMethod"] == "id-ad-ocsp" || $opt["accessMethod"] == "id-pkix-ocsp") {
-                $url = $opt["accessLocation"]["uniformResourceIdentifier"];
-                break;
-            }
-        }
-        return $url;
-    }
-
     public function getCert(): X509
     {
         if (!$this->certificate) {

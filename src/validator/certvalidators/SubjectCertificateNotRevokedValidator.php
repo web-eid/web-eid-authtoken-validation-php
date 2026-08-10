@@ -123,12 +123,13 @@ final class SubjectCertificateNotRevokedValidator implements SubjectCertificateV
         // that helps us to verify it. According to RFC 2560 this field is optional, but including it
         // is standard practice.
 
-        if (count($basicResponse->getCertificates()) < 1) {
+        $responderCertificates = $basicResponse->getCertificates();
+        if (count($responderCertificates) < 1) {
             throw new UserCertificateOCSPCheckFailedException("OCSP response must contain the responder certificate, but none was provided");
         }
 
         // The first certificate is the responder certificate, other certificates, if given, are the certificate's chain.
-        $responderCert = $basicResponse->getCertificates()[0];
+        $responderCert = $responderCertificates[0];
 
         OcspResponseValidator::validateResponseSignature($basicResponse, $responderCert);
 

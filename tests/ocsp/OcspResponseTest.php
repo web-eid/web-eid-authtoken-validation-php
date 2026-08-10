@@ -64,12 +64,6 @@ class OcspResponseTest extends TestCase
         $response = new OcspResponse(self::getOcspResponseBytesFromResources());
         $basicResponse = $response->getBasicResponse();
 
-        $mockCertificateID = $basicResponse->getResponses()[0]['certID'];
-        $mockCertificateID['hashAlgorithm']['algorithm'] = ASN1::getOID('id-sha1');
-
-        $response->validateCertificateId($mockCertificateID);
-        $response->validateSignature();
-
         $this->assertFalse($response->isRevoked());
         $this->assertEquals("successful", $response->getStatus());
         $this->assertEquals("2021-09-17 18:25:24", $basicResponse->getProducedAt()->format("Y-m-d H:i:s"));
@@ -103,21 +97,6 @@ class OcspResponseTest extends TestCase
         $this->expectExceptionMessage("OCSP response must contain one response, received 2 responses instead");
 
         $response->isRevoked();
-    }
-
-    public function testWhenCertificateIdsDoNotMatchThenThrows(): void
-    {
-        $response = new OcspResponse(self::getOcspResponseBytesFromResources());
-        $basicResponse = $response->getBasicResponse();
-
-        $mockCertificateID = $basicResponse->getResponses()[0]['certID'];
-        $mockCertificateID['issuerNameHash'] = "1234";
-        $mockCertificateID['hashAlgorithm']['algorithm'] = ASN1::getOID('id-sha1');
-
-        $this->expectException(OcspVerifyFailedException::class);
-        $this->expectExceptionMessage("OCSP responded with certificate ID that differs from the requested ID");
-
-        $response->validateCertificateId($mockCertificateID);
     }
 
     public function testWhenResponseTypeNotBasicResponseThrows(): void
@@ -160,10 +139,6 @@ class OcspResponseTest extends TestCase
 
         $response = new OcspResponse(self::getOcspResponseBytesFromResources());
 
-        $basicResponse = $response->getBasicResponse();
-        $mockCertificateID = $basicResponse->getResponses()[0]['certID'];
-        $mockCertificateID['hashAlgorithm']['algorithm'] = ASN1::getOID('id-sha1');
-
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
         $mockResponse = $property->getValue($response);
@@ -172,27 +147,6 @@ class OcspResponseTest extends TestCase
         $property->setValue($response, $mockResponse);
 
         $response->isRevoked();
-    }
-
-    public function testWhenResponseSignatureIsNotValidThrows(): void
-    {
-        $this->expectException(OcspVerifyFailedException::class);
-        $this->expectExceptionMessage('OCSP response signature is not valid');
-
-        $response = new OcspResponse(self::getOcspResponseBytesFromResources());
-
-        $basicResponse = $response->getBasicResponse();
-        $mockCertificateID = $basicResponse->getResponses()[0]['certID'];
-        $mockCertificateID['hashAlgorithm']['algorithm'] = ASN1::getOID('id-sha1');
-
-        $reflection = new ReflectionClass(get_class($response));
-        $property = $reflection->getProperty('ocspResponse');
-        $mockResponse = $property->getValue($response);
-        $mockResponse['responseBytes']['response']['signature'] = "somesignature";
-
-        $property->setValue($response, $mockResponse);
-
-        $response->validateSignature();
     }
 
     public function testWhenSignatureAlgorithmIsSha3(): void
