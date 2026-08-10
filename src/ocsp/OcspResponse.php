@@ -37,6 +37,7 @@ class OcspResponse
 {
     private array $ocspResponse = [];
     private string $revokeReason = "";
+    private ?OcspBasicResponse $basicResponse = null;
 
     public function __construct(string $encodedBER)
     {
@@ -59,6 +60,10 @@ class OcspResponse
 
     public function getBasicResponse(): OcspBasicResponse
     {
+        if ($this->basicResponse !== null) {
+            return $this->basicResponse;
+        }
+
         if (
             Ocsp::ID_PKIX_OCSP_BASIC_STRING !=
             $this->ocspResponse["responseBytes"]["responseType"]
@@ -75,7 +80,7 @@ class OcspResponse
             );
         }
 
-        return new OcspBasicResponse(
+        return $this->basicResponse = new OcspBasicResponse(
             $this->ocspResponse["responseBytes"]["response"]
         );
     }

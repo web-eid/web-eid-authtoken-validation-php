@@ -160,10 +160,6 @@ class OcspResponseTest extends TestCase
 
         $response = new OcspResponse(self::getOcspResponseBytesFromResources());
 
-        $basicResponse = $response->getBasicResponse();
-        $mockCertificateID = $basicResponse->getResponses()[0]['certID'];
-        $mockCertificateID['hashAlgorithm']['algorithm'] = ASN1::getOID('id-sha1');
-
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
         $mockResponse = $property->getValue($response);
@@ -180,10 +176,6 @@ class OcspResponseTest extends TestCase
         $this->expectExceptionMessage('OCSP response signature is not valid');
 
         $response = new OcspResponse(self::getOcspResponseBytesFromResources());
-
-        $basicResponse = $response->getBasicResponse();
-        $mockCertificateID = $basicResponse->getResponses()[0]['certID'];
-        $mockCertificateID['hashAlgorithm']['algorithm'] = ASN1::getOID('id-sha1');
 
         $reflection = new ReflectionClass(get_class($response));
         $property = $reflection->getProperty('ocspResponse');
