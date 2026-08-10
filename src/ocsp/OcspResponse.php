@@ -116,37 +116,6 @@ class OcspResponse
         return null;
     }
 
-    public function validateSignature(): void
-    {
-        $basicResponse = $this->getBasicResponse();
-        $this->validateResponse($basicResponse);
-
-        $responderCert = $basicResponse->getCertificates()[0];
-        // get public key from responder certificate in order to verify signature on response
-        $publicKey = $responderCert
-            ->getPublicKey()
-            ->withHash($basicResponse->getSignatureAlgorithm());
-        // verify response data
-        $encodedTbsResponseData = $basicResponse->getEncodedResponseData();
-        $signature = $basicResponse->getSignature();
-
-        if (!$publicKey->verify($encodedTbsResponseData, $signature)) {
-            throw new OcspVerifyFailedException(
-                "OCSP response signature is not valid"
-            );
-        }
-    }
-
-    public function validateCertificateId(array $requestCertificateId): void
-    {
-        $basicResponse = $this->getBasicResponse();
-        if ($requestCertificateId != $basicResponse->getCertID()) {
-            throw new OcspVerifyFailedException(
-                "OCSP responded with certificate ID that differs from the requested ID"
-            );
-        }
-    }
-
     private function validateResponse(OcspBasicResponse $basicResponse): void
     {
         // Must be one response
