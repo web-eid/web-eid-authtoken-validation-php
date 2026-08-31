@@ -130,7 +130,7 @@ class Router
 
         $router = new AltoRouter();
         $router->setBasePath("");
-        
+
         // Page routes
         $router->map("GET", "/", ["controller" => "Pages", "method" => "login"]);
         $router->map("GET", "/logout", ["controller" => "Auth", "method" => "logout"]);
@@ -148,7 +148,7 @@ class Router
         if (isset($_SESSION["auth-user"])) {
             $router->map("GET", "/welcome", ["controller" => "Pages", "method" => "welcome"]);
         }
-        
+
         $match = $router->match();
 
         if (!$match) {
@@ -156,7 +156,6 @@ class Router
             header("Location: /");
             return;
         }
-
 
         $controller = new $match["target"]["controller"]($this->config);
         $method = $match["target"]["method"];
@@ -332,7 +331,6 @@ Note that successful token validation only establishes *who* the user is; it doe
 
 See the complete example in the `example` directory.
 
-
 # Table of contents
 
 - [Quickstart](#quickstart)
@@ -434,7 +432,7 @@ The website back end must look up the challenge nonce from its local store using
 
 As described in section *[4. Configure the authentication token validator](#4-configure-the-authentication-token-validator)*, the mandatory authentication token validator configuration parameters are the website origin and trusted certificate authorities.
 
-**Origin** must be the URL serving the web application. Origin URL must be in the form of `"https://" <hostname> [ ":" <port> ]`  as defined in [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Location/origin) and not contain path or query components. Note that the `origin` URL must not end with a slash `/`. The configured origin must use the ASCII serialization that is signed by the Web eID application. For internationalized domain names, use the Punycode form, for example `https://xn--pike-loa.ee` instead of `https://päike.ee`.
+**Origin** must be the URL serving the web application. Origin URL must be in the form of `"https://" <hostname> [ ":" <port> ]` as defined in [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Location/origin) and not contain path or query components. Note that the `origin` URL must not end with a slash `/`. The configured origin must use the ASCII serialization that is signed by the Web eID application. For internationalized domain names, use the Punycode form, for example `https://xn--pike-loa.ee` instead of `https://päike.ee`.
 
 The **trusted certificate authority certificates** are used to validate that the user certificate from the authentication token and the OCSP responder certificate is signed by a trusted certificate authority. Intermediate CA certificates must be used instead of the root CA certificates so that revoked CA certificates can be removed. Trusted certificate authority certificates configuration is described in more detail in section *[3. Add trusted certificate authority certificates](#3-add-trusted-certificate-authority-certificates)*.
 
@@ -442,7 +440,7 @@ Before validation, the previously issued **challenge nonce** must be looked up f
 
 The authentication token validator configuration and construction is described in more detail in section *[4. Configure the authentication token validator](#4-configure-the-authentication-token-validator)*. Once the validator object has been constructed, it can be used for validating authentication tokens as follows:
 
-```php  
+```php
 $challengeNonce = (new ChallengeNonceStore())->getAndRemove()->getBase64EncodedNonce();
 $token = new WebEidAuthToken($tokenString);
 
@@ -455,10 +453,10 @@ $userCertificate = $tokenValidator->validate($token, $challengeNonce);
 ```
 The `validate()` method returns the validated user certificate object if validation is successful or throws an exception as described in section *[Possible validation errors](#possible-validation-errors)* below if validation fails. The `CertificateData` class and `ucwords` function can be used for extracting user information from the user certificate object:
 
-```php  
+```php
 use web_eid\web_eid_authtoken_validation_php\certificate\CertificateData;
 ...
-    
+
 CertificateData::getSubjectCN($userCertificate); // "JÕEORG\\,JAAK-KRISTJAN\\,38001085718"
 CertificateData::getSubjectIdCode($userCertificate); // "PNOEE-38001085718"
 CertificateData::getSubjectCountryCode($userCertificate); // "EE"
@@ -486,7 +484,6 @@ The following additional configuration options are available in `AuthTokenValida
 - `withAllowedOcspResponseTimeSkew(int $allowedTimeSkew)` – sets the allowed time skew for OCSP response's `thisUpdate` and `nextUpdate` times to allow discrepancies between the system clock and the OCSP responder's clock or revocation updates that are not published in real time. The default allowed time skew is 15 minutes. The relatively long default is specifically chosen to account for one particular OCSP responder that used CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
 
 - `withMaxOcspResponseThisUpdateAge(int $maxThisUpdateAge)` – sets the maximum age for the OCSP response's `thisUpdate` time before it is considered too old to rely on. The default maximum age is 2 minutes.
-
 
 Extended configuration example:
 
@@ -536,7 +533,7 @@ The nonce generator configuration and construction is described in more detail i
 
 ```php
 $generator = (new ChallengeNonceGeneratorBuilder())->build();
-$challengeNonce = $generator->generateAndStoreNonce();  
+$challengeNonce = $generator->generateAndStoreNonce();
 ```
 
 The `generateAndStoreNonce()` method both generates the nonce and saves it in the store.
@@ -551,7 +548,7 @@ The following additional configuration options are available in `ChallengeNonceG
 
 Extended configuration example:
 
-```php  
+```php
 $generator = (new ChallengeNonceGeneratorBuilder())
   ->withNonceTtl(300) // 5 minutes
   ->withSecureRandom($customSecureRandom)
@@ -578,7 +575,7 @@ composer install
 composer dump-autoload
 ```
 
-Change origin url (used by token validator) to match the url you are running the example on (set to https://localhost by default) by changing the array key  `origin_url` in `example/src/app.conf.php`. You can also override settings with environmental variable that is constructed by appending uppercased setting name to prefix 'WEB_EID_SAMPLE_'. This is useful for example in containerized environments like docker.
+Change origin url (used by token validator) to match the url you are running the example on (set to https://localhost by default) by changing the array key `origin_url` in `example/src/app.conf.php`. You can also override settings with environmental variable that is constructed by appending uppercased setting name to prefix 'WEB_EID_SAMPLE_'. This is useful for example in containerized environments like docker.
 
 For example to override origin_url set environmental variable:
 
