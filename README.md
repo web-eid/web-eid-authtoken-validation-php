@@ -338,6 +338,7 @@ See the complete example in the `example` directory.
 - [Quickstart](#quickstart)
 - [Introduction](#introduction)
 - [Authentication token format](#authentication-token-format)
+  - [Supported token format versions](#supported-token-format-versions)
 - [Authentication token validation](#authentication-token-validation)
   - [Basic usage](#basic-usage)
   - [Extended configuration](#extended-configuration)
@@ -350,7 +351,6 @@ See the complete example in the `example` directory.
 - [Example implementation](#example-implementation)
 - [Code formatting](#code-formatting)
 - [Testing](#testing)
-- [Authentication token format versions](#authentication-token-format-versions)
 
 # Introduction
 
@@ -365,7 +365,9 @@ In the following,
 - **origin** is defined as the website origin, the URL serving the web application,
 - **challenge nonce** (or challenge) is defined as a cryptographic nonce, a large random number that can be used only once, with at least 256 bits of entropy.
 
-The Web eID authentication token (format **`web-eid:1.0`**) is a JSON data structure that looks like the following example:
+The authentication token is a JSON data structure. The canonical definition of its fields, their allowed values and the requirements of each token format version is given in the [Web eID authentication token specification](https://github.com/web-eid/web-eid-system-architecture-doc#web-eid-authentication-token-specification); the tokens shown below are illustrative examples only.
+
+An authentication token in format **`web-eid:1.0`** looks like the following:
 
 ```json
 {
@@ -377,27 +379,7 @@ The Web eID authentication token (format **`web-eid:1.0`**) is a JSON data struc
 }
 ```
 
-It contains the following fields:
-
-- `unverifiedCertificate`: the base64-encoded DER-encoded authentication certificate of the eID user; the public key contained in this certificate should be used to verify the signature; the certificate cannot be trusted as it is received from client side and the client can submit a malicious certificate; to establish trust, it must be verified that the certificate is signed by a trusted certificate authority,
-
-- `algorithm`: the signature algorithm used to produce the signature; the allowed values are the algorithms specified in [JWA RFC](https://www.ietf.org/rfc/rfc7518.html) sections 3.3, 3.4 and 3.5:
-
-    ```
-      "ES256", "ES384", "ES512", // ECDSA
-      "PS256", "PS384", "PS512", // RSASSA-PSS
-      "RS256", "RS384", "RS512"  // RSASSA-PKCS1-v1_5
-    ```
-
-- `signature`: the base64-encoded signature of the token (see the description below),
-
-- `format`: the type identifier and version of the token format separated by a colon character '`:`', `web-eid:1.0` or `web-eid:1.1` as of now; the version number consists of the major and minor number separated by a dot, major version changes are incompatible with previous versions, minor version changes are backwards-compatible within the given major version,
-
-- `appVersion`: the URL identifying the name and version of the application that issued the token; informative purpose, can be used to identify the affected application in case of faulty tokens.
-
-The value that is signed by the user’s authentication private key and included in the `signature` field is `hash(origin)+hash(challenge)`. The hash function is used before concatenation to ensure field separation as the hash of a value is guaranteed to have a fixed length. Otherwise the origin `example.com` with challenge nonce `.eu1234` and another origin `example.com.eu` with challenge nonce `1234` would result in the same value after concatenation. The hash function `hash` is the same hash function that is used in the signature algorithm, for example SHA256 in case of RS256.
-
-The Web eID authentication token (format **`web-eid:1.1`**) is a JSON data structure that looks like the following example:
+An authentication token in format **`web-eid:1.1`** additionally contains the `unverifiedSigningCertificates` field:
 
 ```json
 {
@@ -420,32 +402,18 @@ The Web eID authentication token (format **`web-eid:1.1`**) is a JSON data struc
   "appVersion": "https://web-eid.eu/web-eid-app/releases/v2.0.0"
 }
 ```
-It contains the following fields:
 
-- `unverifiedSigningCertificates`: an array of objects containing signing certificate information.
+The value that is signed by the user’s authentication private key and included in the `signature` field is `hash(origin)+hash(challenge)`. The hash function is used before concatenation to ensure field separation as the hash of a value is guaranteed to have a fixed length. Otherwise the origin `example.com` with challenge nonce `.eu1234` and another origin `example.com.eu` with challenge nonce `1234` would result in the same value after concatenation. The hash function `hash` is the same hash function that is used in the signature algorithm, for example SHA256 in case of RS256.
 
-Each object inside `unverifiedSigningCertificates` contains:
+## Supported token format versions
 
-- `certificate`: base64-encoded DER-encoded signing certificate,
+This library validates both authentication token formats defined by the Web eID authentication protocol:
 
-- `supportedSignatureAlgorithms`: list of supported algorithms in the following format:
+- **`web-eid:1.0`** – the base authentication token format, without signing certificate information. It is used both by the Web eID browser extension and by the mobile application when signing certificate information is not requested.
 
-  - `cryptoAlgorithm`: the cryptographic algorithm used for the key,
+- **`web-eid:1.1`** – extends the base format with signing certificate information in the `unverifiedSigningCertificates` field. It is used when the authentication request asks for the signing certificate.
 
-  - `hashFunction`: the hashing algorithm used,
-
-  - `paddingScheme`: the padding scheme used (if applicable).
-
-
-Allowed values are:
-
-    cryptoAlgorithm: "ECC", "RSA"
-
-    hashFunction: 
-      "SHA-224", "SHA-256", "SHA-384", "SHA-512", 
-      "SHA3-224", "SHA3-256", "SHA3-384", "SHA3-512"
-
-    paddingScheme: "NONE", "PKCS1.5", "PSS"
+Both formats follow the same validation principles; `web-eid:1.1` adds the verification steps for the signing certificates that are listed in *[Authentication token validation](#authentication-token-validation)*.
 
 # Authentication token validation
 
@@ -667,17 +635,3 @@ Run phpunit in the root directory to run all unit tests.
 ```
 ./vendor/bin/phpunit tests
 ```
-
-# Authentication Token Format Versions
-
-The Web eID authentication protocol defines two token formats currently supported by this library:
-
-- **Format v1.0** – Used in desktop Web eID authentication flows with traditional smart card readers.
-
-- **Format v1.1** – An extended token format introduced for broader device compatibility and improved interoperability.  
-  In addition to the fields present in v1.0, it includes:
-  - `unverifiedSigningCertificates` – an array of signing certificate entries. Each entry contains:
-    - `certificate` – a base64-encoded DER-encoded signing certificate;
-    - `supportedSignatureAlgorithms` – a list of supported signature algorithms associated with that certificate;
-
-Both token formats follow the same validation principles, differing only in the structure of embedded certificates and the additional verification steps required for v1.1.
