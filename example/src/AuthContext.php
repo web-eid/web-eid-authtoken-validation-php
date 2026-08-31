@@ -56,6 +56,7 @@ final class AuthContext
 
     /**
      * @throws AuthTokenParseException
+     * @throws UserNotAuthorizedException
      */
     public function authenticate(
         string $authTokenJson,
@@ -67,6 +68,15 @@ final class AuthContext
             $authToken,
             $base64ChallengeNonce,
         );
+
+        // Successful token validation establishes the identity of the user, but not
+        // their permission to use the service. The application-specific authorization
+        // check must be performed before the authenticated session is created.
+        if (!$this->isUserAuthorized($cert)) {
+            throw new UserNotAuthorizedException(
+                "The user is not authorized to access this service",
+            );
+        }
 
         $firstSigningCertificate = null;
         $supportedSignatureAlgorithms = null;
@@ -149,6 +159,18 @@ final class AuthContext
                 ...$this->trustedIntermediateCACertificates(),
             )
             ->build();
+    }
+
+    /**
+     * Application-specific authorization check stub. Replace it with the check that
+     * your application requires, for example a lookup of the user's identity code in
+     * the service's user registry or a query for the roles granted to the user.
+     */
+    public function isUserAuthorized(X509 $cert): bool
+    {
+        $idCode = CertificateData::getSubjectIdCode($cert);
+        // TODO Replace with the actual authorization decision for the given user.
+        return !empty($idCode);
     }
 
     public function getPrincipalNameFromCertificate(X509 $cert): string

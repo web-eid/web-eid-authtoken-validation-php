@@ -81,6 +81,15 @@ final class MobileAuth
             $_SESSION["auth-supported-signature-algorithms"] = $authResult["supportedSignatureAlgorithms"];
 
             echo json_encode(["redirect" => "/welcome"]);
+        } catch (UserNotAuthorizedException $e) {
+            error_log("Authorization failed: " . $e->getMessage());
+
+            unset($_SESSION["auth-user"]);
+
+            http_response_code(403);
+            echo json_encode([
+                "error" => "User is not authorized to access this service"
+            ]);
         } catch (Throwable $e) {
             error_log("Authentication failed: " . $e->getMessage());
 

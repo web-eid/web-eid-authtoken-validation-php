@@ -86,6 +86,10 @@ final class Auth
             echo json_encode([
                 "sub" => $authResult["subjectName"],
             ]);
+        } catch (UserNotAuthorizedException $e) {
+            unset($_SESSION["auth-user"]);
+            http_response_code(403);
+            echo "User is not authorized to access this service";
         } catch (Exception $e) {
             unset($_SESSION["auth-user"]);
             http_response_code(401);

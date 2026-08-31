@@ -239,6 +239,37 @@ use web_eid\web_eid_authtoken_validation_php\challenge\ChallengeNonceStore;
 use web_eid\web_eid_authtoken_validation_php\exceptions\ChallengeNonceExpiredException;
 ...
 
+public function authenticate(
+    string $authTokenJson,
+    string $base64ChallengeNonce
+): array {
+    $authToken = new WebEidAuthToken($authTokenJson);
+
+    $cert = $this->tokenValidator()->validate($authToken, $base64ChallengeNonce);
+
+    // Successful token validation establishes the identity of the user, but not
+    // their permission to use the service. The application-specific authorization
+    // check must be performed before the authenticated session is created.
+    if (!$this->isUserAuthorized($cert)) {
+        throw new UserNotAuthorizedException("The user is not authorized to access this service");
+    }
+
+    return [
+        "subjectName" => $this->getPrincipalNameFromCertificate($cert),
+        ...
+    ];
+}
+
+// Application-specific authorization check stub. Replace it with the check that
+// your application requires, for example a lookup of the user's identity code in
+// the service's user registry or a query for the roles granted to the user.
+public function isUserAuthorized(X509 $cert): bool
+{
+    $idCode = CertificateData::getSubjectIdCode($cert);
+    // TODO Replace with the actual authorization decision for the given user.
+    return !empty($idCode);
+}
+
 public function getPrincipalNameFromCertificate(X509 $cert): string
 {
     $givenName = CertificateData::getSubjectGivenName($cert);
@@ -276,6 +307,10 @@ public function validate()
         echo json_encode([
             "sub" => $authResult["subjectName"]
         ]);
+    } catch (UserNotAuthorizedException) {
+        unset($_SESSION["auth-user"]);
+        http_response_code(403);
+        echo "User is not authorized to access this service";
     } catch (ChallengeNonceExpiredException) {
         unset($_SESSION["auth-user"]);
         http_response_code(401);
@@ -292,6 +327,9 @@ public function validate()
 }
 ...
 ```
+
+Note that successful token validation only establishes *who* the user is; it does not establish that the user is allowed to use the service. The authorization check is application-specific and must be implemented by the application itself, as outlined by the `isUserAuthorized()` stub above.
+
 See the complete example in the `example` directory.
 
 
