@@ -91,9 +91,9 @@ class UriTest extends TestCase
             $uri,
             Uri::fromParts(
                 [
-                    "scheme" => "https",  
-                    "host" => $uri->getHost(),  
-                    "port" => $uri->getPort(),  
+                    "scheme" => "https",
+                    "host" => $uri->getHost(),
+                    "port" => $uri->getPort(),
                 ]
             )
         );
@@ -107,9 +107,9 @@ class UriTest extends TestCase
             $uri,
             Uri::fromParts(
                 [
-                    "scheme" => "https",  
-                    "host" => $uri->getHost(),  
-                    "port" => $uri->getPort(),  
+                    "scheme" => "https",
+                    "host" => $uri->getHost(),
+                    "port" => $uri->getPort(),
                 ]
             )
         );

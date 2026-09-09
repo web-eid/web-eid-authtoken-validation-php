@@ -74,5 +74,4 @@ class CollectionsUtilTest extends TestCase
         $subjectCertificateValidatorCollection = new SubjectCertificateValidatorCollection(new SubjectCertificatePolicyValidator(["1.3.6.1.4.1.51361.1.2.1"]));
         $subjectCertificateValidatorCollection->offsetSet(1, "Wrong Type");
     }
-
 }

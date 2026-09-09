@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,15 @@
 
 class Pages
 {
-    var $template;
-    var $data = [];
+    private $template;
+    private $data;
 
     public function __construct()
     {
         $this->template = new Template();
     }
 
-    private function _generateCsrfToken()
+    private function generateCsrfToken()
     {
         // Store token to session
         $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
@@ -42,7 +42,14 @@ class Pages
     public function login()
     {
         $this->data = [
-            "content" => $this->template->getHtml(__DIR__ . '/../tpl/login.phtml')
+            "content" => $this->template->getHtml(__DIR__ . '/../tpl/index.phtml')
+        ];
+    }
+
+    public function mobileLoginView()
+    {
+        $this->data = [
+            "content" => $this->template->getHtml(__DIR__ . '/../tpl/webeid-login.phtml'),
         ];
     }
 
@@ -56,7 +63,7 @@ class Pages
 
     public function __destruct()
     {
-        $this->data["token"] = $this->_generateCsrfToken();;
+        $this->data["token"] = $this->generateCsrfToken();
         echo $this->template->getHtml(__DIR__ . '/../tpl/site.phtml', $this->data);
     }
 }

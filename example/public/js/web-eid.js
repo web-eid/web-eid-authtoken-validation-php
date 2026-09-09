@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020-2021 Estonian Information System Authority
+ * Copyright (c) 2020-2023 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,20 +48,12 @@ var ErrorCode;
 (function (ErrorCode) {
     ErrorCode["ERR_WEBEID_ACTION_TIMEOUT"] = "ERR_WEBEID_ACTION_TIMEOUT";
     ErrorCode["ERR_WEBEID_USER_TIMEOUT"] = "ERR_WEBEID_USER_TIMEOUT";
-    ErrorCode["ERR_WEBEID_SERVER_TIMEOUT"] = "ERR_WEBEID_SERVER_TIMEOUT";
     ErrorCode["ERR_WEBEID_VERSION_MISMATCH"] = "ERR_WEBEID_VERSION_MISMATCH";
     ErrorCode["ERR_WEBEID_VERSION_INVALID"] = "ERR_WEBEID_VERSION_INVALID";
     ErrorCode["ERR_WEBEID_EXTENSION_UNAVAILABLE"] = "ERR_WEBEID_EXTENSION_UNAVAILABLE";
     ErrorCode["ERR_WEBEID_NATIVE_UNAVAILABLE"] = "ERR_WEBEID_NATIVE_UNAVAILABLE";
     ErrorCode["ERR_WEBEID_UNKNOWN_ERROR"] = "ERR_WEBEID_UNKNOWN_ERROR";
     ErrorCode["ERR_WEBEID_CONTEXT_INSECURE"] = "ERR_WEBEID_CONTEXT_INSECURE";
-    ErrorCode["ERR_WEBEID_PROTOCOL_INSECURE"] = "ERR_WEBEID_PROTOCOL_INSECURE";
-    ErrorCode["ERR_WEBEID_TLS_CONNECTION_BROKEN"] = "ERR_WEBEID_TLS_CONNECTION_BROKEN";
-    ErrorCode["ERR_WEBEID_TLS_CONNECTION_INSECURE"] = "ERR_WEBEID_TLS_CONNECTION_INSECURE";
-    ErrorCode["ERR_WEBEID_TLS_CONNECTION_WEAK"] = "ERR_WEBEID_TLS_CONNECTION_WEAK";
-    ErrorCode["ERR_WEBEID_CERTIFICATE_CHANGED"] = "ERR_WEBEID_CERTIFICATE_CHANGED";
-    ErrorCode["ERR_WEBEID_ORIGIN_MISMATCH"] = "ERR_WEBEID_ORIGIN_MISMATCH";
-    ErrorCode["ERR_WEBEID_SERVER_REJECTED"] = "ERR_WEBEID_SERVER_REJECTED";
     ErrorCode["ERR_WEBEID_USER_CANCELLED"] = "ERR_WEBEID_USER_CANCELLED";
     ErrorCode["ERR_WEBEID_NATIVE_INVALID_ARGUMENT"] = "ERR_WEBEID_NATIVE_INVALID_ARGUMENT";
     ErrorCode["ERR_WEBEID_NATIVE_FATAL"] = "ERR_WEBEID_NATIVE_FATAL";
@@ -112,7 +104,7 @@ class ExtensionUnavailableError extends Error {
 }
 
 var config = Object.freeze({
-    VERSION: "2.0.1",
+    VERSION: "2.0.2",
     EXTENSION_HANDSHAKE_TIMEOUT: 1000,
     NATIVE_APP_HANDSHAKE_TIMEOUT: 5 * 1000,
     DEFAULT_USER_INTERACTION_TIMEOUT: 2 * 60 * 1000,
@@ -251,7 +243,7 @@ class WebExtensionService {
             (_d = message.warnings) === null || _d === void 0 ? void 0 : _d.forEach((warning) => {
                 if (!this.loggedWarnings.includes(warning)) {
                     this.loggedWarnings.push(warning);
-                    console.warn(warning);
+                    console.warn(warning.replace(/\n|\r/g, ""));
                 }
             });
         }

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (c) 2022-2024 Estonian Information System Authority
+ * Copyright (c) 2022-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,8 +34,6 @@ use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
  */
 interface AuthTokenValidator
 {
-    public const CURRENT_TOKEN_FORMAT_VERSION = 'web-eid:1';
-
     /**
      * Parses the Web eID authentication token signed by the subject.
      *
