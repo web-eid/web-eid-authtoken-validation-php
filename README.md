@@ -10,7 +10,7 @@ More information about the Web eID project is available on the project [website]
 
 # Quickstart
 
-Complete the steps below to add support for secure authentication with eID cards to your PHP web application back end. Instructions for the front end are available [here](https://github.com/web-eid/web-eid.js).
+Complete the steps below to add support for secure authentication with eID cards to your PHP web application back end. Instructions for the front end are available [here](https://github.com/web-eid/web-eid.js). If your application already uses Web eID and you only need to add the mobile flow, see [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration).
 
 A PHP web application that uses Composer to manage packages is needed for running this quickstart.
 
@@ -188,7 +188,7 @@ class Auth
 
 ### Issuing challenge nonces for Web eID for Mobile
 
-The `POST /auth/mobile/init` endpoint initiates authentication flows that use **Web eID token format v1.1**. It generates a challenge nonce and returns a deep link URI that embeds a base64-encoded payload containing the challenge nonce, the login endpoint URL and whether the mobile application should include the signing certificate information in the authentication token. The mobile application opens the deep link, signs the challenge and posts the `web-eid:1.1` authentication token to the `POST /auth/mobile/login` endpoint, which validates it with the same `AuthContext::authenticate()` method that is used in the regular flow. See the full implementation in `example/src/MobileAuth.php`.
+The `POST /auth/mobile/init` endpoint initiates mobile authentication. Authentication-only responses use `web-eid:1.0`; requesting signing certificate information uses `web-eid:1.1`. It generates a challenge nonce and returns a deep link URI that embeds a base64-encoded payload containing the challenge nonce, the login endpoint URL and whether the mobile application should include the signing certificate information in the authentication token. The mobile application opens the deep link and returns the authentication token in the browser login page URL fragment. The page posts the token to `POST /auth/mobile/login`, which validates it with the same `AuthContext::authenticate()` method that is used in the regular flow. See the full implementation in `example/src/MobileAuth.php`.
 
 ```php
 final class MobileAuth
@@ -229,7 +229,7 @@ The deep link base URL and whether the signing certificate is requested are conf
 
 ## 6. Implement authentication
 
-Authentication consists of calling the `validate()` method of the authentication token validator. In the updated implementation, the authentication logic is centralized in `AuthContext`, which is used by both `Auth` for the `web-eid:1.0` authentication flow and `MobileAuth` for the `web-eid:1.1` authentication flow. The internal implementation of the validation process is described in more detail below and in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
+Authentication consists of calling the `validate()` method of the authentication token validator. In the updated implementation, the authentication logic is centralized in `AuthContext`, which is used by both `Auth` for desktop authentication and `MobileAuth` for mobile authentication. Both flows use `web-eid:1.0` for authentication only; mobile responses that include signing certificate information use `web-eid:1.1`. The internal implementation of the validation process is described in more detail below and in the [Web eID system architecture document](https://github.com/web-eid/web-eid-system-architecture-doc#authentication-1).
 
 ```php
 use web_eid\web_eid_authtoken_validation_php\authtoken\WebEidAuthToken;
@@ -331,9 +331,21 @@ Note that successful token validation only establishes *who* the user is; it doe
 
 See the complete example in the `example` directory.
 
+## Adding Web eID for Mobile support to an existing integration
+
+Reuse your existing challenge nonce generator and store, trusted CA configuration, token validation and authorization logic. The mobile flow adds an App Link/Universal Link that opens the RIA DigiDoc app and a login page that receives the response in its URL fragment and posts the token to your back end. Authentication-only responses use `web-eid:1.0`; requesting a signing certificate with `getSigningCertificate=true` requires a validator that supports `web-eid:1.1`. The validator configuration stays the same.
+
+1. Add `POST /auth/mobile/init` to generate and store a challenge nonce and return `authUri`: `https://id.eesti.ee/auth#<payload>`, where the payload is Base64-encoded JSON containing `challenge`, `loginUri` and optionally `getSigningCertificate` ([MobileAuth::init()](example/src/MobileAuth.php), routed via `Auth::mobileInit()`). Set `mobile_base_url` in [app.conf.php](example/src/app.conf.php) to `https://id.eesti.ee` for the RIA DigiDoc app; the example defaults to the development scheme `web-eid-mobile://`. Configure `mobile_request_signing_cert` as needed.
+2. Serve `GET /auth/mobile/login` at an HTTPS `loginUri` on the validator's configured `origin_url`. Its script must decode the response, handle errors and post `authToken` to the existing login endpoint ([login page](example/tpl/webeid-login.phtml), [payload parser](example/public/js/payload.js)); the example uses a separate `POST /auth/mobile/login` that shares [AuthContext::authenticate()](example/src/AuthContext.php) with desktop login. Retrieve and consume the session's unexpired challenge nonce, validate the token, apply your authorization checks and establish the authenticated session as before.
+3. Use `Secure`, `HttpOnly`, `SameSite=Lax` for the pre-authentication session cookie so it accompanies the return from the app ([index.php](example/public/index.php)). Keep CSRF protection on POST endpoints ([AuthContext::assertCsrf()](example/src/AuthContext.php)) and protect the login page against XSS. Callback fragments are untrusted input; the CSRF token alone does not authenticate them. See the architecture document's [security assumptions](https://github.com/web-eid/web-eid-for-mobile-architecture-doc#security-assumptions).
+4. Add a mobile login button that calls the init endpoint and opens the returned `authUri` ([front end](example/tpl/index.phtml)). Keep the existing desktop login control.
+
+Optional mobile signing is not demonstrated by the PHP example; see the [Java](https://github.com/web-eid/web-eid-authtoken-validation-java/tree/web-eid-mobile/example) and [.NET](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/tree/web-eid-mobile/example) examples.
+
 # Table of contents
 
 - [Quickstart](#quickstart)
+  - [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)
 - [Introduction](#introduction)
 - [Authentication token format](#authentication-token-format)
   - [Supported token format versions](#supported-token-format-versions)
@@ -420,11 +432,11 @@ The authentication token validation process consists of the following stages:
 - First, **user certificate validation**: the validator parses the token and extracts the user certificate from the *unverifiedCertificate* field. Then it checks the certificate expiration, purpose and policies. Next it checks that the certificate is signed by a trusted CA and checks the certificate status with OCSP.
 - Second, **token signature validation**: the validator validates that the token signature was created using the provided user certificate by reconstructing the signed data `hash(origin)+hash(challenge)` and using the public key from the certificate to verify the signature in the `signature` field. If the signature verification succeeds, then the origin and challenge nonce have been implicitly and correctly verified without the need to implement any additional security checks.
 - Additional validation for **Web eID authentication tokens (format v1.1)**: the token must contain the `unverifiedSigningCertificates` field with at least one signing certificate entry. Each entry's `supportedSignatureAlgorithms` are validated against the set of allowed cryptographic algorithms, hash functions, and padding schemes. For each signing certificate, the following checks are performed:
-    - The subject must match the subject of the authentication certificate, ensuring both certificates belong to the same user.
-    - The issuing authority must match that of the authentication certificate, verified via the Authority Key Identifier (AKI) extension.
-    - The certificate must be within its validity period.
-    - The certificate must contain the non-repudiation key usage bit required for digital signatures.
-    - The certificate chain must validate against the configured trusted certificate authorities.
+  - The subject must match the subject of the authentication certificate, ensuring both certificates belong to the same user.
+  - The issuing authority must match that of the authentication certificate, verified via the Authority Key Identifier (AKI) extension.
+  - The certificate must be within its validity period.
+  - The certificate must contain the non-repudiation key usage bit required for digital signatures.
+  - The certificate chain must validate against the configured trusted certificate authorities.
 
 The website back end must look up the challenge nonce from its local store using an identifier specific to the browser session, to guarantee that the authentication token was received from the same browser to which the corresponding challenge nonce was issued. The website back end must guarantee that the challenge nonce lifetime is limited and that its expiration is checked, and that it can be used only once by removing it from the store during validation.
 
@@ -587,6 +599,9 @@ The Web eID for Mobile authentication flow is configured with the following addi
 
 - `mobile_base_url` – the base URL used for building the mobile authentication deep link, `web-eid-mobile://` by default;
 - `mobile_request_signing_cert` – whether the mobile application is asked to include the signing certificate information (`unverifiedSigningCertificates`) in the authentication token, `false` by default.
+
+The example files that implement the mobile flow are listed step by step in *[Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)*.
+
 Point your Apache web server Document Root to `/example/public` folder.
 
 # Dependency versioning policy
