@@ -32,7 +32,6 @@ use web_eid\web_eid_authtoken_validation_php\validator\AuthTokenValidatorBuilder
 
 final class AuthTokenValidators
 {
-
     private const TOKEN_ORIGIN_URL = "https://ria.ee";
     private const EST_IDEMIA_POLICY = "1.3.6.1.4.1.51361.1.2.1";
 
@@ -94,8 +93,8 @@ final class AuthTokenValidators
         return self::getAuthTokenValidator(
             "https://47f0-46-131-86-189.ngrok-free.app",
             ...CertificateLoader::loadCertificatesFromResources(
-            __DIR__ . "/../_resources/eID TEST EC Citizen CA.cer"
-        )
+                __DIR__ . "/../_resources/eID TEST EC Citizen CA.cer"
+            )
         );
     }
 
@@ -104,9 +103,9 @@ final class AuthTokenValidators
         return self::getAuthTokenValidator(
             "https://47f0-46-131-86-189.ngrok-free.app",
             ...CertificateLoader::loadCertificatesFromResources(
-            __DIR__ . "/../_resources/DVV TEST Certificates - G5E.crt",
-            __DIR__ . "/../_resources/VRK TEST CA for Test Purposes - G4.crt"
-        )
+                __DIR__ . "/../_resources/DVV TEST Certificates - G5E.crt",
+                __DIR__ . "/../_resources/VRK TEST CA for Test Purposes - G4.crt"
+            )
         );
     }
 

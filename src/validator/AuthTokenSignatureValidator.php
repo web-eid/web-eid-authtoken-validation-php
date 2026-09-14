@@ -36,7 +36,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\AuthTokenSignatureValida
 
 class AuthTokenSignatureValidator
 {
-
     private const ECDSA_ALGORITHMS = ['ES256', 'ES384', 'ES512'];
 
     private const RSASSA_PSS_ALGORITHMS = ['PS256', 'PS384', 'PS512'];
@@ -96,7 +95,11 @@ class AuthTokenSignatureValidator
 
         $result = openssl_verify($concatSignedFields, $decodedSignature, $publicKey, $hashAlgorithm);
         if ($result !== 1) {
-            throw new AuthTokenSignatureValidationException($result === -1 ? openssl_error_string() : "Signature is invalid");
+            $message = $result === -1
+                ? openssl_error_string()
+                : "Signature is invalid";
+
+            throw new AuthTokenSignatureValidationException($message);
         }
     }
 

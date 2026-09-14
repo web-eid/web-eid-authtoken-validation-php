@@ -31,7 +31,6 @@ use Psr\Log\LoggerInterface;
 
 class OcspClientImpl implements OcspClient
 {
-
     private const OCSP_REQUEST_TYPE = "application/ocsp-request";
     private const OCSP_RESPONSE_TYPE = "application/ocsp-response";
     private int $requestTimeout;
@@ -67,7 +66,9 @@ class OcspClientImpl implements OcspClient
 
         $info = curl_getinfo($curl);
         if ($info["http_code"] !== 200) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP request was not successful, response: " + $result);
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP request was not successful, response: " . (is_string($result) ? $result : '')
+            );
         }
 
         $response = new OcspResponse($result);
@@ -76,7 +77,9 @@ class OcspClientImpl implements OcspClient
         $this->logger?->debug("OCSP response: " . $responseJson);
 
         if ($info["content_type"] !== self::OCSP_RESPONSE_TYPE) {
-            throw new UserCertificateOCSPCheckFailedException("OCSP response content type is not " . self::OCSP_RESPONSE_TYPE);
+            throw new UserCertificateOCSPCheckFailedException(
+                "OCSP response content type is not " . self::OCSP_RESPONSE_TYPE
+            );
         }
 
         return $response;

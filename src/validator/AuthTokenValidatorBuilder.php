@@ -29,12 +29,14 @@ namespace web_eid\web_eid_authtoken_validation_php\validator;
 use GuzzleHttp\Psr7\Uri;
 use phpseclib3\File\X509;
 use web_eid\web_eid_authtoken_validation_php\util\X509Collection;
+use web_eid\web_eid_authtoken_validation_php\validator\ocsp\OcspClient;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
 use Psr\Log\LoggerInterface;
 
 class AuthTokenValidatorBuilder
 {
     private AuthTokenValidationConfiguration $configuration;
+    private ?OcspClient $ocspClient = null;
     private $logger;
 
     public function __construct(?LoggerInterface $logger = null)
@@ -48,14 +50,18 @@ class AuthTokenValidatorBuilder
      * <p>
      * Origin is a mandatory configuration parameter.
      *
-     * @param origin origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
+     * @param origin origin URL as defined in
+     *               <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
      *               in the form of {@code <scheme> "://" <hostname> [ ":" <port> ]}
      * @return the builder instance for method chaining
      */
     public function withSiteOrigin(Uri $origin): AuthTokenValidatorBuilder
     {
         $this->configuration->setSiteOrigin($origin);
-        $this->logger?->debug("Origin set to " . $this->configuration->getSiteOrigin()->jsonSerialize());
+        $this->logger?->debug(
+            "Origin set to " .
+                $this->configuration->getSiteOrigin()->jsonSerialize(),
+        );
         return $this;
     }
 
@@ -68,14 +74,26 @@ class AuthTokenValidatorBuilder
      * At least one trusted intermediate Certificate Authority must be provided as a mandatory configuration parameter.
      *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
-     * 
+     *
      * @param X509 $certificates trusted intermediate Certificate Authority certificates
      * @return the builder instance for method chaining
      */
-    public function withTrustedCertificateAuthorities(X509 ...$certificates): AuthTokenValidatorBuilder
-    {
-        array_push($this->configuration->getTrustedCACertificates(), ...$certificates);
-        $this->logger?->debug("Trusted intermediate certificate authorities set to " . json_encode(X509Collection::getSubjectDNs(null, ...$this->configuration->getTrustedCACertificates())));
+    public function withTrustedCertificateAuthorities(
+        X509 ...$certificates,
+    ): AuthTokenValidatorBuilder {
+        array_push(
+            $this->configuration->getTrustedCACertificates(),
+            ...$certificates,
+        );
+        $this->logger?->debug(
+            "Trusted intermediate certificate authorities set to " .
+                json_encode(
+                    X509Collection::getSubjectDNs(
+                        null,
+                        ...$this->configuration->getTrustedCACertificates(),
+                    ),
+                ),
+        );
         return $this;
     }
 
@@ -83,16 +101,25 @@ class AuthTokenValidatorBuilder
      * Adds the given policies to the list of disallowed user certificate policies.
      * In order for the user certificate to be considered valid, it must not contain any policies
      * present in this list.
-     * 
+     *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      *
      * @param string $policies disallowed user certificate policies as string array
      * @return the builder instance for method chaining
      */
-    public function withDisallowedCertificatePolicies(string ...$policies): AuthTokenValidatorBuilder
-    {
-        array_push($this->configuration->getDisallowedSubjectCertificatePolicies(), ...$policies);
-        $this->logger?->debug("Disallowed subject certificate policies set to " . json_encode($this->configuration->getDisallowedSubjectCertificatePolicies()));
+    public function withDisallowedCertificatePolicies(
+        string ...$policies,
+    ): AuthTokenValidatorBuilder {
+        array_push(
+            $this->configuration->getDisallowedSubjectCertificatePolicies(),
+            ...$policies,
+        );
+        $this->logger?->debug(
+            "Disallowed subject certificate policies set to " .
+                json_encode(
+                    $this->configuration->getDisallowedSubjectCertificatePolicies(),
+                ),
+        );
         return $this;
     }
 
@@ -108,7 +135,12 @@ class AuthTokenValidatorBuilder
     public function withoutUserCertificateRevocationCheckWithOcsp(): AuthTokenValidatorBuilder
     {
         $this->configuration->setUserCertificateRevocationCheckWithOcspDisabled();
-        $this->logger?->warning("User certificate revocation check with OCSP is disabled, you should turn off the revocation check only in exceptional circumstances");
+
+        $this->logger?->warning(
+            "User certificate revocation check with OCSP is disabled, " .
+            "you should turn off the revocation check only in exceptional circumstances",
+        );
+
         return $this;
     }
 
@@ -120,13 +152,16 @@ class AuthTokenValidatorBuilder
      * @param int $ocspRequestTimeout the duration of OCSP request connection and response timeout
      * @return the builder instance for method chaining.
      */
-    public function withOcspRequestTimeout(int $ocspRequestTimeout): AuthTokenValidatorBuilder
-    {
+    public function withOcspRequestTimeout(
+        int $ocspRequestTimeout,
+    ): AuthTokenValidatorBuilder {
         $this->configuration->setOcspRequestTimeout($ocspRequestTimeout);
-        $this->logger?->debug("OCSP request timeout set to " . $ocspRequestTimeout);
+        $this->logger?->debug(
+            "OCSP request timeout set to " . $ocspRequestTimeout,
+        );
         return $this;
     }
-    
+
     /**
      * Sets the allowed time skew for OCSP response's thisUpdate and nextUpdate times.
      * This parameter is used to allow discrepancies between the system clock and the OCSP responder's clock,
@@ -135,14 +170,17 @@ class AuthTokenValidatorBuilder
      * This is an optional configuration parameter, the default is 15 minutes.
      * The relatively long default is specifically chosen to account for one particular OCSP responder that used
      * CRLs for authoritative revocation info, these CRLs were updated every 15 minutes.
-     * 
+     *
      * @param integer $allowedTimeSkew the allowed time skew
      * @return AuthTokenValidatorBuilder the builder instance for method chaining.
      */
-    public function withAllowedOcspResponseTimeSkew(int $allowedTimeSkew) : AuthTokenValidatorBuilder
-    {
+    public function withAllowedOcspResponseTimeSkew(
+        int $allowedTimeSkew,
+    ): AuthTokenValidatorBuilder {
         $this->configuration->setAllowedOcspResponseTimeSkew($allowedTimeSkew);
-        $this->logger?->debug("Allowed OCSP response time skew set to " . $allowedTimeSkew);
+        $this->logger?->debug(
+            "Allowed OCSP response time skew set to " . $allowedTimeSkew,
+        );
         return $this;
     }
 
@@ -150,14 +188,19 @@ class AuthTokenValidatorBuilder
      * Sets the maximum age of the OCSP response's thisUpdate time before it is considered too old.
      * <p>
      * This is an optional configuration parameter, the default is 2 minutes.
-     * 
+     *
      * @param integer $maxThisUpdateAge the maximum age of the OCSP response's thisUpdate time
      * @return AuthTokenValidatorBuilder the builder instance for method chaining.
      */
-    public function withMaxOcspResponseThisUpdateAge(int $maxThisUpdateAge) : AuthTokenValidatorBuilder
-    {
-        $this->configuration->setMaxOcspResponseThisUpdateAge($maxThisUpdateAge);
-        $this->logger?->debug("Maximum OCSP response thisUpdate age set to " . $maxThisUpdateAge);
+    public function withMaxOcspResponseThisUpdateAge(
+        int $maxThisUpdateAge,
+    ): AuthTokenValidatorBuilder {
+        $this->configuration->setMaxOcspResponseThisUpdateAge(
+            $maxThisUpdateAge,
+        );
+        $this->logger?->debug(
+            "Maximum OCSP response thisUpdate age set to " . $maxThisUpdateAge,
+        );
         return $this;
     }
 
@@ -166,30 +209,54 @@ class AuthTokenValidatorBuilder
      * The OCSP URL is extracted from the user certificate and some OCSP services don't support the nonce extension.
      *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
-     * 
+     *
      * @param URI $urls OCSP URLs for which the nonce protocol extension will be disabled
      * @return the builder instance for method chaining
      */
-    public function withNonceDisabledOcspUrls(URI ...$uris): AuthTokenValidatorBuilder
-    {
+    public function withNonceDisabledOcspUrls(
+        URI ...$uris,
+    ): AuthTokenValidatorBuilder {
         foreach ($uris as $uri) {
             $this->configuration->getNonceDisabledOcspUrls()->pushItem($uri);
         }
-        $this->logger?->debug("OCSP URLs for which the nonce protocol extension is disabled set to " . implode(", ", $this->configuration->getNonceDisabledOcspUrls()->getUrlsArray()));
+        $this->logger?->debug(
+            "OCSP URLs for which the nonce protocol extension is disabled set to " .
+                implode(
+                    ", ",
+                    $this->configuration
+                        ->getNonceDisabledOcspUrls()
+                        ->getUrlsArray(),
+                ),
+        );
 
         return $this;
     }
 
-    public function withDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration $serviceConfiguration): AuthTokenValidatorBuilder
-    {
-        $this->configuration->setDesignatedOcspServiceConfiguration($serviceConfiguration);
+    public function withDesignatedOcspServiceConfiguration(
+        DesignatedOcspServiceConfiguration $serviceConfiguration,
+    ): AuthTokenValidatorBuilder {
+        $this->configuration->setDesignatedOcspServiceConfiguration(
+            $serviceConfiguration,
+        );
         $this->logger?->debug("Using designated OCSP service configuration");
+        return $this;
+    }
+
+    public function withOcspClient(
+        OcspClient $ocspClient,
+    ): AuthTokenValidatorBuilder {
+        $this->ocspClient = $ocspClient;
+        $this->logger?->debug("Custom OCSP client configured");
         return $this;
     }
 
     public function build(): AuthTokenValidator
     {
         $this->configuration->validate();
-        return new AuthTokenValidatorImpl($this->configuration, $this->logger);
+        return new AuthTokenValidatorImpl(
+            $this->configuration,
+            $this->logger,
+            $this->ocspClient,
+        );
     }
 }

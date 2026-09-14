@@ -30,7 +30,6 @@ use UnexpectedValueException;
 
 class CertificateDataTest extends TestCase
 {
-
     public function testValidateCertificateSubjectFields(): void
     {
         $cert = Certificates::getJaakKristjanEsteid2018Cert();

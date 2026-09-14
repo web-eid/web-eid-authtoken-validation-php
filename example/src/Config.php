@@ -36,7 +36,7 @@ class Config
     public function overrideFromEnv()
     {
         foreach ($this->configArr as $key => $value) {
-            $envKey = 'WEB_EID_SAMPLE_'.strtoupper($key);
+            $envKey = 'WEB_EID_SAMPLE_' . strtoupper($key);
             $envValue = getenv($envKey);
             if ($envValue !== false) {
                 $this->configArr[$key] = $envValue;
@@ -48,6 +48,6 @@ class Config
 
     public function get($name)
     {
-        return isset ($this->configArr[$name]) ? $this->configArr[$name] : null;
+        return isset($this->configArr[$name]) ? $this->configArr[$name] : null;
     }
 }

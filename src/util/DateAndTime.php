@@ -31,7 +31,6 @@ use BadFunctionCallException;
 
 final class DateAndTime
 {
-
     /**
      * Don't call this, all functions are static.
      *
@@ -46,7 +45,7 @@ final class DateAndTime
 
     /**
      * Get current UTC time
-     * 
+     *
      * @return DateTime
      */
     public static function utcNow(): DateTime
@@ -57,7 +56,7 @@ final class DateAndTime
     /**
      * Validates duration in seconds and
      * throws exception when duration is zero or below zero
-     * 
+     *
      * @throws InvalidArgumentException
      */
     public static function requirePositiveDuration(int $duration, string $fieldName): void

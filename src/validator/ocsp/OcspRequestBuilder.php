@@ -32,7 +32,6 @@ use web_eid\web_eid_authtoken_validation_php\util\SecureRandom;
 
 final class OcspRequestBuilder
 {
-
     private $secureRandom;
     private bool $ocspNonceEnabled = true;
     private array $certificateId;

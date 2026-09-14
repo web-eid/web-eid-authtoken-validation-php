@@ -31,7 +31,6 @@ use web_eid\web_eid_authtoken_validation_php\util\SecureRandom;
 
 class ChallengeNonceGeneratorBuilder
 {
-
     private ChallengeNonceStore $challengeNonceStore;
 
     /**
@@ -60,7 +59,7 @@ class ChallengeNonceGeneratorBuilder
      * Override default nonce time-to-live duration.
      * <p>
      * When the time-to-live passes, the nonce is considered to be expired.
-     * 
+     *
      * @copyright 2022 Petr Muzikant pmuzikant@email.cz
      *
      * @param int $seconds - challenge nonce time-to-live duration in seconds

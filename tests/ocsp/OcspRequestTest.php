@@ -33,12 +33,11 @@ use web_eid\web_eid_authtoken_validation_php\util\AsnUtil;
 
 class OcspRequestTest extends TestCase
 {
-
     private function getRequest(): array
     {
         return [
-            'tbsRequest' => [
-                'version' => 'v1',
+            "tbsRequest" => [
+                "version" => "v1",
             ],
         ];
     }
@@ -46,17 +45,19 @@ class OcspRequestTest extends TestCase
     private function getNonce(): array
     {
         return [
-            'extnId' => AsnUtil::ID_PKIX_OCSP_NONCE,
-            'critical' => false,
-            'extnValue' => ASN1::encodeDER("nonce", ['type' => ASN1::TYPE_OCTET_STRING]),
+            "extnId" => AsnUtil::ID_PKIX_OCSP_NONCE,
+            "critical" => false,
+            "extnValue" => ASN1::encodeDER("nonce", [
+                "type" => ASN1::TYPE_OCTET_STRING,
+            ]),
         ];
     }
 
     private function getExpectedRequestWithCertID(): array
     {
         $result = $this->getRequest();
-        $result['tbsRequest']['requestList'][] = [
-            'reqCert' => [1]
+        $result["tbsRequest"]["requestList"][] = [
+            "reqCert" => [1],
         ];
         return $result;
     }
@@ -64,7 +65,7 @@ class OcspRequestTest extends TestCase
     private function getExpectedWithNonce(): array
     {
         $result = $this->getRequest();
-        $result['tbsRequest']['requestExtensions'][] = $this->getNonce();
+        $result["tbsRequest"]["requestExtensions"][] = $this->getNonce();
         return $result;
     }
 
@@ -73,10 +74,13 @@ class OcspRequestTest extends TestCase
         $request = new OcspRequest();
         $request->addCertificateId([1]);
 
-        $reflection = new ReflectionClass(get_class($request));
-        $property = $reflection->getProperty('ocspRequest');
+        $reflection = new ReflectionClass($request);
+        $property = $reflection->getProperty("ocspRequest");
 
-        $this->assertEquals($this->getExpectedRequestWithCertID(), $property->getValue($request));
+        $this->assertEquals(
+            $this->getExpectedRequestWithCertID(),
+            $property->getValue($request),
+        );
     }
 
     public function testWhenAddNonceExtensionSuccess(): void
@@ -84,10 +88,13 @@ class OcspRequestTest extends TestCase
         $request = new OcspRequest();
         $request->addNonceExtension("nonce");
 
-        $reflection = new ReflectionClass(get_class($request));
-        $property = $reflection->getProperty('ocspRequest');
+        $reflection = new ReflectionClass($request);
+        $property = $reflection->getProperty("ocspRequest");
 
-        $this->assertEquals($this->getExpectedWithNonce(), $property->getValue($request));
+        $this->assertEquals(
+            $this->getExpectedWithNonce(),
+            $property->getValue($request),
+        );
     }
 
     public function testWhenGetNonceExtensionSuccess(): void
@@ -103,10 +110,11 @@ class OcspRequestTest extends TestCase
         // Create a nonce with a mixture of potentially problematic bytes,
         // null bytes, control characters and high-byte values (above 0x7F),
         // which are common sources of string decoding problems.
-        $nonce = "\0\1\2\3\4\5\6\7\x08\x09\x10\0"
-                       . "\x0A\x0D\x1B"
-                       . "\xE2\x82\xAC"
-                       . "\xFF";
+        $nonce =
+            "\0\1\2\3\4\5\6\7\x08\x09\x10\0" .
+            "\x0A\x0D\x1B" .
+            "\xE2\x82\xAC" .
+            "\xFF";
         $request = new OcspRequest();
         $request->addNonceExtension($nonce);
 

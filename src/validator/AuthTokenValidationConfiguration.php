@@ -30,7 +30,6 @@ use web_eid\web_eid_authtoken_validation_php\certificate\SubjectCertificatePolic
 use GuzzleHttp\Psr7\Uri;
 use web_eid\web_eid_authtoken_validation_php\util\DateAndTime;
 use web_eid\web_eid_authtoken_validation_php\util\UriCollection;
-
 use InvalidArgumentException;
 use web_eid\web_eid_authtoken_validation_php\validator\ocsp\service\DesignatedOcspServiceConfiguration;
 
@@ -121,8 +120,9 @@ final class AuthTokenValidationConfiguration
         return $this->designatedOcspServiceConfiguration;
     }
 
-    public function setDesignatedOcspServiceConfiguration(DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration): void
-    {
+    public function setDesignatedOcspServiceConfiguration(
+        DesignatedOcspServiceConfiguration $designatedOcspServiceConfiguration
+    ): void {
         $this->designatedOcspServiceConfiguration = $designatedOcspServiceConfiguration;
     }
 
@@ -159,7 +159,8 @@ final class AuthTokenValidationConfiguration
     }
 
     /**
-     * Validates that the given URI is an origin URL as defined in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
+     * Validates that the given URI is an origin URL as defined in
+     * <a href="https://developer.mozilla.org/en-US/docs/Web/API/Location/origin">MDN</a>,
      * in the form of {@code <scheme> "://" <hostname> [ ":" <port> ]}.
      *
      * @param uri URI with origin URL
@@ -174,17 +175,21 @@ final class AuthTokenValidationConfiguration
         }
 
         // 2. Verify that the URI contains only HTTPS scheme, host and optional port components.
-        if (!Uri::isSameDocumentReference(
-            $uri,
-            Uri::fromParts(
-                [
+        if (
+            !Uri::isSameDocumentReference(
+                $uri,
+                Uri::fromParts(
+                    [
                     "scheme" => "https",
                     "host" => $uri->getHost(),
                     "port" => $uri->getPort(),
-                ]
+                    ]
+                )
             )
-        )) {
-            throw new InvalidArgumentException("Origin URI must only contain the HTTPS scheme, host and optional port component");
+        ) {
+            throw new InvalidArgumentException(
+                "Origin URI must only contain the HTTPS scheme, host and optional port component"
+            );
         }
     }
 }

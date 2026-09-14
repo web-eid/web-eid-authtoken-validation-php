@@ -37,7 +37,6 @@ use web_eid\web_eid_authtoken_validation_php\exceptions\UserCertificateOCSPCheck
 
 class OcspResponseValidatorTest extends TestCase
 {
-
     private static int $timeSkew;
     private static int $maxThisUpdateAge;
 

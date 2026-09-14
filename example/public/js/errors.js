@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2024 Estonian Information System Authority
+ * Copyright (c) 2020-2025 Estonian Information System Authority
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,9 @@ export function hideErrorMessage() {
     alertUi.alert.style.display = "none";
 }
 
-export function showErrorMessage(error) {
-    const message = "Authentication failed";
+export function showErrorMessage(error, message = "Authentication failed") {
     const details =
-        `[Code]\n${error.code}` +
+        `[Code]\n${error.code ?? "UNKNOWN_ERROR"}` +
         `\n\n[Message]\n${error.message}` +
         (error.response ? `\n\n[response]\n${JSON.stringify(error.response, null, " ")}` : "");
 

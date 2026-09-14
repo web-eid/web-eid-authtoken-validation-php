@@ -32,7 +32,7 @@ class CertificateLoaderTest extends TestCase
 {
     public function testWhenCertificateLoaderFromFileSuccess(): void
     {
-        $loader = (new CertificateLoader)->fromFile(__DIR__.'/../../_resources/revoked.crt');
+        $loader = (new CertificateLoader())->fromFile(__DIR__ . '/../../_resources/revoked.crt');
 
         $this->assertEquals("318601422914101149693420017798940712227677", $loader->getCert()->getCurrentCert()['tbsCertificate']['serialNumber']);
         $this->assertEquals("http://cert.int-x3.letsencrypt.org/", $loader->getIssuerCertificateUrl());
@@ -41,26 +41,25 @@ class CertificateLoaderTest extends TestCase
 
     public function testWhenCertificateLoaderFromStringSuccess(): void
     {
-        $certData = file_get_contents(__DIR__.'/../../_resources/revoked.crt');
-        $certificate = (new CertificateLoader)->fromString($certData)->getCert();
+        $certData = file_get_contents(__DIR__ . '/../../_resources/revoked.crt');
+        $certificate = (new CertificateLoader())->fromString($certData)->getCert();
         $this->assertEquals("318601422914101149693420017798940712227677", $certificate->getCurrentCert()['tbsCertificate']['serialNumber']);
     }
 
     public function testWhenCertificateFileDoNotExistThrows(): void
     {
         $this->expectException(OcspCertificateException::class);
-        $this->expectExceptionMessage('Certificate file not found or not readable: '.__DIR__.'/../../_resources/somecert.crt');
+        $this->expectExceptionMessage('Certificate file not found or not readable: ' . __DIR__ . '/../../_resources/somecert.crt');
 
-        (new CertificateLoader)->fromFile(__DIR__.'/../../_resources/somecert.crt');
-
+        (new CertificateLoader())->fromFile(__DIR__ . '/../../_resources/somecert.crt');
     }
 
     public function testWhenCertificateIsInvalidThrows(): void
     {
         $this->expectException(OcspCertificateException::class);
-        $this->expectExceptionMessage('Certificate decoding from Base64 or parsing failed for '.__DIR__.'/../../_resources/invalid.crt');
+        $this->expectExceptionMessage('Certificate decoding from Base64 or parsing failed for ' . __DIR__ . '/../../_resources/invalid.crt');
 
-        (new CertificateLoader)->fromFile(__DIR__.'/../../_resources/invalid.crt');
+        (new CertificateLoader())->fromFile(__DIR__ . '/../../_resources/invalid.crt');
     }
 
     public function testWhenCertificateStringIsNotValidThrows(): void
@@ -68,7 +67,7 @@ class CertificateLoaderTest extends TestCase
         $this->expectException(OcspCertificateException::class);
         $this->expectExceptionMessage('Certificate decoding from Base64 or parsing failed');
 
-        (new CertificateLoader)->fromString("certsource");
+        (new CertificateLoader())->fromString("certsource");
     }
 
     public function testWhenCertificateIsNotLoadedOnIssuerCertificateUrlThrows(): void
@@ -76,7 +75,7 @@ class CertificateLoaderTest extends TestCase
         $this->expectException(OcspCertificateException::class);
         $this->expectExceptionMessage('Certificate not loaded');
 
-        (new CertificateLoader)->getIssuerCertificateUrl();
+        (new CertificateLoader())->getIssuerCertificateUrl();
     }
 
     public function testWhenCertificateIsNotLoadedOnOcspResponderUrlThrows(): void
@@ -84,7 +83,7 @@ class CertificateLoaderTest extends TestCase
         $this->expectException(OcspCertificateException::class);
         $this->expectExceptionMessage('Certificate not loaded');
 
-        (new CertificateLoader)->getOcspResponderUrl();
+        (new CertificateLoader())->getOcspResponderUrl();
     }
 
     public function testWhenCertificateIsNotLoadedOnGetCertThrows(): void
@@ -92,7 +91,6 @@ class CertificateLoaderTest extends TestCase
         $this->expectException(OcspCertificateException::class);
         $this->expectExceptionMessage('Certificate not loaded');
 
-        (new CertificateLoader)->getCert();
+        (new CertificateLoader())->getCert();
     }
-
 }

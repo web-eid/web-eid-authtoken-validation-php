@@ -40,6 +40,8 @@ use GuzzleHttp\Psr7\Uri;
  */
 abstract class Collection implements Countable, IteratorAggregate, ArrayAccess
 {
+    protected const WRONG_TYPE_MESSAGE = 'Wrong type, expected ';
+
     protected array $array;
 
     abstract public function __construct();
@@ -94,7 +96,7 @@ class X509Collection extends Collection
     public function validateType($value): void
     {
         if (!$value instanceof X509) {
-            throw new TypeError("Wrong type, expected " . X509::class);
+            throw new TypeError(self::WRONG_TYPE_MESSAGE . X509::class);
         }
     }
 
@@ -120,7 +122,7 @@ class SubjectCertificateValidatorCollection extends Collection
     public function validateType($value): void
     {
         if (!$value instanceof SubjectCertificateValidator) {
-            throw new TypeError("Wrong type, expected " . SubjectCertificateValidator::class);
+            throw new TypeError(self::WRONG_TYPE_MESSAGE . SubjectCertificateValidator::class);
         }
     }
 }
@@ -135,7 +137,7 @@ class UriCollection extends Collection
     public function validateType($value): void
     {
         if (!$value instanceof Uri) {
-            throw new TypeError("Wrong type, expected " . Uri::class);
+            throw new TypeError(self::WRONG_TYPE_MESSAGE . Uri::class);
         }
     }
 

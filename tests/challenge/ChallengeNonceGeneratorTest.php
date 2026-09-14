@@ -82,5 +82,4 @@ class ChallengeNonceGeneratorTest extends TestCase
         unset($_SESSION);
         new ChallengeNonceStore();
     }
-
 }
