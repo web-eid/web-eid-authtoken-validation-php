@@ -10,7 +10,7 @@ More information about the Web eID project is available on the project [website]
 
 # Quickstart
 
-Complete the steps below to add support for secure authentication with eID cards to your PHP web application back end. Instructions for the front end are available [here](https://github.com/web-eid/web-eid.js).
+Complete the steps below to add support for secure authentication with eID cards to your PHP web application back end. Instructions for the front end are available [here](https://github.com/web-eid/web-eid.js). If your application already uses Web eID and you want to add the mobile flow, see [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration).
 
 A PHP web application that uses Composer to manage packages is needed for running this quickstart.
 
@@ -331,9 +331,21 @@ Note that successful token validation only establishes *who* the user is; it doe
 
 See the complete example in the `example` directory.
 
+## Adding Web eID for Mobile support to an existing integration
+
+Reuse your existing challenge nonce generator and store, trusted CA configuration, token validation and authorization logic. The mobile flow adds an App Link/Universal Link that opens the RIA DigiDoc app and a login page that receives the response in its URL fragment and posts the token to your back end. Authentication-only responses use `web-eid:1.0`; requesting a signing certificate with `getSigningCertificate=true` requires a validator that supports `web-eid:1.1`. The validator configuration stays the same.
+
+1. Add `POST /auth/mobile/init` to generate and store a challenge nonce and return `authUri`: `https://mopp.ria.ee/auth#<payload>`, where the payload is Base64-encoded JSON containing `challenge`, `loginUri` and optionally `getSigningCertificate` ([MobileAuth::init()](example/src/MobileAuth.php), routed via `Auth::mobileInit()`). Set `mobile_base_url` in [app.conf.php](example/src/app.conf.php) to `https://mopp.ria.ee` for the RIA DigiDoc app; the example defaults to the development scheme `web-eid-mobile://`. Leave `mobile_request_signing_cert` disabled for authentication only.
+2. Serve `GET /auth/mobile/login` at an HTTPS `loginUri` on the validator's configured `origin_url`. Its script must decode the response, handle errors and post `authToken` to the back end ([login page](example/tpl/webeid-login.phtml), [payload parser](example/public/js/payload.js)). The example uses `POST /auth/mobile/login` and shares [AuthContext::authenticate()](example/src/AuthContext.php) with desktop login: retrieve and consume the session's unexpired challenge nonce, validate the token, apply your authorization checks and establish the authenticated session.
+3. Use `Secure`, `HttpOnly`, `SameSite=Lax` for the pre-authentication session cookie so it accompanies the return from the app ([index.php](example/public/index.php)). Protect POST endpoints against CSRF and the login page against XSS. The example calls `AuthContext::assertCsrf()` before generating a mobile challenge nonce and when processing login. Callback fragments remain untrusted input even with a CSRF token; see the architecture document's [security assumptions](https://github.com/web-eid/web-eid-for-mobile-architecture-doc/tree/web-eid-mobile#security-assumptions).
+4. Add a mobile login button that calls the init endpoint and opens the returned `authUri` ([front end](example/tpl/index.phtml)). Keep the existing desktop login control.
+
+The PHP example implements authentication only. For optional mobile signing, see the [Java](https://github.com/web-eid/web-eid-authtoken-validation-java/tree/web-eid-mobile/example) and [.NET](https://github.com/web-eid/web-eid-authtoken-validation-dotnet/tree/web-eid-mobile/example) examples.
+
 # Table of contents
 
 - [Quickstart](#quickstart)
+  - [Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)
 - [Introduction](#introduction)
 - [Authentication token format](#authentication-token-format)
   - [Supported token format versions](#supported-token-format-versions)
@@ -587,6 +599,9 @@ The Web eID for Mobile authentication flow is configured with the following addi
 
 - `mobile_base_url` – the base URL used for building the mobile authentication deep link, `web-eid-mobile://` by default;
 - `mobile_request_signing_cert` – whether the mobile application is asked to include the signing certificate information (`unverifiedSigningCertificates`) in the authentication token, `false` by default.
+
+The example files that implement the mobile flow are listed step by step in *[Adding Web eID for Mobile support to an existing integration](#adding-web-eid-for-mobile-support-to-an-existing-integration)*.
+
 Point your Apache web server Document Root to `/example/public` folder.
 
 # Dependency versioning policy
