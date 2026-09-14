@@ -34,9 +34,7 @@ final class MobileAuth
     {
         header("Content-Type: application/json; charset=utf-8");
 
-        if (!isset($_SESSION["csrf-token"])) {
-            $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
-        }
+        $this->ctx->assertCsrf();
 
         $challenge = $this->ctx->nonceGenerator()->generateAndStoreNonce();
 
