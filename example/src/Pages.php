@@ -34,8 +34,10 @@ class Pages
 
     private function generateCsrfToken()
     {
-        // Store token to session
-        $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
+        if (!isset($_SESSION["csrf-token"])) {
+            // Store token to session
+            $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
+        }
         return $_SESSION["csrf-token"];
     }
 
