@@ -49,7 +49,7 @@ final class MobileAuthInitTest extends TestCase
 
         self::assertSame(200, $result['status']);
         self::assertSame($session['csrf-token'], $result['session']['csrf-token']);
-        self::assertStringStartsWith('https://mopp.ria.ee/auth#', $body['authUri']);
+        self::assertStringStartsWith('https://id.eesti.ee/auth#', $body['authUri']);
         $payload = json_decode(base64_decode(explode('#', $body['authUri'], 2)[1]), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('https://example.com/auth/mobile/login', $payload['loginUri']);
         self::assertFalse($payload['getSigningCertificate']);

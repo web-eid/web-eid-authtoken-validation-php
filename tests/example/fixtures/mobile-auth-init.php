@@ -28,7 +28,7 @@ register_shutdown_function(function (): void {
 
 $config = Config::fromArray([
     'origin_url' => 'https://example.com',
-    'mobile_base_url' => 'https://mopp.ria.ee',
+    'mobile_base_url' => 'https://id.eesti.ee',
     'mobile_request_signing_cert' => false,
 ]);
 (new MobileAuth(new AuthContext($config)))->init();
