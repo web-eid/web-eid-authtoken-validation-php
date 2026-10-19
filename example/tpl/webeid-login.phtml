@@ -39,8 +39,8 @@
                         "Content-Type": "application/json",
                         "X-CSRF-TOKEN": csrfToken
                     },
-                  body: JSON.stringify({ authToken: authToken }),
-                  credentials: "include"
+                    body: JSON.stringify(authToken),
+                    credentials: "include"
                 });
                 await checkHttpError(response);
 

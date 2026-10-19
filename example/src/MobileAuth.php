@@ -34,9 +34,7 @@ final class MobileAuth
     {
         header("Content-Type: application/json; charset=utf-8");
 
-        if (!isset($_SESSION["csrf-token"])) {
-            $_SESSION["csrf-token"] = bin2hex(random_bytes(32));
-        }
+        $this->ctx->assertCsrf();
 
         $challenge = $this->ctx->nonceGenerator()->generateAndStoreNonce();
 
@@ -60,18 +58,13 @@ final class MobileAuth
         $this->ctx->assertCsrf();
         $this->ctx->assertJsonContentType();
 
-        $json = json_decode(file_get_contents("php://input"), true);
-        if (!isset($json["authToken"])) {
-            http_response_code(400);
-            echo json_encode(["error" => "Missing authToken"]);
-            return;
-        }
+        $authToken = file_get_contents("php://input");
 
         try {
             $nonce = (new ChallengeNonceStore())->getAndRemove();
 
             $authResult = $this->ctx->authenticate(
-                json_encode($json["authToken"]),
+                $authToken,
                 $nonce->getBase64EncodedNonce()
             );
 
